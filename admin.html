@@ -6,43 +6,265 @@
 <title>Admin — Badminton Tournament</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root { --primary:#e8372a; --bg:#0a0a0a; --card:#141414; --border:#2a2a2a; --text:#f0f0f0; --muted:#666; }
+  :root { --primary:#e8372a; --accent:#f5a623; --bg:#0a0a0a; --card:#141414; --border:#2a2a2a; --text:#f0f0f0; --muted:#666; --success:#22c55e; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Barlow',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-  .topbar { display:flex; align-items:center; gap:16px; padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--card); }
-  .topbar a { color:var(--muted); text-decoration:none; font-size:13px; }
+
+  .topbar { display:flex; align-items:center; gap:16px; padding:1rem 1.5rem; border-bottom:1px solid var(--border); background:var(--card); position:sticky; top:0; z-index:10; }
+  .topbar a { color:var(--muted); text-decoration:none; font-size:13px; transition:color 0.2s; }
   .topbar a:hover { color:var(--text); }
   .topbar .sep { color:var(--border); }
-  .topbar h1 { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; margin-left:auto; color:var(--primary); }
-  .content { max-width:900px; margin:0 auto; padding:2rem 1rem; }
-  .page-title { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; text-transform:uppercase; margin-bottom:0.25rem; }
-  .page-sub { color:var(--muted); font-size:0.9rem; margin-bottom:2rem; }
-  .coming-soon { text-align:center; padding:5rem 1rem; }
-  .coming-soon .icon { font-size:4rem; margin-bottom:1rem; opacity:0.4; }
-  .coming-soon h2 { font-family:'Barlow Condensed',sans-serif; font-size:1.5rem; font-weight:700; text-transform:uppercase; color:var(--muted); }
-  .coming-soon p { color:var(--muted); font-size:0.9rem; margin-top:0.5rem; }
-  .back-btn { display:inline-flex; align-items:center; gap:8px; background:transparent; border:1px solid var(--border); color:var(--muted); padding:8px 16px; border-radius:8px; font-family:'Barlow Condensed',sans-serif; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; text-decoration:none; margin-top:2rem; transition:all 0.2s; }
-  .back-btn:hover { border-color:var(--text); color:var(--text); }
+  .topbar-brand { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; color:var(--primary); }
+  .logout-btn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; transition:all 0.2s; font-family:'Barlow',sans-serif; }
+  .logout-btn:hover { border-color:var(--primary); color:var(--primary); }
+
+  .content { max-width:1100px; margin:0 auto; padding:2rem 1rem; }
+
+  .page-header { margin-bottom:2rem; }
+  .page-title { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; text-transform:uppercase; }
+  .page-sub { color:var(--muted); font-size:0.9rem; margin-top:0.25rem; }
+
+  /* Stats cards */
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1.25rem; }
+  .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+  .stat-num { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; }
+  .stat-num.red { color:var(--primary); }
+  .stat-num.green { color:var(--success); }
+  .stat-num.amber { color:var(--accent); }
+
+  /* Filters */
+  .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:1.5rem; align-items:center; }
+  .filter-input { background:#111; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Barlow',sans-serif; font-size:0.9rem; padding:8px 14px; transition:border-color 0.2s; }
+  .filter-input:focus { outline:none; border-color:var(--primary); }
+  .filter-select { background:#111; border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Barlow',sans-serif; font-size:0.9rem; padding:8px 14px; appearance:none; cursor:pointer; }
+
+  /* Table */
+  .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .table-head { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+  .table-title { font-family:'Barlow Condensed',sans-serif; font-size:1rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; }
+  .table-count { font-size:12px; color:var(--muted); }
+
+  .table-scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:700px; }
+  thead th { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); padding:10px 16px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+  tbody tr { border-bottom:1px solid #1a1a1a; transition:background 0.15s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:#1a1a1a; }
+  tbody td { padding:12px 16px; font-size:13px; vertical-align:middle; }
+
+  .level-badge { display:inline-block; font-size:10px; font-weight:600; padding:3px 8px; background:#1e1e1e; border:1px solid var(--border); border-radius:4px; color:var(--muted); text-transform:uppercase; white-space:nowrap; }
+  .level-badge.age { border-color:rgba(232,55,42,0.3); color:var(--primary); background:rgba(232,55,42,0.05); }
+
+  .empty-state { text-align:center; padding:3rem 1rem; color:var(--muted); }
+  .empty-state .icon { font-size:2.5rem; margin-bottom:0.75rem; opacity:0.3; }
+  .empty-state p { font-size:0.9rem; }
+
+  .loading-state { text-align:center; padding:3rem; color:var(--muted); font-size:0.9rem; }
+
+  /* Supabase config notice */
+  .config-notice {
+    background: linear-gradient(135deg, #1a1000, #141414);
+    border: 1px solid rgba(245,166,35,0.3);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .config-notice strong { display:block; margin-bottom:4px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+  .config-notice code { background:#0a0a0a; padding:2px 6px; border-radius:4px; font-size:12px; color:var(--text); }
 </style>
 </head>
 <body>
+
 <div class="topbar">
   <a href="index.html">← Home</a>
   <span class="sep">|</span>
-  <a href="registration.html">Registration</a>
-  <span class="sep">|</span>
   <a href="tournaments.html">Tournaments</a>
-  <h1>⚙️ Admin</h1>
+  <span class="sep">|</span>
+  <a href="registration.html">Registration</a>
+  <div class="topbar-brand">⚙️ Admin Panel</div>
+  <button class="logout-btn" onclick="logout()">Logout</button>
 </div>
+
 <div class="content">
-  <div class="page-title">Admin Panel</div>
-  <div class="page-sub">Manage registrations, teams, and tournament entries.</div>
-  <div class="coming-soon">
-    <div class="icon">⚙️</div>
-    <h2>Coming Soon</h2>
-    <p>Admin panel is under construction.<br>Check back soon for team management features.</p>
-    <a class="back-btn" href="index.html">← Back to Home</a>
+  <div class="page-header">
+    <div class="page-title">Registrations Dashboard</div>
+    <div class="page-sub">View and manage all tournament registrations.</div>
+  </div>
+
+  <div class="config-notice" id="configNotice">
+    <strong>⚙️ Supabase Setup Required</strong>
+    Open <code>admin.html</code> and replace <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> with your project credentials to connect to the database.
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Registrations</div>
+      <div class="stat-num red" id="statTotal">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Age Category</div>
+      <div class="stat-num amber" id="statAge">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open Levels</div>
+      <div class="stat-num green" id="statOpen">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today</div>
+      <div class="stat-num" id="statToday">—</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <input class="filter-input" type="search" id="searchInput" placeholder="🔍 Search team or player..." oninput="filterTable()" style="flex:1;min-width:200px;" />
+    <select class="filter-select" id="levelFilter" onchange="filterTable()">
+      <option value="">All Levels</option>
+      <option value="MIXED 16 AND BELOW">Mixed 16 & Below</option>
+      <option value="WOMEN 16 AND BELOW">Women 16 & Below</option>
+      <option value="EXECUTIVE (40 AND ABOVE)">Executive 40+</option>
+      <option value="LEVEL H">Level H</option>
+      <option value="LEVEL G">Level G</option>
+      <option value="LEVEL F">Level F</option>
+      <option value="LEVEL OPEN">Level Open</option>
+      <option value="MIX LOW">Mix Low</option>
+      <option value="MIX HIGH">Mix High</option>
+      <option value="WOMEN'S LOW">Women's Low</option>
+      <option value="WOMEN'S HIGH">Women's High</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-head">
+      <div class="table-title">All Registrations</div>
+      <div class="table-count" id="tableCount">Loading...</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Level</th>
+            <th>Team Name</th>
+            <th>Player 1</th>
+            <th>Player 2</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Submitted</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="8" class="loading-state">⏳ Connecting to database...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<script>
+  // ─── SUPABASE CONFIG ─────────────────────────────────────────────────────
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const TABLE_NAME = 'registrations';
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const AGE_LEVELS = ['MIXED 16 AND BELOW', 'WOMEN 16 AND BELOW', 'EXECUTIVE (40 AND ABOVE)'];
+  let allData = [];
+
+  function logout() {
+    sessionStorage.removeItem('adminAuth');
+    window.location.href = 'index.html';
+  }
+
+  async function fetchRegistrations() {
+    if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+      // Show demo mode with empty state
+      document.getElementById('tableBody').innerHTML = `
+        <tr><td colspan="8" class="empty-state">
+          <div class="icon">🔌</div>
+          <p>Connect Supabase to see registrations.<br>Update <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> in admin.html.</p>
+        </td></tr>`;
+      document.getElementById('tableCount').textContent = 'Not connected';
+      document.getElementById('statTotal').textContent = '—';
+      document.getElementById('statAge').textContent = '—';
+      document.getElementById('statOpen').textContent = '—';
+      document.getElementById('statToday').textContent = '—';
+      return;
+    }
+
+    document.getElementById('configNotice').style.display = 'none';
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}?select=*&order=submitted_at.desc`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch');
+      allData = await res.json();
+      renderTable(allData);
+      updateStats(allData);
+    } catch (err) {
+      document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">⚠️</div><p>Failed to load data. Check your Supabase credentials.</p></td></tr>`;
+      document.getElementById('tableCount').textContent = 'Error';
+    }
+  }
+
+  function updateStats(data) {
+    const today = new Date().toDateString();
+    document.getElementById('statTotal').textContent = data.length;
+    document.getElementById('statAge').textContent = data.filter(r => AGE_LEVELS.includes(r.level)).length;
+    document.getElementById('statOpen').textContent = data.filter(r => !AGE_LEVELS.includes(r.level)).length;
+    document.getElementById('statToday').textContent = data.filter(r => new Date(r.submitted_at).toDateString() === today).length;
+  }
+
+  function renderTable(data) {
+    document.getElementById('tableCount').textContent = `${data.length} record${data.length !== 1 ? 's' : ''}`;
+    if (data.length === 0) {
+      document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" class="empty-state"><div class="icon">📋</div><p>No registrations yet.</p></td></tr>`;
+      return;
+    }
+    document.getElementById('tableBody').innerHTML = data.map((r, i) => {
+      const isAge = AGE_LEVELS.includes(r.level);
+      const date = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' }) : '—';
+      return `<tr>
+        <td style="color:var(--muted)">${i + 1}</td>
+        <td><span class="level-badge ${isAge ? 'age' : ''}">${r.level || '—'}</span></td>
+        <td style="font-weight:600">${r.team_name || '—'}</td>
+        <td>${r.player1_name || '—'}</td>
+        <td>${r.player2_name || '—'}</td>
+        <td style="color:var(--muted)">${r.phone_number || '—'}</td>
+        <td style="color:var(--muted)">${r.email_address || '—'}</td>
+        <td style="color:var(--muted);font-size:12px">${date}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const level = document.getElementById('levelFilter').value;
+    const filtered = allData.filter(r => {
+      const matchLevel = !level || r.level === level;
+      const matchSearch = !search ||
+        (r.team_name || '').toLowerCase().includes(search) ||
+        (r.player1_name || '').toLowerCase().includes(search) ||
+        (r.player2_name || '').toLowerCase().includes(search) ||
+        (r.email_address || '').toLowerCase().includes(search);
+      return matchLevel && matchSearch;
+    });
+    renderTable(filtered);
+  }
+
+  fetchRegistrations();
+</script>
 </body>
 </html>

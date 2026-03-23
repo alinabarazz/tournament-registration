@@ -169,8 +169,8 @@
 
 <script>
   // ─── SUPABASE CONFIG ─────────────────────────────────────────────────────
-  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_URL = 'https://hzfrpjkgromfkaxrhhbp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZnJwamtncm9tZmtheHJoaGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzk4NTQsImV4cCI6MjA4OTg1NTg1NH0.yOxSdqVTfyKUlnyEhjLBSH-t1zPK_8OLCXmq3K0foXk';
   const TABLE_NAME = 'registrations';
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -183,7 +183,7 @@
   }
 
   async function fetchRegistrations() {
-    if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    if (SUPABASE_URL === 'https://hzfrpjkgromfkaxrhhbp.supabase.co') {
       // Show demo mode with empty state
       document.getElementById('tableBody').innerHTML = `
         <tr><td colspan="8" class="empty-state">

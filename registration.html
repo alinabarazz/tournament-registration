@@ -63,74 +63,24 @@
   .btn.loading .btn-text { display:none; }
   .btn.loading .spinner { display:block; }
   .age-hint { font-size:11px; color:var(--muted); margin-bottom:1rem; padding:8px 12px; background:#161616; border-radius:4px; border-left:2px solid var(--primary); }
-
-  /* Success page */
   .success-page { text-align:center; padding:1.5rem 0.5rem; }
   .success-icon { width:80px; height:80px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 1.5rem; animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
   @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
   .success-page h2 { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; text-transform:uppercase; margin-bottom:0.5rem; }
-
-  .ref-box {
-    background: linear-gradient(135deg, #1a0808, #1a1a1a);
-    border: 1px solid rgba(232,55,42,0.3);
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin: 1.25rem 0;
-    text-align: center;
-  }
+  .ref-box { background:linear-gradient(135deg,#1a0808,#1a1a1a); border:1px solid rgba(232,55,42,0.3); border-radius:12px; padding:1.25rem; margin:1.25rem 0; text-align:center; }
   .ref-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px; }
-  .ref-number { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; color:var(--primary); letter-spacing:0.1em; }
+  .ref-number { font-family:'Barlow Condensed',sans-serif; font-size:2.5rem; font-weight:800; color:var(--primary); letter-spacing:0.1em; }
   .ref-sub { font-size:12px; color:var(--muted); margin-top:4px; }
-
-  .status-flow {
-    display:flex;
-    justify-content:center;
-    gap:0;
-    margin: 1.25rem 0;
-    flex-wrap: wrap;
-  }
-  .status-step {
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:6px;
-    padding: 8px 12px;
-    position: relative;
-  }
-  .status-step::after {
-    content: '→';
-    position: absolute;
-    right: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--border);
-    font-size: 14px;
-  }
+  .pending-msg { background:#161616; border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; font-size:13px; color:var(--muted); text-align:left; line-height:1.7; margin-bottom:1.25rem; }
+  .pending-msg strong { color:var(--text); }
+  .status-flow { display:flex; justify-content:center; gap:0; margin:1.25rem 0 0.5rem; flex-wrap:wrap; }
+  .status-step { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 12px; position:relative; }
+  .status-step::after { content:'→'; position:absolute; right:-8px; top:40%; color:var(--border); font-size:14px; }
   .status-step:last-child::after { display:none; }
-  .status-dot {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-    border: 2px solid var(--border);
-    color: var(--muted);
-  }
+  .status-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; border:2px solid var(--border); color:var(--muted); }
   .status-step.current .status-dot { background:var(--primary); border-color:var(--primary); color:#fff; }
   .status-step-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
   .status-step.current .status-step-label { color:var(--text); }
-
-  .pending-msg {
-    background:#161616;
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:1rem 1.25rem;
-    font-size:13px;
-    color:var(--muted);
-    text-align:left;
-    line-height:1.6;
-  }
-  .pending-msg strong { color:var(--text); }
-
   .sponsor-section { margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border); }
   .sponsor-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; margin-bottom:1rem; text-align:center; }
   .sponsor-grid { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
@@ -145,7 +95,6 @@
     <h1>Tournament<br><span>Registration</span></h1>
     <p>Fill in your team details to register for the tournament.</p>
   </div>
-
   <div class="steps">
     <div class="step active" id="step1"><div class="step-num">1</div><div class="step-label">Team Info</div></div>
     <div class="step-line" id="line1"></div>
@@ -193,9 +142,7 @@
 
   <!-- PAGE 2 -->
   <div class="page" id="page2">
-    <div class="info-banner">
-      <div class="info-banner-text" id="banner-p2"></div>
-    </div>
+    <div class="info-banner"><div class="info-banner-text" id="banner-p2"></div></div>
     <div class="card">
       <div class="card-header">
         <div class="card-icon">👤</div>
@@ -245,40 +192,24 @@
       <div class="success-page">
         <div class="success-icon">✓</div>
         <h2>Registration Submitted!</h2>
-        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;">Your registration has been received and is pending review.</p>
-
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;">Your registration is now pending review.</p>
         <div class="ref-box">
           <div class="ref-label">Your Reference Number</div>
           <div class="ref-number" id="refNumber">#——</div>
-          <div class="ref-sub">Keep this number for your records.</div>
+          <div class="ref-sub">Screenshot or note this number for your records.</div>
         </div>
-
         <div class="pending-msg">
           <strong>What happens next?</strong><br>
           We will contact you once your partnership is approved for <strong id="successLevel">this level</strong>.<br><br>
-          Once approved, you will receive an email with payment instructions via GCash.<br>
-          After payment, submit your GCash screenshot to complete your registration.
+          📧 Once approved, you will receive an <strong>email with payment instructions</strong> via GCash.<br>
+          💳 After payment, submit your <strong>GCash screenshot</strong> to complete your registration.
         </div>
-
-        <div class="status-flow" style="margin:1.5rem 0 0.5rem;">
-          <div class="status-step current">
-            <div class="status-dot">📋</div>
-            <div class="status-step-label">Pending</div>
-          </div>
-          <div class="status-step">
-            <div class="status-dot">✅</div>
-            <div class="status-step-label">Approved</div>
-          </div>
-          <div class="status-step">
-            <div class="status-dot">💳</div>
-            <div class="status-step-label">Payment</div>
-          </div>
-          <div class="status-step">
-            <div class="status-dot">🏸</div>
-            <div class="status-step-label">Registered</div>
-          </div>
+        <div class="status-flow">
+          <div class="status-step current"><div class="status-dot">📋</div><div class="status-step-label">Pending</div></div>
+          <div class="status-step"><div class="status-dot">✅</div><div class="status-step-label">Approved</div></div>
+          <div class="status-step"><div class="status-dot">💳</div><div class="status-step-label">Payment</div></div>
+          <div class="status-step"><div class="status-dot">🏸</div><div class="status-step-label">Registered</div></div>
         </div>
-
         <div class="sponsor-section">
           <div class="sponsor-label">Proudly Supported By</div>
           <div class="sponsor-grid">
@@ -287,7 +218,6 @@
             <div class="sponsor-slot">Logo 3</div>
           </div>
         </div>
-
         <a href="index.html" style="display:inline-block;margin-top:1.5rem;color:var(--primary);text-decoration:none;font-size:13px;">← Back to Home</a>
       </div>
     </div>
@@ -307,158 +237,144 @@
   };
 
   function getActiveRule() { return AGE_RULES[document.getElementById('level').value] || null; }
-
   function calcAge(v) {
     if (!v) return null;
-    const t = new Date(), b = new Date(v);
-    let a = t.getFullYear() - b.getFullYear();
-    const m = t.getMonth() - b.getMonth();
-    if (m < 0 || (m === 0 && t.getDate() < b.getDate())) a--;
+    const t=new Date(), b=new Date(v);
+    let a=t.getFullYear()-b.getFullYear();
+    const m=t.getMonth()-b.getMonth();
+    if (m<0||(m===0&&t.getDate()<b.getDate())) a--;
     return a;
   }
+  function showError(id,msg){const el=document.getElementById(id);if(!el)return;el.textContent=msg;el.classList.toggle('show',!!msg);}
+  function setErr(id,has){const el=document.getElementById(id);if(!el)return;el.classList.toggle('error',has);el.classList.toggle('valid',!has&&el.value);}
 
-  function showError(id, msg) { const el = document.getElementById(id); if (!el) return; el.textContent = msg; el.classList.toggle('show', !!msg); }
-  function setErr(id, has) { const el = document.getElementById(id); if (!el) return; el.classList.toggle('error', has); el.classList.toggle('valid', !has && el.value); }
-
-  function goToPage(n) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(typeof n === 'string' ? n : 'page' + n).classList.add('active');
-    window.scrollTo(0, 0);
-    if (n === 1) { document.getElementById('step1').className='step active'; document.getElementById('step2').className='step'; document.getElementById('line1').className='step-line'; }
-    if (n === 2) { document.getElementById('step1').className='step done'; document.getElementById('step2').className='step active'; document.getElementById('line1').className='step-line done'; }
+  function goToPage(n){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(typeof n==='string'?n:'page'+n).classList.add('active');
+    window.scrollTo(0,0);
+    if(n===1){document.getElementById('step1').className='step active';document.getElementById('step2').className='step';document.getElementById('line1').className='step-line';}
+    if(n===2){document.getElementById('step1').className='step done';document.getElementById('step2').className='step active';document.getElementById('line1').className='step-line done';}
   }
 
-  function goToPage2() {
-    const level = document.getElementById('level').value;
-    const team = document.getElementById('teamName').value.trim();
-    let ok = true;
-    if (!level) { showError('err-level','Please select a level.'); ok=false; } else showError('err-level','');
-    if (!team)  { showError('err-teamName','Please enter your team name.'); ok=false; } else showError('err-teamName','');
-    if (!ok) return;
-    document.getElementById('banner-p2').textContent = `${level} | Team: ${team}`;
-    const rule = getActiveRule();
-    document.getElementById('p1-age-fields').style.display = rule ? 'block' : 'none';
-    document.getElementById('p2-age-fields').style.display = rule ? 'block' : 'none';
-    const hint = document.getElementById('age-hint');
-    if (rule) {
-      hint.style.display = 'block';
-      hint.textContent = rule.max !== null ? `⚠️ ${rule.label} — Both players must be ${rule.max} or younger.` : `⚠️ ${rule.label} — Both players must be ${rule.min} or older.`;
-      document.getElementById('p2-card-sub').textContent = 'Both players must meet age requirements';
-    } else {
-      hint.style.display = 'none';
-      document.getElementById('p2-card-sub').textContent = "Enter both players' information";
-    }
+  function goToPage2(){
+    const level=document.getElementById('level').value, team=document.getElementById('teamName').value.trim();
+    let ok=true;
+    if(!level){showError('err-level','Please select a level.');ok=false;}else showError('err-level','');
+    if(!team){showError('err-teamName','Please enter your team name.');ok=false;}else showError('err-teamName','');
+    if(!ok)return;
+    document.getElementById('banner-p2').textContent=`${level} | Team: ${team}`;
+    const rule=getActiveRule();
+    document.getElementById('p1-age-fields').style.display=rule?'block':'none';
+    document.getElementById('p2-age-fields').style.display=rule?'block':'none';
+    const hint=document.getElementById('age-hint');
+    if(rule){hint.style.display='block';hint.textContent=rule.max!==null?`⚠️ ${rule.label} — Both players must be ${rule.max} or younger.`:`⚠️ ${rule.label} — Both players must be ${rule.min} or older.`;document.getElementById('p2-card-sub').textContent='Both players must meet age requirements';}
+    else{hint.style.display='none';document.getElementById('p2-card-sub').textContent="Enter both players' information";}
     goToPage(2);
   }
 
-  function validateP(prefix) {
-    let ok = true;
-    const rule = getActiveRule();
-    if (!document.getElementById(prefix+'Name').value.trim()) { showError('err-'+prefix+'Name','Required.'); setErr(prefix+'Name',true); ok=false; }
-    else { showError('err-'+prefix+'Name',''); setErr(prefix+'Name',false); }
-    if (rule) {
-      const bday=document.getElementById(prefix+'Bday').value, age=parseInt(document.getElementById(prefix+'Age').value,10), calc=calcAge(bday);
-      if (!bday) { showError('err-'+prefix+'Bday','Required.'); setErr(prefix+'Bday',true); ok=false; }
-      else if (!isNaN(age)&&calc!==null&&calc!==age) { showError('err-'+prefix+'Bday',`Birthdate doesn't match age (calculated: ${calc}).`); setErr(prefix+'Bday',true); setErr(prefix+'Age',true); ok=false; }
-      else { showError('err-'+prefix+'Bday',''); setErr(prefix+'Bday',false); }
-      if (isNaN(age)||document.getElementById(prefix+'Age').value==='') { showError('err-'+prefix+'Age','Required.'); setErr(prefix+'Age',true); ok=false; }
-      else if (rule.max!==null&&age>rule.max) { showError('err-'+prefix+'Age',`Must be ${rule.max} or below for this level.`); setErr(prefix+'Age',true); ok=false; }
-      else if (rule.min!==null&&age<rule.min) { showError('err-'+prefix+'Age',`Must be ${rule.min} or above for this level.`); setErr(prefix+'Age',true); ok=false; }
-      else { showError('err-'+prefix+'Age',''); setErr(prefix+'Age',false); }
+  function validateP(prefix){
+    let ok=true; const rule=getActiveRule();
+    if(!document.getElementById(prefix+'Name').value.trim()){showError('err-'+prefix+'Name','Required.');setErr(prefix+'Name',true);ok=false;}else{showError('err-'+prefix+'Name','');setErr(prefix+'Name',false);}
+    if(rule){
+      const bday=document.getElementById(prefix+'Bday').value,age=parseInt(document.getElementById(prefix+'Age').value,10),calc=calcAge(bday);
+      if(!bday){showError('err-'+prefix+'Bday','Required.');setErr(prefix+'Bday',true);ok=false;}
+      else if(!isNaN(age)&&calc!==null&&calc!==age){showError('err-'+prefix+'Bday',`Birthdate doesn't match age (calculated: ${calc}).`);setErr(prefix+'Bday',true);setErr(prefix+'Age',true);ok=false;}
+      else{showError('err-'+prefix+'Bday','');setErr(prefix+'Bday',false);}
+      if(isNaN(age)||document.getElementById(prefix+'Age').value===''){showError('err-'+prefix+'Age','Required.');setErr(prefix+'Age',true);ok=false;}
+      else if(rule.max!==null&&age>rule.max){showError('err-'+prefix+'Age',`Must be ${rule.max} or below for this level.`);setErr(prefix+'Age',true);ok=false;}
+      else if(rule.min!==null&&age<rule.min){showError('err-'+prefix+'Age',`Must be ${rule.min} or above for this level.`);setErr(prefix+'Age',true);ok=false;}
+      else{showError('err-'+prefix+'Age','');setErr(prefix+'Age',false);}
     }
-    if (!document.getElementById(prefix+'Facebook').value.trim()) { showError('err-'+prefix+'Facebook','Required.'); setErr(prefix+'Facebook',true); ok=false; }
-    else { showError('err-'+prefix+'Facebook',''); setErr(prefix+'Facebook',false); }
+    if(!document.getElementById(prefix+'Facebook').value.trim()){showError('err-'+prefix+'Facebook','Required.');setErr(prefix+'Facebook',true);ok=false;}else{showError('err-'+prefix+'Facebook','');setErr(prefix+'Facebook',false);}
     return ok;
   }
 
-  async function submitForm() {
-    const phoneRaw = document.getElementById('phone').value.trim().replace(/\D/g,'');
-    const email = document.getElementById('email').value.trim();
-    let ok = validateP('p1') & validateP('p2');
-    if (!phoneRaw||phoneRaw.length<10||phoneRaw.length>11) { showError('err-phone','Phone must be 10-11 digits.'); ok=false; } else showError('err-phone','');
-    if (!email||!email.includes('@')) { showError('err-email','Valid email required.'); ok=false; } else showError('err-email','');
-    if (!ok) return;
+  async function submitForm(){
+    const phoneRaw=document.getElementById('phone').value.trim().replace(/\D/g,'');
+    const email=document.getElementById('email').value.trim();
+    let ok=validateP('p1')&validateP('p2');
+    if(!phoneRaw||phoneRaw.length<10||phoneRaw.length>11){showError('err-phone','Phone must be 10-11 digits.');ok=false;}else showError('err-phone','');
+    if(!email||!email.includes('@')){showError('err-email','Valid email required.');ok=false;}else showError('err-email','');
+    if(!ok)return;
 
-    const btn = document.getElementById('submitBtn');
-    btn.classList.add('loading'); btn.disabled=true;
+    const btn=document.getElementById('submitBtn');
+    btn.classList.add('loading');btn.disabled=true;
 
-    const isAge = !!getActiveRule();
-    const level = document.getElementById('level').value;
-    const payload = {
-      level,
-      team_name:        document.getElementById('teamName').value.trim(),
-      player1_name:     document.getElementById('p1Name').value.trim(),
-      player1_facebook: document.getElementById('p1Facebook').value.trim(),
-      player2_name:     document.getElementById('p2Name').value.trim(),
-      player2_facebook: document.getElementById('p2Facebook').value.trim(),
-      phone_number:     parseInt(phoneRaw, 10),
-      email_address:    email,
-      submitted_at:     new Date().toISOString(),
-      status:           'Pending Review',
+    const isAge=!!getActiveRule();
+    const level=document.getElementById('level').value;
+
+    // Column names match Supabase schema exactly
+    const payload={
+      "Level":           level,
+      "Team_Name":       document.getElementById('teamName').value.trim(),
+      "Player1_Name":    document.getElementById('p1Name').value.trim(),
+      "Player1_Facebook":document.getElementById('p1Facebook').value.trim(),
+      "Player2_Name":    document.getElementById('p2Name').value.trim(),
+      "Player2_Facebook":document.getElementById('p2Facebook').value.trim(),
+      "Phone_Number":    parseInt(phoneRaw,10),
+      "Email_Address":   email,
+      "Status":          "Pending Review",
     };
 
-    if (isAge) {
-      payload.player1_birthdate = document.getElementById('p1Bday').value;
-      payload.player1_age       = parseInt(document.getElementById('p1Age').value,10);
-      payload.player2_birthdate = document.getElementById('p2Bday').value;
-      payload.player2_age       = parseInt(document.getElementById('p2Age').value,10);
+    if(isAge){
+      payload["Player1_Birthdate"] = document.getElementById('p1Bday').value||null;
+      payload["Player1_Age"]       = parseInt(document.getElementById('p1Age').value,10);
+      payload["Player2_Birthdate"] = document.getElementById('p2Bday').value||null;
+      payload["Player2_Age"]       = parseInt(document.getElementById('p2Age').value,10);
     }
 
-    try {
-      // Save to Supabase and get back the ID
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation',
+    try{
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`,{
+        method:'POST',
+        headers:{
+          'apikey':SUPABASE_ANON_KEY,
+          'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type':'application/json',
+          'Prefer':'return=representation',
         },
-        body: JSON.stringify(payload),
+        body:JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
+      if(!res.ok){
+        const err=await res.json();
         throw new Error(JSON.stringify(err));
       }
 
-      const data = await res.json();
-      const newId = data[0]?.id;
+      const data=await res.json();
+      const newId=data[0]?.id;
 
       // Also notify n8n
-      fetch(N8N_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, ref_id: newId }),
-      }).catch(() => {});
+      fetch(N8N_WEBHOOK,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({...payload,ref_id:newId}),
+      }).catch(()=>{});
 
-      // Show success with ref number
-      document.getElementById('refNumber').textContent = `#${String(newId).padStart(5, '0')}`;
-      document.getElementById('successLevel').textContent = level;
+      document.getElementById('refNumber').textContent=`#${String(newId).padStart(5,'0')}`;
+      document.getElementById('successLevel').textContent=level;
       goToPage('pageSuccess');
 
-    } catch (err) {
-      console.error('Supabase error:', err);
-      btn.classList.remove('loading'); btn.disabled=false;
-      showError('err-email', '❌ Submission failed: ' + err.message);
+    }catch(err){
+      console.error('Supabase error:',err);
+      btn.classList.remove('loading');btn.disabled=false;
+      showError('err-email','❌ Submission failed: '+err.message);
     }
   }
 
-  // Live age/birthdate validation
-  ['p1Bday','p1Age','p2Bday','p2Age'].forEach(id => {
-    document.getElementById(id).addEventListener('input', function() {
-      const rule = getActiveRule(); if (!rule) return;
-      const prefix = id.startsWith('p1') ? 'p1' : 'p2';
-      const bday = document.getElementById(prefix+'Bday').value;
-      const age  = parseInt(document.getElementById(prefix+'Age').value,10);
-      const calc = calcAge(bday);
-      if (bday&&!isNaN(age)&&calc!==null&&calc!==age) { showError('err-'+prefix+'Bday',`Birthdate doesn't match age (calculated: ${calc}).`); setErr(prefix+'Bday',true); setErr(prefix+'Age',true); }
-      else {
-        showError('err-'+prefix+'Bday',''); setErr(prefix+'Bday',false);
-        if (!isNaN(age)) {
-          if (rule.max!==null&&age>rule.max) { showError('err-'+prefix+'Age',`Must be ${rule.max} or below.`); setErr(prefix+'Age',true); }
-          else if (rule.min!==null&&age<rule.min) { showError('err-'+prefix+'Age',`Must be ${rule.min} or above.`); setErr(prefix+'Age',true); }
-          else { showError('err-'+prefix+'Age',''); setErr(prefix+'Age',false); }
+  ['p1Bday','p1Age','p2Bday','p2Age'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',function(){
+      const rule=getActiveRule();if(!rule)return;
+      const prefix=id.startsWith('p1')?'p1':'p2';
+      const bday=document.getElementById(prefix+'Bday').value;
+      const age=parseInt(document.getElementById(prefix+'Age').value,10);
+      const calc=calcAge(bday);
+      if(bday&&!isNaN(age)&&calc!==null&&calc!==age){showError('err-'+prefix+'Bday',`Birthdate doesn't match age (calculated: ${calc}).`);setErr(prefix+'Bday',true);setErr(prefix+'Age',true);}
+      else{
+        showError('err-'+prefix+'Bday','');setErr(prefix+'Bday',false);
+        if(!isNaN(age)){
+          if(rule.max!==null&&age>rule.max){showError('err-'+prefix+'Age',`Must be ${rule.max} or below.`);setErr(prefix+'Age',true);}
+          else if(rule.min!==null&&age<rule.min){showError('err-'+prefix+'Age',`Must be ${rule.min} or above.`);setErr(prefix+'Age',true);}
+          else{showError('err-'+prefix+'Age','');setErr(prefix+'Age',false);}
         }
       }
     });

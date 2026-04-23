@@ -64,215 +64,314 @@
   .detail-value{font-size:13px;}
   .expand-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:all 0.2s;line-height:1;}
   .expand-btn:hover{background:#222;color:var(--text);}
+  .login-container{display:flex;justify-content:center;align-items:center;min-height:100vh;background:var(--bg);}
+  .login-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;width:100%;max-width:400px;}
+  .login-box h2{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;margin-bottom:1.5rem;text-align:center;}
+  .login-field{margin-bottom:1rem;}
+  .login-field label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px;}
+  .login-field input{width:100%;background:#111;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;padding:10px 14px;transition:border-color 0.2s;}
+  .login-field input:focus{outline:none;border-color:var(--primary);}
+  .login-btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+  .login-btn:hover{background:#b82a1f;}
+  .login-error{color:#ff6b6b;font-size:12px;text-align:center;margin-bottom:1rem;display:none;}
+  .login-error.show{display:block;}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <a href="index.html">← Home</a>
-  <span class="sep">|</span>
-  <a href="tournaments.html">Tournaments</a>
-  <span class="sep">|</span>
-  <a href="registration.html">Registration</a>
-  <div class="topbar-brand">⚙️ Admin Panel</div>
-  <button class="logout-btn" onclick="logout()">Logout</button>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-container" style="display:flex;">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <div class="login-error" id="loginError"></div>
+    <form onsubmit="handleLogin(event)">
+      <div class="login-field">
+        <label>Username</label>
+        <input type="text" id="username" required>
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="password" required>
+      </div>
+      <button type="submit" class="login-btn">Login</button>
+    </form>
+  </div>
 </div>
 
-<div class="content">
-  <div class="page-title">Registrations Dashboard</div>
-  <div class="page-sub">Manage all tournament registrations and update their status.</div>
-
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-num red" id="statTotal">—</div></div>
-    <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-num amber" id="statPending">—</div></div>
-    <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-num blue" id="statApproved">—</div></div>
-    <div class="stat-card"><div class="stat-label">Payment Submitted</div><div class="stat-num amber" id="statPayment">—</div></div>
-    <div class="stat-card"><div class="stat-label">Registered ✅</div><div class="stat-num green" id="statRegistered">—</div></div>
+<!-- ADMIN DASHBOARD -->
+<div id="adminScreen" style="display:none;">
+  <div class="topbar">
+    <a href="index.html">← Home</a>
+    <span class="sep">|</span>
+    <a href="tournaments.html">Tournaments</a>
+    <span class="sep">|</span>
+    <a href="registration.html">Registration</a>
+    <div class="topbar-brand">⚙️ Admin Panel</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
-  <div class="filters">
-    <input class="filter-input" type="search" id="searchInput" placeholder="🔍 Search team or player..." oninput="filterTable()" style="flex:1;min-width:200px;"/>
-    <select class="filter-select" id="levelFilter" onchange="filterTable()">
-      <option value="">All Levels</option>
-      <option value="MIXED 16 AND BELOW">Mixed 16 & Below</option>
-      <option value="WOMEN 16 AND BELOW">Women 16 & Below</option>
-      <option value="EXECUTIVE (40 AND ABOVE)">Executive 40+</option>
-      <option value="LEVEL H">Level H</option>
-      <option value="LEVEL G">Level G</option>
-      <option value="LEVEL F">Level F</option>
-      <option value="LEVEL OPEN">Level Open</option>
-      <option value="MIX LOW">Mix Low</option>
-      <option value="MIX HIGH">Mix High</option>
-      <option value="WOMEN'S LOW">Women's Low</option>
-      <option value="WOMEN'S HIGH">Women's High</option>
-    </select>
-    <select class="filter-select" id="statusFilter" onchange="filterTable()">
-      <option value="">All Statuses</option>
-      <option value="Pending Review">Pending Review</option>
-      <option value="Approved">Approved</option>
-      <option value="Payment Submitted">Payment Submitted</option>
-      <option value="Registered">Registered</option>
-    </select>
-  </div>
+  <div class="content">
+    <div class="page-title">Registrations Dashboard</div>
+    <div class="page-sub">Manage all tournament registrations and update their status.</div>
 
-  <div class="table-wrap">
-    <div class="table-head">
-      <div class="table-title">All Registrations</div>
-      <div class="table-count" id="tableCount">Loading...</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-num red" id="statTotal">—</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-num amber" id="statPending">—</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-num blue" id="statApproved">—</div></div>
+      <div class="stat-card"><div class="stat-label">Payment Submitted</div><div class="stat-num amber" id="statPayment">—</div></div>
+      <div class="stat-card"><div class="stat-label">Registered ✅</div><div class="stat-num green" id="statRegistered">—</div></div>
     </div>
-    <div class="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th></th>
-            <th>Ref #</th>
-            <th>Status</th>
-            <th>Level</th>
-            <th>Team Name</th>
-            <th>Player 1</th>
-            <th>Player 2</th>
-            <th>Email</th>
-            <th>Submitted</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <tr><td colspan="9"><div class="empty-state"><span class="icon">⏳</span><p>Loading registrations...</p></div></td></tr>
-        </tbody>
-      </table>
+
+    <div class="filters">
+      <input class="filter-input" type="search" id="searchInput" placeholder="🔍 Search team or player..." oninput="filterTable()" style="flex:1;min-width:200px;"/>
+      <select class="filter-select" id="levelFilter" onchange="filterTable()">
+        <option value="">All Levels</option>
+        <option value="MIXED 16 AND UNDER">Mixed 16 & Under</option>
+        <option value="WOMEN 16 AND UNDER">Women 16 & Under</option>
+        <option value="EXECUTIVE 40 AND ABOVE">Executive 40+</option>
+        <option value="LEVEL G">Level G</option>
+        <option value="LEVEL F">Level F</option>
+        <option value="LEVEL OPEN">Level Open</option>
+        <option value="MIX LOW">Mix Low</option>
+        <option value="MIX HIGH">Mix High</option>
+        <option value="WOMEN LOW">Women Low</option>
+        <option value="WOMEN HIGH">Women High</option>
+      </select>
+      <select class="filter-select" id="statusFilter" onchange="filterTable()">
+        <option value="">All Status</option>
+        <option value="Pending Review">Pending Review</option>
+        <option value="Approved">Approved</option>
+        <option value="Payment Submitted">Payment Submitted</option>
+        <option value="Registered">Registered</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <div class="table-title">Registrations</div>
+        <div class="table-count" id="tableCount">0 records</div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Level</th>
+              <th>Player 1</th>
+              <th>Player 2</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="registrationsBody">
+            <tr><td colspan="8" class="empty-state"><span class="icon">📋</span>No registrations yet</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  const SUPABASE_URL='https://hzfrpjkgromfkaxrhhbp.supabase.co';
-  const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZnJwamtncm9tZmtheHJoaGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzk4NTQsImV4cCI6MjA4OTg1NTg1NH0.yOxSdqVTfyKUlnyEhjLBSH-t1zPK_8OLCXmq3K0foXk';
-  const TABLE_NAME='Registrations';
-  const AGE_LEVELS=['MIXED 16 AND BELOW','WOMEN 16 AND BELOW','EXECUTIVE (40 AND ABOVE)'];
-  const STATUSES=['Pending Review','Approved','Payment Submitted','Registered'];
-  const STATUS_CLASS={'Pending Review':'s-pending','Approved':'s-approved','Payment Submitted':'s-payment','Registered':'s-registered'};
+  // Supabase Configuration
+  const SUPABASE_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
 
-  let allData=[];
+  let currentUser = null;
 
-  const hdrs={
-    'apikey':SUPABASE_ANON_KEY,
-    'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
-    'Content-Type':'application/json',
-  };
+  // LOGIN HANDLER
+  async function handleLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
 
-  function logout(){window.location.href='index.html';}
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
 
-  async function fetchRegistrations(){
-    try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}?select=*&order=id.desc`,{headers:hdrs});
-      if(!res.ok) throw new Error(await res.text());
-      allData=await res.json();
-      renderTable(allData);
-      updateStats(allData);
-    }catch(err){
-      document.getElementById('tableBody').innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">⚠️</span><p>Failed to load: ${err.message}</p></div></td></tr>`;
-      document.getElementById('tableCount').textContent='Error';
+      const users = await response.json();
+
+      if (users.length > 0) {
+        currentUser = users[0];
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminScreen').style.display = 'block';
+        loadRegistrations();
+      } else {
+        errorDiv.textContent = 'Invalid username or password';
+        errorDiv.classList.add('show');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      errorDiv.textContent = 'Login failed. Please try again.';
+      errorDiv.classList.add('show');
     }
   }
 
-  function updateStats(data){
-    document.getElementById('statTotal').textContent=data.length;
-    document.getElementById('statPending').textContent=data.filter(r=>r.Status==='Pending Review').length;
-    document.getElementById('statApproved').textContent=data.filter(r=>r.Status==='Approved').length;
-    document.getElementById('statPayment').textContent=data.filter(r=>r.Status==='Payment Submitted').length;
-    document.getElementById('statRegistered').textContent=data.filter(r=>r.Status==='Registered').length;
-  }
+  // LOAD REGISTRATIONS
+  async function loadRegistrations() {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/registrations`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
 
-  function renderTable(data){
-    document.getElementById('tableCount').textContent=`${data.length} record${data.length!==1?'s':''}`;
-    if(data.length===0){
-      document.getElementById('tableBody').innerHTML=`<tr><td colspan="9"><div class="empty-state"><span class="icon">📋</span><p>No registrations yet.</p></div></td></tr>`;
-      return;
-    }
-    document.getElementById('tableBody').innerHTML=data.map(r=>{
-      const isAge=AGE_LEVELS.includes(r.Level);
-      const date=r.created_at?new Date(r.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}):'—';
-      const ref=`#${String(r.id).padStart(5,'0')}`;
-      const status=r.Status||'Pending Review';
-      const sClass=STATUS_CLASS[status]||'s-pending';
-      const statusOpts=STATUSES.map(s=>`<option value="${s}"${status===s?' selected':''}>${s}</option>`).join('');
-      return `
-        <tr id="row-${r.id}">
-          <td><button class="expand-btn" onclick="toggleDetail(${r.id})">▸</button></td>
-          <td class="ref-cell">${ref}</td>
+      const registrations = await response.json();
+      const tbody = document.getElementById('registrationsBody');
+      tbody.innerHTML = '';
+
+      if (registrations.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="icon">📋</span>No registrations yet</td></tr>';
+        updateStats([]);
+        return;
+      }
+
+      registrations.forEach(reg => {
+        const row = document.createElement('tr');
+        const statusClass = `s-${reg.Status.toLowerCase().replace(/\s+/g, '-')}`;
+        row.innerHTML = `
+          <td><strong>${reg.Team_Name}</strong></td>
+          <td><span class="level-badge">${reg.Level}</span></td>
+          <td>${reg.Player1_Name}</td>
+          <td>${reg.Player2_Name}</td>
+          <td>${reg.Email_Address}</td>
+          <td>${reg.Phone_Number}</td>
           <td>
-            <select class="status-select ${sClass}" id="sel-${r.id}" onchange="updateStatus(${r.id},this)">
-              ${statusOpts}
+            <select class="status-select ${statusClass}" onchange="updateStatus(${reg.id}, this.value)">
+              <option value="Pending Review" ${reg.Status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
+              <option value="Approved" ${reg.Status === 'Approved' ? 'selected' : ''}>Approved</option>
+              <option value="Payment Submitted" ${reg.Status === 'Payment Submitted' ? 'selected' : ''}>Payment Submitted</option>
+              <option value="Registered" ${reg.Status === 'Registered' ? 'selected' : ''}>Registered</option>
+              <option value="Rejected" ${reg.Status === 'Rejected' ? 'selected' : ''}>Rejected</option>
             </select>
-            <span class="save-indicator" id="saved-${r.id}">✓</span>
           </td>
-          <td><span class="level-badge ${isAge?'age':''}">${r.Level||'—'}</span></td>
-          <td style="font-weight:600">${r.Team_Name||'—'}</td>
-          <td>${r.Player1_Name||'—'}</td>
-          <td>${r.Player2_Name||'—'}</td>
-          <td style="color:var(--muted)">${r.Email_Address||'—'}</td>
-          <td style="color:var(--muted);font-size:12px">${date}</td>
+          <td><button class="expand-btn" onclick="toggleDetail(this)">▼</button></td>
         </tr>
-        <tr class="detail-row" id="detail-${r.id}">
-          <td colspan="9">
+        <tr class="detail-row">
+          <td colspan="8">
             <div class="detail-inner">
-              <div class="detail-item"><span class="detail-label">Phone</span><span class="detail-value">${r.Phone_Number||'—'}</span></div>
-              <div class="detail-item"><span class="detail-label">P1 Facebook</span><span class="detail-value">${r.Player1_Facebook||'—'}</span></div>
-              <div class="detail-item"><span class="detail-label">P2 Facebook</span><span class="detail-value">${r.Player2_Facebook||'—'}</span></div>
-              ${r.Player1_Birthdate?`<div class="detail-item"><span class="detail-label">P1 Birthdate</span><span class="detail-value">${r.Player1_Birthdate} (Age ${r.Player1_Age})</span></div>`:''}
-              ${r.Player2_Birthdate?`<div class="detail-item"><span class="detail-label">P2 Birthdate</span><span class="detail-value">${r.Player2_Birthdate} (Age ${r.Player2_Age})</span></div>`:''}
+              <div class="detail-item"><div class="detail-label">Player 1 Email</div><div class="detail-value">${reg.Player1_Email || '—'}</div></div>
+              <div class="detail-item"><div class="detail-label">Player 1 Phone</div><div class="detail-value">${reg.Player1_Phone || '—'}</div></div>
+              <div class="detail-item"><div class="detail-label">Player 2 Email</div><div class="detail-value">${reg.Player2_Email || '—'}</div></div>
+              <div class="detail-item"><div class="detail-label">Player 2 Phone</div><div class="detail-value">${reg.Player2_Phone || '—'}</div></div>
+              <div class="detail-item"><div class="detail-label">Registered</div><div class="detail-value">${new Date(reg.created_at).toLocaleDateString()}</div></div>
             </div>
           </td>
-        </tr>`;
-    }).join('');
-  }
-
-  function toggleDetail(id){
-    const row=document.getElementById('detail-'+id);
-    const btn=document.querySelector(`#row-${id} .expand-btn`);
-    row.classList.toggle('open');
-    btn.textContent=row.classList.contains('open')?'▾':'▸';
-  }
-
-  async function updateStatus(id,sel){
-    const newStatus=sel.value;
-    const saved=document.getElementById('saved-'+id);
-    sel.classList.add('saving');
-    saved.classList.remove('show');
-    try{
-      const res=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}?id=eq.${id}`,{
-        method:'PATCH',
-        headers:{...hdrs,'Prefer':'return=minimal'},
-        body:JSON.stringify({"Status":newStatus}),
+        </tr>
+        `;
+        tbody.appendChild(row);
       });
-      if(!res.ok) throw new Error(await res.text());
-      const rec=allData.find(r=>r.id===id);
-      if(rec) rec.Status=newStatus;
-      // Update select color class
-      Object.values(STATUS_CLASS).forEach(c=>sel.classList.remove(c));
-      sel.classList.add(STATUS_CLASS[newStatus]||'s-pending');
-      updateStats(allData);
-      saved.classList.add('show');
-      setTimeout(()=>saved.classList.remove('show'),2000);
-    }catch(err){
-      alert('Failed to update: '+err.message);
-    }finally{
-      sel.classList.remove('saving');
+
+      updateStats(registrations);
+      document.getElementById('tableCount').textContent = `${registrations.length} records`;
+    } catch (error) {
+      console.error('Error loading registrations:', error);
     }
   }
 
-  function filterTable(){
-    const search=document.getElementById('searchInput').value.toLowerCase();
-    const level=document.getElementById('levelFilter').value;
-    const status=document.getElementById('statusFilter').value;
-    const filtered=allData.filter(r=>{
-      const ml=!level||r.Level===level;
-      const ms=!status||r.Status===status;
-      const mq=!search||(r.Team_Name||'').toLowerCase().includes(search)||(r.Player1_Name||'').toLowerCase().includes(search)||(r.Player2_Name||'').toLowerCase().includes(search)||(r.Email_Address||'').toLowerCase().includes(search);
-      return ml&&ms&&mq;
-    });
-    renderTable(filtered);
+  // UPDATE STATUS
+  async function updateStatus(regId, newStatus) {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/registrations?id=eq.${regId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ Status: newStatus })
+      });
+
+      if (response.ok) {
+        loadRegistrations();
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
   }
 
-  fetchRegistrations();
+  // UPDATE STATS
+  function updateStats(registrations) {
+    const stats = {
+      total: registrations.length,
+      pending: registrations.filter(r => r.Status === 'Pending Review').length,
+      approved: registrations.filter(r => r.Status === 'Approved').length,
+      payment: registrations.filter(r => r.Status === 'Payment Submitted').length,
+      registered: registrations.filter(r => r.Status === 'Registered').length
+    };
+
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('statPending').textContent = stats.pending;
+    document.getElementById('statApproved').textContent = stats.approved;
+    document.getElementById('statPayment').textContent = stats.payment;
+    document.getElementById('statRegistered').textContent = stats.registered;
+  }
+
+  // FILTER TABLE
+  function filterTable() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const levelFilter = document.getElementById('levelFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const rows = document.querySelectorAll('tbody tr:not(.detail-row)');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const level = row.querySelector('.level-badge')?.textContent || '';
+      const status = row.querySelector('.status-select')?.value || '';
+
+      const matchesSearch = text.includes(searchTerm);
+      const matchesLevel = !levelFilter || level.includes(levelFilter);
+      const matchesStatus = !statusFilter || status === statusFilter;
+
+      if (matchesSearch && matchesLevel && matchesStatus) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    document.getElementById('tableCount').textContent = `${visibleCount} records`;
+  }
+
+  // TOGGLE DETAIL ROW
+  function toggleDetail(btn) {
+    const row = btn.closest('tr');
+    const detailRow = row.nextElementSibling;
+    if (detailRow && detailRow.classList.contains('detail-row')) {
+      detailRow.classList.toggle('open');
+      btn.textContent = detailRow.classList.contains('open') ? '▲' : '▼';
+    }
+  }
+
+  // LOGOUT
+  function logout() {
+    localStorage.removeItem('currentUser');
+    location.reload();
+  }
+
+  // CHECK IF ALREADY LOGGED IN
+  window.addEventListener('load', () => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      currentUser = JSON.parse(savedUser);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminScreen').style.display = 'block';
+      loadRegistrations();
+    }
+  });
 </script>
+
 </body>
 </html>

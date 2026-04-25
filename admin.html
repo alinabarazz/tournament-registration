@@ -19,6 +19,12 @@
   .login-field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px;}
   .login-field input{width:100%;background:#111;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:11px 14px;transition:border-color 0.2s;}
   .login-field input:focus{outline:none;border-color:var(--primary);}
+  .password-wrapper{position:relative;display:flex;align-items:center;}
+  .password-wrapper input{width:100%;}
+  .password-toggle{position:absolute;right:12px;background:none;border:none;color:var(--muted);cursor:pointer;padding:6px 8px;transition:color 0.2s;display:flex;align-items:center;justify-content:center;}
+  .password-toggle:hover{color:var(--text);}
+  .password-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+  .password-toggle svg[data-hidden='true'] circle{opacity:0.3;}
   .login-btn{width:100%;background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:13px;border-radius:8px;cursor:pointer;margin-top:0.5rem;transition:background 0.2s;}
   .login-btn:hover{background:#c0281c;}
   .login-error{color:#ff6b6b;font-size:13px;text-align:center;margin-top:0.75rem;display:none;}
@@ -256,7 +262,15 @@
     </div>
     <div class="login-field">
       <label>Password</label>
-      <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="password-wrapper">
+        <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" id="passwordToggle">
+          <svg id="eyeIcon" viewBox="0 0 24 24">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
     </div>
     <button class="login-btn" onclick="doLogin()">Login</button>
     <div class="login-error" id="loginError">Invalid username or password.</div>
@@ -636,6 +650,18 @@ const DEFAULT_LEVELS = [
 /* ════════════════════════════════════════════
    LOGIN / AUTH
 ════════════════════════════════════════════ */
+function togglePasswordVisibility(){
+  const input = document.getElementById('loginPass');
+  const eyeIcon = document.getElementById('eyeIcon');
+  if(input.type==='password'){
+    input.type='text';
+    eyeIcon.setAttribute('data-hidden','false');
+  }else{
+    input.type='password';
+    eyeIcon.setAttribute('data-hidden','true');
+  }
+}
+
 async function doLogin(){
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value;

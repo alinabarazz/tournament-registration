@@ -1018,9 +1018,9 @@
     </div>
 
     <div class="modal-field">
-      <label>Payment Channel *</label>
+      <label>Payment Method *</label>
       <select class="modal-input" id="pcChannel" style="appearance:none;cursor:pointer;">
-        <option value="">— Select channel —</option>
+        <option value="">— Select payment method —</option>
         <option value="GCash">GCash</option>
         <option value="Maya">Maya</option>
         <option value="Bank Transfer">Bank Transfer</option>
@@ -1049,6 +1049,24 @@
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="cancelPaymentChannel()">Cancel</button>
       <button class="btn-modal-submit" id="pcConfirmBtn" onclick="confirmPaymentChannel()">Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM DELETE MODAL ══ -->
+<div id="confirmDeleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3000;align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:#141414;border:1px solid #2a2a2a;border-radius:14px;max-width:420px;width:100%;overflow:hidden;">
+    <div style="background:#1a0808;border-bottom:1px solid #3a1010;padding:16px 20px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:1.3rem;">🗑</span>
+      <span id="cdmTitle" style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#ff6b6b;">Confirm Delete</span>
+    </div>
+    <div style="padding:20px;">
+      <p id="cdmMessage" style="font-size:13px;color:#ccc;line-height:1.6;margin-bottom:6px;"></p>
+      <p style="font-size:11px;color:#e8372a;font-weight:600;">⚠ This action is permanent and cannot be undone.</p>
+    </div>
+    <div style="padding:0 20px 20px;display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeConfirmDelete()" style="background:#1a1a1a;border:1px solid #333;color:#aaa;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:10px 20px;border-radius:8px;cursor:pointer;">Cancel</button>
+      <button id="cdmConfirmBtn" style="background:#e8372a;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:10px 20px;border-radius:8px;cursor:pointer;">Delete</button>
     </div>
   </div>
 </div>
@@ -2731,11 +2749,50 @@ async function submitExpense(){
 
 function editExpense(id){ openExpenseModal(id); }
 
+/* ════════════════════════════════════════════
+   CONFIRM DELETE MODAL
+════════════════════════════════════════════ */
+let _confirmDeleteResolve = null;
+
+function showConfirmDelete(title, message){
+  return new Promise(resolve => {
+    _confirmDeleteResolve = resolve;
+    document.getElementById('cdmTitle').textContent   = title;
+    document.getElementById('cdmMessage').innerHTML   = message;
+    document.getElementById('cdmConfirmBtn').onclick  = () => { closeConfirmDelete(); resolve(true); };
+    document.getElementById('confirmDeleteModal').style.display = 'flex';
+  });
+}
+
+function closeConfirmDelete(){
+  document.getElementById('confirmDeleteModal').style.display = 'none';
+  if(_confirmDeleteResolve){ _confirmDeleteResolve(false); _confirmDeleteResolve = null; }
+}
+
 async function deleteExpense(id){
-  if(!confirm('Delete this expense?')) return;
+  const exp = expensesData?.find(e=>e.id===id);
+  const name = exp?.description || 'this expense';
+  const confirmed = await showConfirmDelete(
+    'Delete Expense',
+    `Are you sure you want to delete <strong style="color:#fff;">"${name}"</strong>?<br><br>This expense record will be permanently removed.`
+  );
+  if(!confirmed) return;
   const res = await fetch(`${SB_URL}/rest/v1/expenses?id=eq.${id}`,{method:'DELETE',headers:HDRS});
   if(res.ok) await fetchExpenses();
   else alert('Delete failed.');
+}
+
+async function removeSponsor(id){
+  const sp = sponsorsData?.find(s=>s.id===id);
+  const name = sp?.name || 'this sponsor';
+  const tier = sp?.tier ? ` (${sp.tier})` : '';
+  const confirmed = await showConfirmDelete(
+    'Remove Sponsor',
+    `Are you sure you want to remove <strong style="color:#fff;">${name}${tier}</strong>?<br><br>The sponsor and all their contribution details will be permanently deleted.`
+  );
+  if(!confirmed) return;
+  const res = await fetch(`${SB_URL}/rest/v1/sponsors?id=eq.${id}`,{method:'DELETE',headers:HDRS});
+  if(res.ok) await fetchSponsors();
 }
 
 /* ════════════════════════════════════════════
@@ -2922,12 +2979,6 @@ async function saveSponsor(id){
     setTimeout(() => { btn.textContent = '💾 Save'; btn.style.background = ''; btn.disabled = false; }, 2000);
     console.error('Sponsor save failed:', e.message);
   }
-}
-
-async function removeSponsor(id){
-  if(!confirm('Remove this sponsor?')) return;
-  const res = await fetch(`${SB_URL}/rest/v1/sponsors?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok) await fetchSponsors();
 }
 
 /* ════════════════════════════════════════════

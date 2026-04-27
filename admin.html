@@ -1290,7 +1290,21 @@ function initApp(){
   document.getElementById('homeBadge').textContent = badge.textContent;
   document.getElementById('homeBadge').className   = badge.className;
   document.getElementById('homeUsername').textContent = currentUser.username;
-  loadTournaments();
+  loadTournaments().then(()=>{
+    const saved = localStorage.getItem('_reloadAfterSave');
+    if(saved){
+      localStorage.removeItem('_reloadAfterSave');
+      try{
+        const {returnTo, tournamentId, tab} = JSON.parse(saved);
+        if(returnTo === 'home' || !tournamentId){
+          // Stay on home screen — do nothing, already there
+        } else if(tournamentId){
+          openTournamentDashboard(tournamentId);
+          if(tab) setTimeout(()=>showTab(tab), 200);
+        }
+      }catch(e){}
+    }
+  });
 }
 
 function showHomeScreen(){
@@ -1535,7 +1549,7 @@ async function updateTournament(id, forceStatus){
       }catch(e){ console.warn(`QR ${type} upload (non-fatal):`,e.message); }
     }
 
-    // ── Done — update local cache directly, no re-fetch needed ──
+    // ── Done — reload page to clear file:// CORS preflight cache ──
     const idx = tournaments.findIndex(x=>x.id===id);
     if(idx>-1){
       tournaments[idx] = Object.assign({}, tournaments[idx], payload, {
@@ -1545,9 +1559,9 @@ async function updateTournament(id, forceStatus){
         payment_qr_other: payload.payment_qr_other || tournaments[idx].payment_qr_other,
       });
     }
-    closeTournamentModal();
-    buildTournamentDropdown();
-    renderHomeCards();
+    // Stay on home screen after reload — tournament modal was on home
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({ returnTo: 'home' }));
+    window.location.reload();
 
   }catch(e){
     console.error('❌ updateTournament ERROR:', e.name, e.message);
@@ -2523,7 +2537,8 @@ async function savePricing(){
     if(errors.length){
       alert('Some rows failed to save:\n\n'+errors.join('\n'));
     } else {
-      if(msg){ msg.style.display='inline'; setTimeout(()=>msg.style.display='none',3000); }
+      localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'pricing'}));
+      window.location.reload();
     }
     await fetchPricing();
   }catch(e){
@@ -2563,8 +2578,8 @@ async function submitCategory(){
   });
 
   if(res.ok){
-    closeCategoryModal();
-    await fetchPricing();
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'pricing'}));
+    window.location.reload();
   } else {
     const err = await res.text();
     errEl.textContent = 'Save failed: ' + err;
@@ -2578,7 +2593,8 @@ async function removeCustomPricingRow(key){
   const row = pricingRows.find(p=>p.level_key===key);
   if(row?.id){
     await fetch(`${SB_URL}/rest/v1/pricing?id=eq.${row.id}`,{method:'DELETE',headers:HDRS});
-    await fetchPricing();
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'pricing'}));
+    window.location.reload();
   }
 }
 
@@ -2706,8 +2722,8 @@ async function submitExpense(){
       });
       if(!res.ok) throw new Error(await res.text());
     }
-    closeExpenseModal();
-    await fetchExpenses();
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'expenses'}));
+    window.location.reload();
   } catch(e) {
     alert('Save failed: ' + e.message);
     submitBtn.textContent = origText;
@@ -2720,8 +2736,10 @@ function editExpense(id){ openExpenseModal(id); }
 async function deleteExpense(id){
   if(!confirm('Delete this expense?')) return;
   const res = await fetch(`${SB_URL}/rest/v1/expenses?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok) await fetchExpenses();
-  else alert('Delete failed.');
+  if(res.ok){
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'expenses'}));
+    window.location.reload();
+  } else alert('Delete failed.');
 }
 
 /* ════════════════════════════════════════════
@@ -2801,6 +2819,10 @@ function addSponsor(){
   setTimeout(()=>document.getElementById('smName').focus(), 80);
 }
 
+function closeSponsorModal(){
+  document.getElementById('sponsorModal').classList.remove('open');
+}
+
 let _smLogoFile = null;
 
 function previewSponsorLogo(event){
@@ -2863,8 +2885,12 @@ async function submitSponsorModal(){
       body:JSON.stringify(payload),
     });
     if(!res.ok) throw new Error(await res.text());
-    closeSponsorModal();
-    await fetchSponsors();
+    // Reload to clear file:// CORS cache, restore tab
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({
+      tournamentId: activeTournament.id,
+      tab: 'sponsors',
+    }));
+    window.location.reload();
   }catch(e){
     errEl.textContent = 'Save failed: ' + e.message;
     errEl.style.display='block';
@@ -2894,29 +2920,14 @@ async function saveSponsor(id){
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await res.text());
-
-    btn.textContent = '✓ Saved!';
-    btn.style.background = 'var(--success, #22c55e)';
-    // Refresh logo preview if URL changed
-    const logoWrap = document.querySelector(`#scard-${id} .sponsor-logo-wrap`);
-    if (logoWrap) {
-      logoWrap.innerHTML = payload.logo_url
-        ? `<img src="${payload.logo_url}" alt="${payload.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-        : `<div class="sponsor-logo-placeholder"><span class="plus">+</span><span>ADD LOGO</span></div>`;
-    }
-    setTimeout(() => {
-      btn.textContent = '💾 Save';
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 1800);
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({
+      tournamentId: activeTournament.id, tab: 'sponsors',
+    }));
+    window.location.reload();
   } catch(e) {
     btn.textContent = '❌ Failed';
     btn.style.background = 'var(--danger, #e8372a)';
-    setTimeout(() => {
-      btn.textContent = '💾 Save';
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 2000);
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.style.background = ''; btn.disabled = false; }, 2000);
     console.error('Sponsor save failed:', e.message);
   }
 }
@@ -2924,7 +2935,10 @@ async function saveSponsor(id){
 async function removeSponsor(id){
   if(!confirm('Remove this sponsor?')) return;
   const res = await fetch(`${SB_URL}/rest/v1/sponsors?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok) await fetchSponsors();
+  if(res.ok){
+    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'sponsors'}));
+    window.location.reload();
+  }
 }
 
 /* ════════════════════════════════════════════

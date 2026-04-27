@@ -63,28 +63,28 @@
   .btn.loading .btn-text { display:none; }
   .btn.loading .spinner { display:block; }
   .age-hint { font-size:11px; color:var(--muted); margin-bottom:1rem; padding:8px 12px; background:#161616; border-radius:4px; border-left:2px solid var(--primary); }
-  .success-page { text-align:center; padding:1.5rem 0.5rem; }
-  .success-icon { width:80px; height:80px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 1.5rem; animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+  .success-page { text-align:center; padding:1.25rem 0.5rem 0.75rem; }
+  .success-icon { width:56px; height:56px; background:var(--success); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 0.75rem; animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
   @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
-  .success-page h2 { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; text-transform:uppercase; margin-bottom:0.5rem; }
-  .ref-box { background:linear-gradient(135deg,#1a0808,#1a1a1a); border:1px solid rgba(232,55,42,0.3); border-radius:12px; padding:1.25rem; margin:1.25rem 0; text-align:center; }
-  .ref-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px; }
-  .ref-number { font-family:'Barlow Condensed',sans-serif; font-size:2.5rem; font-weight:800; color:var(--primary); letter-spacing:0.1em; }
-  .ref-sub { font-size:12px; color:var(--muted); margin-top:4px; }
-  .pending-msg { background:#161616; border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; font-size:13px; color:var(--muted); text-align:left; line-height:1.7; margin-bottom:1.25rem; }
+  .success-page h2 { font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; text-transform:uppercase; margin-bottom:0.25rem; }
+  .ref-box { background:linear-gradient(135deg,#1a0808,#1a1a1a); border:1px solid rgba(232,55,42,0.3); border-radius:10px; padding:0.75rem 1rem; margin:0.75rem 0; text-align:center; }
+  .ref-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+  .ref-number { font-family:'Barlow Condensed',sans-serif; font-size:2rem; font-weight:800; color:var(--primary); letter-spacing:0.1em; }
+  .ref-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+  .pending-msg { background:#161616; border:1px solid var(--border); border-radius:8px; padding:0.75rem 1rem; font-size:12px; color:var(--muted); text-align:left; line-height:1.6; margin-bottom:0.75rem; }
   .pending-msg strong { color:var(--text); }
-  .status-flow { display:flex; justify-content:center; gap:0; margin:1.25rem 0 0.5rem; flex-wrap:wrap; }
-  .status-step { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 12px; position:relative; }
-  .status-step::after { content:'→'; position:absolute; right:-8px; top:40%; color:var(--border); font-size:14px; }
+  .status-flow { display:flex; justify-content:center; gap:0; margin:0.5rem 0; flex-wrap:nowrap; }
+  .status-step { display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 8px; position:relative; }
+  .status-step::after { content:'→'; position:absolute; right:-8px; top:38%; color:var(--border); font-size:12px; }
   .status-step:last-child::after { display:none; }
-  .status-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; border:2px solid var(--border); color:var(--muted); }
+  .status-dot { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; border:2px solid var(--border); color:var(--muted); }
   .status-step.current .status-dot { background:var(--primary); border-color:var(--primary); color:#fff; }
-  .status-step-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
+  .status-step-label { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; }
   .status-step.current .status-step-label { color:var(--text); }
-  .sponsor-section { margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border); }
-  .sponsor-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; margin-bottom:1rem; text-align:center; }
-  .sponsor-grid { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
-  .sponsor-slot { width:100px; height:50px; background:var(--card); border:1px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted); }
+  .sponsor-section { margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border); }
+  .sponsor-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; margin-bottom:0.6rem; text-align:center; }
+  .sponsor-grid { display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center; align-items:center; }
+  .sponsor-slot { display:flex; flex-direction:column; align-items:center; gap:4px; }
   /* TOURNAMENT PICKER */
   .t-picker-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; cursor:pointer; transition:all 0.2s; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .t-picker-card:hover { border-color:var(--primary); transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,55,42,0.12); }
@@ -226,7 +226,7 @@
       <div class="success-page">
         <div class="success-icon">✓</div>
         <h2>Registration Submitted!</h2>
-        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.5rem;">Your registration is now pending review.</p>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:0.5rem;">Your registration is now pending review.</p>
         <div class="ref-box">
           <div class="ref-label">Your Reference Number</div>
           <div class="ref-number" id="refNumber">#——</div>
@@ -234,9 +234,7 @@
         </div>
         <div class="pending-msg">
           <strong>What happens next?</strong><br>
-          We will contact you once your partnership is approved for <strong id="successLevel">this level</strong>.<br><br>
-          📧 Once approved, you will receive an <strong>email with payment instructions</strong> via GCash.<br>
-          💳 After payment, submit your <strong>GCash screenshot</strong> to complete your registration.
+          Pending review for <strong id="successLevel">this level</strong>. Once approved you'll receive an <strong>email with payment instructions</strong>. After payment, submit your screenshot to complete registration.
         </div>
         <div class="status-flow">
           <div class="status-step current"><div class="status-dot">📋</div><div class="status-step-label">Pending</div></div>
@@ -246,11 +244,9 @@
         </div>
         <div class="sponsor-section">
           <div class="sponsor-label">Proudly Supported By</div>
-          <div class="sponsor-grid" id="sponsorDisplay">
-            <!-- populated by buildSponsorDisplay() -->
-          </div>
+          <div class="sponsor-grid" id="sponsorDisplay"></div>
         </div>
-        <a href="index.html" style="display:inline-block;margin-top:1.5rem;color:var(--primary);text-decoration:none;font-size:13px;">← Back to Home</a>
+        <a href="index.html" style="display:inline-block;margin-top:0.75rem;color:var(--primary);text-decoration:none;font-size:12px;">← Back to Home</a>
       </div>
     </div>
   </div>
@@ -752,15 +748,16 @@
       const sponsors = res.ok ? await res.json() : [];
       if(!sponsors.length){ grid.innerHTML=''; return; }
       const sorted = [...sponsors].sort((a,b)=>(TIER_ORDER_REG[a.tier]??9)-(TIER_ORDER_REG[b.tier]??9));
-      const tierEmoji = {Platinum:'💎',Gold:'🥇',Silver:'🥈',Bronze:'🥉'};
+      const tierColor = {Platinum:'#e5c84a',Gold:'#f5a623',Silver:'#aaa',Bronze:'#cd7f32'};
       grid.innerHTML = sorted.map(s=>`
-        <div class="sponsor-slot" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;min-width:90px;">
-          ${s.logo_url
-            ? `<img src="${s.logo_url}" alt="${s.name}" style="width:60px;height:60px;object-fit:cover;border-radius:50%;border:2px solid #333;">`
-            : `<div style="width:60px;height:60px;border-radius:50%;border:2px dashed #333;display:flex;align-items:center;justify-content:center;font-size:20px;">${tierEmoji[s.tier]||'🏅'}</div>`
-          }
-          <span style="font-size:10px;color:var(--muted);text-align:center;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${s.name}</span>
-          <span style="font-size:9px;color:var(--muted);opacity:0.6;">${tierEmoji[s.tier]||''} ${s.tier}</span>
+        <div class="sponsor-slot">
+          <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid ${tierColor[s.tier]||'#333'};flex-shrink:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;">
+            ${s.logo_url
+              ? `<img src="${s.logo_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+              : `<span style="font-size:18px;">${{Platinum:'💎',Gold:'🥇',Silver:'🥈',Bronze:'🥉'}[s.tier]||'🏅'}</span>`
+            }
+          </div>
+          <span style="font-size:9px;color:var(--muted);text-align:center;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;max-width:60px;line-height:1.2;">${s.name}</span>
         </div>`).join('');
     }catch(e){ grid.innerHTML=''; }
   }

@@ -85,17 +85,32 @@
   .sponsor-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em; font-weight:600; margin-bottom:1rem; text-align:center; }
   .sponsor-grid { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
   .sponsor-slot { width:100px; height:50px; background:var(--card); border:1px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted); }
+  /* TOURNAMENT PICKER */
+  .t-picker-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; cursor:pointer; transition:all 0.2s; padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .t-picker-card:hover { border-color:var(--primary); transform:translateY(-1px); box-shadow:0 6px 20px rgba(232,55,42,0.12); }
+  .t-picker-name { font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--text); }
+  .t-picker-meta { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.5; }
+  .t-picker-arrow { font-size:1.1rem; color:var(--primary); flex-shrink:0; }
 </style>
 </head>
 <body>
 <div class="container">
-  <a class="back-home" href="index.html">← Back to Home</a>
+  <a class="back-home" href="tournaments.html">← Back to Tournaments</a>
 
   <!-- TOURNAMENT CONTEXT BANNER (shown when loaded via link/QR) -->
   <div id="tournamentContextBanner" style="display:none;background:linear-gradient(135deg,#1a0f0f,#141414);border:1px solid rgba(232,55,42,0.35);border-left:4px solid var(--primary);border-radius:10px;padding:14px 18px;margin-bottom:1.5rem;">
     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;font-weight:600;margin-bottom:4px;">You are registering for</div>
     <div id="tournamentContextName" style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;text-transform:uppercase;color:var(--text);letter-spacing:0.05em;"></div>
     <div id="tournamentContextMeta" style="font-size:12px;color:var(--muted);margin-top:4px;"></div>
+  </div>
+
+  <!-- TOURNAMENT PICKER (shown when browsing from website, multiple active tournaments) -->
+  <div id="tournamentPicker" style="display:none;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:2.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">Choose a Tournament</div>
+      <div style="font-size:13px;color:var(--muted);">Select which tournament you'd like to register for.</div>
+    </div>
+    <div id="tournamentPickerList" style="display:flex;flex-direction:column;gap:12px;"></div>
   </div>
 
   <!-- CLOSED PAGE -->
@@ -111,7 +126,7 @@
   </div>
 
   <!-- MAIN FORM WRAPPER -->
-  <div id="mainForm">
+  <div id="mainForm" style="display:none;">
   <div class="page-header">
     <div class="badge" id="registrationBadge">Official Registration</div>
     <h1>Tournament<br><span>Registration</span></h1>
@@ -148,7 +163,7 @@
         <input type="text" id="teamName" placeholder="Enter your team name" />
         <div class="error-msg" id="err-teamName"></div>
       </div>
-      <button class="btn btn-primary" onclick="goToPage2()">
+      <button class="btn btn-primary" id="continueBtn" onclick="goToPage2()">
         <span class="btn-text">Continue to Player Details →</span>
         <div class="spinner"></div>
       </button>
@@ -166,7 +181,9 @@
       <div id="age-hint" class="age-hint" style="display:none;"></div>
 
       <div class="player-divider"><span>⚡ Player 1</span></div>
-      <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="p1Name" placeholder="Player 1 full name" /><div class="error-msg" id="err-p1Name"></div></div>
+      <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="p1Name" placeholder="Player 1 full name"
+        oninput="if(/\d/.test(this.value)){showError('err-p1Name','Name must not contain numbers.');}else{showError('err-p1Name','');}"
+        /><div class="error-msg" id="err-p1Name"></div></div>
       <div id="p1-age-fields">
         <div class="field-row">
           <div class="field"><label>Birthdate <span class="req">*</span></label><input type="date" id="p1Bday" /><div class="error-msg" id="err-p1Bday"></div></div>
@@ -176,7 +193,9 @@
       <div class="field"><label>Facebook <span class="req">*</span></label><input type="text" id="p1Facebook" placeholder="Facebook profile link (no locked profile)" /><div class="error-msg" id="err-p1Facebook"></div></div>
 
       <div class="player-divider"><span>⚡ Player 2</span></div>
-      <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="p2Name" placeholder="Player 2 full name" /><div class="error-msg" id="err-p2Name"></div></div>
+      <div class="field"><label>Full Name <span class="req">*</span></label><input type="text" id="p2Name" placeholder="Player 2 full name"
+        oninput="if(/\d/.test(this.value)){showError('err-p2Name','Name must not contain numbers.');}else{showError('err-p2Name','');}"
+        /><div class="error-msg" id="err-p2Name"></div></div>
       <div id="p2-age-fields">
         <div class="field-row">
           <div class="field"><label>Birthdate <span class="req">*</span></label><input type="date" id="p2Bday" /><div class="error-msg" id="err-p2Bday"></div></div>
@@ -270,9 +289,9 @@
       const d = new Date(t.event_date_from).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'});
       meta.push(`📅 Reg. opens ${d}`);
     }
-    if(t.location) meta.push(`📍 ${t.location}`);
+    if(t.location) meta.push(`<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location)}" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">📍 ${t.location}</a>`);
     document.getElementById('tournamentContextName').textContent = t.name;
-    document.getElementById('tournamentContextMeta').textContent = meta.join('  ·  ');
+    document.getElementById('tournamentContextMeta').innerHTML = meta.join('  ·  ');
     document.getElementById('tournamentContextBanner').style.display = 'block';
     const badge = document.getElementById('registrationBadge');
     if(badge) badge.textContent = t.name || 'Official Registration';
@@ -294,13 +313,12 @@
   }
 
   async function loadActiveTournament(){
-    // ── Check for ?t=ID in the URL (QR / direct link) ──
     const params = new URLSearchParams(window.location.search);
     const urlTournamentId = params.get('t');
 
     try{
       if(urlTournamentId){
-        // Load the specific tournament from the link
+        // ── QR / direct link — load specific tournament ──
         const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?id=eq.${urlTournamentId}&select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,location`,{headers:SB_HDRS});
         const data = await res.json();
         if(!data || !data.length){
@@ -312,22 +330,72 @@
           showClosedPage(`Registration for "${t.name}" has been closed.`);
           return;
         }
-        activeTournamentId = t.id;
-        showTournamentBanner(t);
-        await loadPricingFromDB();
+        activateTournament(t);
       } else {
-        // No URL param — load the first Active tournament (original behavior)
-        const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?status=eq.Active&order=created_at.desc&limit=1&select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,location`,{headers:SB_HDRS});
+        // ── No URL param — fetch ALL active tournaments ──
+        const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?status=eq.Active&order=created_at.asc&select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,location`,{headers:SB_HDRS});
         const data = await res.json();
-        if(data && data.length){
-          activeTournamentId = data[0].id;
-          showTournamentBanner(data[0]);
-          await loadPricingFromDB();
-        } else {
+        const open = (data||[]).filter(t => isRegistrationOpen(t));
+
+        if(!open.length){
           showClosedPage('There are no active tournaments open for registration at this time.');
+        } else if(open.length === 1){
+          // Only one active — go straight to it
+          activateTournament(open[0]);
+        } else {
+          // Multiple active — show picker
+          showTournamentPicker(open);
         }
       }
-    }catch(e){ console.error('Failed to load tournament:',e); buildLevelOptions([]); }
+    }catch(e){
+      console.error('Failed to load tournament:',e);
+      buildLevelOptions([]);
+    }
+  }
+
+  function activateTournament(t){
+    activeTournamentId = t.id;
+    showTournamentBanner(t);
+    document.getElementById('tournamentPicker').style.display = 'none';
+    document.getElementById('mainForm').style.display = 'block';
+    loadPricingFromDB();
+  }
+
+  function showTournamentPicker(tournaments){
+    document.getElementById('mainForm').style.display = 'none';
+    document.getElementById('tournamentContextBanner').style.display = 'none';
+    document.getElementById('tournamentPicker').style.display = 'block';
+
+    const fmt = v => v ? new Date(v+'T00:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : null;
+
+    document.getElementById('tournamentPickerList').innerHTML = tournaments.map(t => {
+      const eventDate = t.tournament_date_from ? fmt(t.tournament_date_from) : null;
+      const regEnd    = t.event_date_to ? fmt(t.event_date_to) : null;
+      const meta = [
+        t.owner_name ? `🏸 by ${t.owner_name}` : null,
+        eventDate    ? `📅 Event: ${eventDate}` : null,
+        regEnd       ? `⏰ Reg. closes ${regEnd}` : null,
+        t.location   ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">📍 ${t.location}</a>` : null,
+      ].filter(Boolean).join('  ·  ');
+
+      return `
+      <div class="t-picker-card" onclick="selectTournamentFromPicker(${t.id})">
+        <div>
+          <div class="t-picker-name">${t.name}</div>
+          <div class="t-picker-meta">${meta}</div>
+        </div>
+        <div class="t-picker-arrow">→</div>
+      </div>`;
+    }).join('');
+  }
+
+  async function selectTournamentFromPicker(id){
+    // Fetch full tournament data and activate
+    try{
+      const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?id=eq.${id}&select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,location`,{headers:SB_HDRS});
+      const data = await res.json();
+      if(data && data.length) activateTournament(data[0]);
+    }catch(e){ console.error(e); }
   }
 
   async function loadPricingFromDB(){
@@ -443,6 +511,22 @@
     const pct    = slots>0 ? Math.min(100, Math.round(filled/slots*100)) : 0;
     const barColor = pct>=100?'#e8372a':pct>=75?'#f5a623':'#22c55e';
 
+    // Prize money (only show if set)
+    const hasWinners = d.champion_prize > 0 || d.runner_up_prize > 0;
+    const winnersHtml = hasWinners ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #2a2a2a;display:flex;gap:16px;flex-wrap:wrap;">
+        ${d.champion_prize > 0 ? `
+        <div>
+          <div style="font-size:10px;color:#f5a623;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:2px;">🥇 Champion Prize</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;color:#f5a623;">₱${Number(d.champion_prize).toLocaleString()}</div>
+        </div>` : ''}
+        ${d.runner_up_prize > 0 ? `
+        <div>
+          <div style="font-size:10px;color:#60a5fa;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:2px;">🥈 1st Runner Up Prize</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;color:#60a5fa;">₱${Number(d.runner_up_prize).toLocaleString()}</div>
+        </div>` : ''}
+      </div>` : '';
+
     infoBox.style.display='block';
     infoBox.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
@@ -459,6 +543,7 @@
       <div style="height:5px;background:#222;border-radius:4px;margin-top:10px;overflow:hidden;">
         <div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.4s;"></div>
       </div>
+      ${winnersHtml}
     `;
   }
 
@@ -483,58 +568,69 @@
   function setErr(id,has){const el=document.getElementById(id);if(!el)return;el.classList.toggle('error',has);el.classList.toggle('valid',!has&&el.value);}
 
   function goToPage(n){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById(typeof n==='string'?n:'page'+n).classList.add('active');
-    window.scrollTo(0,0);
-    if(n===1){document.getElementById('step1').className='step active';document.getElementById('step2').className='step';document.getElementById('line1').className='step-line';}
-    if(n===2){document.getElementById('step1').className='step done';document.getElementById('step2').className='step active';document.getElementById('line1').className='step-line done';}
+    try{
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      const pageEl = document.getElementById(typeof n==='string'?n:'page'+n);
+      if(!pageEl){ console.error('Page not found: page'+n); return; }
+      pageEl.classList.add('active');
+      window.scrollTo(0,0);
+      if(n===1){document.getElementById('step1').className='step active';document.getElementById('step2').className='step';document.getElementById('line1').className='step-line';}
+      if(n===2){document.getElementById('step1').className='step done';document.getElementById('step2').className='step active';document.getElementById('line1').className='step-line done';}
+      if(n==='pageSuccess') buildSponsorDisplay();
+    }catch(err){ console.error('goToPage error:', err); }
   }
 
   async function goToPage2(){
-    const level=document.getElementById('level').value, team=document.getElementById('teamName').value.trim();
-    let ok=true;
-    if(!level){showError('err-level','Please select a level.');ok=false;}else showError('err-level','');
-    if(!team){showError('err-teamName','Please enter your team name.');ok=false;}else showError('err-teamName','');
-    if(!ok)return;
+    const level = document.getElementById('level').value;
+    const team  = document.getElementById('teamName').value.trim();
+    let ok = true;
+    if(!level){ showError('err-level','Please select a level.'); ok=false; } else showError('err-level','');
+    if(!team){  showError('err-teamName','Please enter your team name.'); ok=false; } else showError('err-teamName','');
+    if(!ok) return;
 
-    // Live slot recheck before proceeding to Step 2
-    const btn = document.querySelector('#page1 .btn-primary');
-    const origText = btn.textContent;
-    btn.textContent='⏳ Checking slots...'; btn.disabled=true;
-    try{
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/v_slot_summary?tournament_id=eq.${activeTournamentId}&level_key=eq.${encodeURIComponent(level)}&select=available_slots,label`,
-        {headers:SB_HDRS}
-      );
-      if(res.ok){
-        const data = await res.json();
-        if(data && data.length){
-          const avail = data[0].available_slots;
-          if(avail <= 0){
-            showError('err-level',`Sorry — ${data[0].label} just filled up. Please choose another level.`);
-            btn.textContent=origText; btn.disabled=false;
-            // Refresh dropdown with latest counts
-            await loadPricingFromDB();
-            return;
-          }
-        }
+    // Check slots using already-loaded pricingCache — no extra network call
+    const pRow = pricingCache.find(r => r.level_key === level);
+    if(pRow){
+      const avail = pRow.available_slots ?? (pRow.total_slots - (pRow.filled_slots||0));
+      if(avail <= 0){
+        showError('err-level', `Sorry — ${pRow.label||level} is fully booked. Please choose another level.`);
+        return;
       }
-    }catch(e){ /* non-fatal — allow through if check fails */ }
-    btn.textContent=origText; btn.disabled=false;
+    }
 
     document.getElementById('banner-p2').textContent=`${level} | Team: ${team}`;
     const rule=getActiveRule();
     document.getElementById('p1-age-fields').style.display=rule?'block':'none';
     document.getElementById('p2-age-fields').style.display=rule?'block':'none';
     const hint=document.getElementById('age-hint');
-    if(rule){hint.style.display='block';hint.textContent=rule.max!==null?`⚠️ ${rule.label} — Both players must be ${rule.max} or younger.`:`⚠️ ${rule.label} — Both players must be ${rule.min} or older.`;document.getElementById('p2-card-sub').textContent='Both players must meet age requirements';}
-    else{hint.style.display='none';document.getElementById('p2-card-sub').textContent="Enter both players' information";}
+    if(rule){
+      hint.style.display='block';
+      hint.textContent=rule.max!==null
+        ?`⚠️ ${rule.label} — Both players must be ${rule.max} or younger.`
+        :`⚠️ ${rule.label} — Both players must be ${rule.min} or older.`;
+      document.getElementById('p2-card-sub').textContent='Both players must meet age requirements';
+    } else {
+      hint.style.display='none';
+      document.getElementById('p2-card-sub').textContent="Enter both players' information";
+    }
     goToPage(2);
   }
 
   function validateP(prefix){
     let ok=true; const rule=getActiveRule();
-    if(!document.getElementById(prefix+'Name').value.trim()){showError('err-'+prefix+'Name','Required.');setErr(prefix+'Name',true);ok=false;}else{showError('err-'+prefix+'Name','');setErr(prefix+'Name',false);}
+    const nameVal = document.getElementById(prefix+'Name').value.trim();
+    if(!nameVal){
+      showError('err-'+prefix+'Name','Name is required.');
+      setErr(prefix+'Name',true); ok=false;
+    } else if(/\d/.test(nameVal)){
+      showError('err-'+prefix+'Name','Name must not contain numbers.');
+      setErr(prefix+'Name',true); ok=false;
+    } else if(/[^a-zA-Z\u00C0-\u024F\s.\-'ñÑ]/.test(nameVal)){
+      showError('err-'+prefix+'Name','Name must contain letters only.');
+      setErr(prefix+'Name',true); ok=false;
+    } else {
+      showError('err-'+prefix+'Name',''); setErr(prefix+'Name',false);
+    }
     if(rule){
       const bday=document.getElementById(prefix+'Bday').value,age=parseInt(document.getElementById(prefix+'Age').value,10),calc=calcAge(bday);
       if(!bday){showError('err-'+prefix+'Bday','Required.');setErr(prefix+'Bday',true);ok=false;}
@@ -550,12 +646,15 @@
   }
 
   async function submitForm(){
-    const phoneRaw=document.getElementById('phone').value.trim().replace(/\D/g,'');
-    const email=document.getElementById('email').value.trim();
-    let ok=validateP('p1')&validateP('p2');
-    if(!phoneRaw||phoneRaw.length<10||phoneRaw.length>11){showError('err-phone','Phone must be 10-11 digits.');ok=false;}else showError('err-phone','');
-    if(!email||!email.includes('@')){showError('err-email','Valid email required.');ok=false;}else showError('err-email','');
-    if(!ok)return;
+    const phoneRaw = document.getElementById('phone').value.trim().replace(/\D/g,'');
+    const email    = document.getElementById('email').value.trim();
+    const emailOk  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+    let ok = validateP('p1') & validateP('p2');
+    if(!phoneRaw||phoneRaw.length<10||phoneRaw.length>11){ showError('err-phone','Phone must be 10-11 digits.'); ok=false; } else showError('err-phone','');
+    if(!email){             showError('err-email','Email is required.');          ok=false; }
+    else if(!emailOk){      showError('err-email','Please enter a valid email address (e.g. name@gmail.com).'); ok=false; }
+    else                    showError('err-email','');
+    if(!ok) return;
 
     const btn=document.getElementById('submitBtn');
     btn.classList.add('loading');btn.disabled=true;
@@ -666,12 +765,6 @@
     }catch(e){ grid.innerHTML=''; }
   }
 
-  // Override goToPage to trigger sponsor load on success
-  const _origGoToPage = goToPage;
-  function goToPage(n){
-    _origGoToPage(n);
-    if(n==='pageSuccess') buildSponsorDisplay();
-  }
 </script>
 </body>
 </html>

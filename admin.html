@@ -117,9 +117,11 @@
   .status-select.saving{opacity:0.5;pointer-events:none;}
   .status-select.s-pending  {border-color:rgba(156,163,175,0.4);color:#9ca3af;}
   .status-select.s-payment  {border-color:rgba(251,191,36,0.4);color:#fbbf24;}
+  .status-select.s-submitted{border-color:rgba(96,165,250,0.4);color:#60a5fa;}
   .status-select.s-notpaid  {border-color:rgba(239,68,68,0.4);color:#ef4444;}
   .status-select.s-registered{border-color:rgba(34,197,94,0.4);color:#22c55e;}
   .status-select.s-rejected {border-color:rgba(107,114,128,0.4);color:#6b7280;}
+  .status-select.s-cancelled{border-color:rgba(107,114,128,0.4);color:#6b7280;}
   .status-select.s-cancelled{border-color:rgba(107,114,128,0.3);color:#4b5563;}
   .save-indicator{font-size:11px;color:var(--success);margin-left:6px;display:none;}
   .save-indicator.show{display:inline;}
@@ -348,7 +350,7 @@
     <div class="topbar-left">
       <a href="index.html">← Home</a>
       <span class="topbar-sep">|</span>
-      <a href="registration.html">Registration</a>
+      <a href="tournaments.html">Tournaments</a>
     </div>
     <div class="topbar-brand">🏸 Admin Panel</div>
     <div class="topbar-right">
@@ -374,11 +376,12 @@
   <div class="topbar-left">
     <a href="#" onclick="showHomeScreen();return false;">← Tournaments</a>
     <span class="topbar-sep">|</span>
-    <a href="registration.html">Registration</a>
+    <a href="index.html">Home</a>
   </div>
   <div class="topbar-brand">🏸 Admin Panel</div>
   <div class="topbar-right">
     <span class="user-badge" id="userBadge">—</span>
+    <button onclick="openEmailSettings()" title="Email Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Barlow',sans-serif;">⚙️ Email</button>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
@@ -403,6 +406,7 @@
   <button class="tab-btn" onclick="showTab('pricing',event)">Pricing & Slots</button>
   <button class="tab-btn" onclick="showTab('expenses',event)">Expenses</button>
   <button class="tab-btn" onclick="showTab('sponsors',event)">Sponsors</button>
+  <button class="tab-btn" onclick="showTab('sales',event)">📊 Sales</button>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -446,7 +450,8 @@
       <select class="filter-select" id="statusFilter" onchange="filterTable()">
         <option value="">All Statuses</option>
         <option value="Pending Review">Pending Review</option>
-        <option value="Awaiting Payment">Awaiting Payment</option>
+        <option value="Awaiting Payment">Approved (Awaiting Payment)</option>
+        <option value="Payment Submitted">Payment Submitted</option>
         <option value="Payment Not Received">Payment Not Received</option>
         <option value="Registered">Registered</option>
         <option value="Rejected">Rejected</option>
@@ -464,7 +469,7 @@
           <thead>
             <tr>
               <th></th><th>Ref #</th><th>Submitted</th><th>Level</th>
-              <th>Team Name</th><th>Player 1</th><th>Player 2</th><th>Email</th><th>Notes</th><th>Status</th>
+              <th>Team Name</th><th>Player 1</th><th>Player 2</th><th>Email</th><th>Notes</th><th>Screenshot</th><th>Status</th>
             </tr>
           </thead>
           <tbody id="tableBody">
@@ -567,9 +572,155 @@
 </div>
 </div>
 
+<!-- ══════════════════════════════════════════
+     TAB 5 · SALES DASHBOARD
+══════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-sales">
+<div class="content">
+  <div class="page-title">Sales Dashboard</div>
+  <div class="page-sub">Financial overview for this tournament.</div>
+
+  <div id="salesNoTournament" class="no-tournament">
+    <span class="icon">📊</span>
+    <p>Create or select a tournament first.</p>
+    <button class="btn-new-tournament" onclick="openTournamentModal()" style="margin-top:0.5rem;">＋ Create Tournament</button>
+  </div>
+
+  <div id="salesContent" style="display:none;">
+
+    <!-- Top Summary Cards -->
+    <div class="stats-row" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-bottom:1.5rem;">
+      <div class="stat-card" style="border-left:3px solid #22c55e;">
+        <div class="stat-label">Collected Revenue</div>
+        <div class="stat-num green" id="salesCollected">₱0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="salesCollectedSub">0 registered teams</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #f5a623;">
+        <div class="stat-label">Pending Revenue</div>
+        <div class="stat-num amber" id="salesPending">₱0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="salesPendingSub">0 awaiting payment</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #60a5fa;">
+        <div class="stat-label">Max Potential</div>
+        <div class="stat-num" style="color:#60a5fa;" id="salesMax">₱0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">If all slots filled</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #e8372a;">
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-num red" id="salesExpenses">₱0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="salesExpensesSub">0 expense entries</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #a78bfa;">
+        <div class="stat-label">Net Profit / Loss</div>
+        <div class="stat-num" id="salesNet" style="color:#a78bfa;">₱0</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="salesNetSub">Collected − Expenses</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #f472b6;">
+        <div class="stat-label">Slot Fill Rate</div>
+        <div class="stat-num" id="salesFillRate" style="color:#f472b6;">0%</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="salesFillSub">0 / 0 total slots</div>
+      </div>
+    </div>
+
+    <!-- Per-Level Breakdown -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">Per-Level Breakdown</div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:#0f0f0f;">
+              <th style="padding:10px 14px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;white-space:nowrap;">Level</th>
+              <th style="padding:10px 14px;text-align:center;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Slots</th>
+              <th style="padding:10px 14px;text-align:center;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Filled</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Price/Team</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Collected</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Pending</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">🥇 Champion Prize</th>
+              <th style="padding:10px 14px;text-align:right;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">🥈 Runner Up Prize</th>
+            </tr>
+          </thead>
+          <tbody id="salesLevelTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Expenses Breakdown -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;" id="salesBottomGrid">
+      <div class="card">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">Expenses by Category</div>
+        </div>
+        <div id="salesExpenseBreakdown" style="padding:1rem 1.25rem;"></div>
+      </div>
+      <div class="card">
+        <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">Sponsor Contributions</div>
+        </div>
+        <div id="salesSponsorList" style="padding:1rem 1.25rem;"></div>
+      </div>
+    </div>
+
+    <!-- P&L Summary -->
+    <div class="card" id="salesPLCard">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">Profit & Loss Summary</div>
+      </div>
+      <div id="salesPLBody" style="padding:1rem 1.25rem;"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
 </div><!-- /mainDashboard -->
 
 </div><!-- /app -->
+
+<!-- ══ EMAIL SETTINGS MODAL ══ -->
+<div class="modal-overlay" id="emailSettingsModal" onclick="if(event.target===this)closeEmailSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">⚙️ Email Settings</div>
+      <button class="modal-close" onclick="closeEmailSettings()">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
+      Add your email so you receive notifications when a player submits their payment proof.
+    </div>
+    <div class="modal-field">
+      <label>Your Notification Email</label>
+      <input class="modal-input" type="email" id="notifEmail" placeholder="yourname@gmail.com">
+      <div style="font-size:11px;color:#555;margin-top:4px;">You'll receive an email with screenshot when a player pays.</div>
+    </div>
+    <div class="modal-field">
+      <label>Website Base URL <span style="color:var(--muted);font-weight:400;">(for payment links in emails)</span></label>
+      <input class="modal-input" type="text" id="siteBaseUrl" placeholder="https://yoursite.com/">
+      <div style="font-size:11px;color:#555;margin-top:4px;">Where your HTML files are hosted. Payment links in emails will use this URL.</div>
+    </div>
+    <div id="emailSettingsMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:0.5rem;"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeEmailSettings()">Cancel</button>
+      <button class="btn-modal-submit" onclick="saveEmailSettings()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREENSHOT LIGHTBOX ══ -->
+<div id="screenshotLightbox" onclick="closeScreenshot()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:2000;align-items:center;justify-content:center;cursor:zoom-out;padding:1rem;flex-direction:column;gap:12px;">
+  <img id="screenshotLightboxImg"
+    style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.8);"
+    onerror="this.style.display='none';document.getElementById('screenshotError').style.display='block';"
+    onload="this.style.display='block';document.getElementById('screenshotError').style.display='none';"
+    alt="Payment Screenshot">
+  <div id="screenshotError" style="display:none;color:#ff6b6b;font-size:13px;text-align:center;">
+    Unable to load screenshot.<br>
+    <a id="screenshotDirectLink" href="#" target="_blank" onclick="event.stopPropagation();"
+      style="color:#60a5fa;text-decoration:underline;">Open directly in new tab</a>
+  </div>
+  <button onclick="closeScreenshot()" style="position:fixed;top:1rem;right:1rem;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:1.5rem;width:40px;height:40px;border-radius:50%;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;">✕</button>
+</div>
 
 <!-- ══ QR SHARE MODAL ══ -->
 <div class="modal-overlay" id="shareModal" onclick="if(event.target===this)closeShareModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
@@ -678,8 +829,83 @@
     </div>
 
     <div class="modal-field">
-      <label>Free Jersey - Players Count</label>
+      <label>Free Jerseys — Number of Jerseys</label>
       <input class="modal-input" type="number" id="tFreeJerseyCount" placeholder="0" min="0">
+      <div style="font-size:11px;color:#555;margin-top:4px;">Total jerseys to give for free. e.g. 100 jerseys = first 50 teams (2 players each) get free jerseys.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Jersey Price <span style="color:var(--muted);font-weight:400;">(for non-free players, ₱)</span></label>
+      <input class="modal-input" type="number" id="tJerseyPrice" placeholder="0" min="0">
+      <div style="font-size:11px;color:#555;margin-top:4px;">Players outside the free count can purchase at this price.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Jersey Image <span style="color:var(--muted);font-weight:400;">(shown to all players)</span></label>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:4px;">
+        <div id="jerseyPreview"
+          style="width:72px;height:72px;border-radius:8px;border:2px dashed #2a2a2a;background:#0f0f0f;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#444;font-size:20px;text-align:center;cursor:pointer;transition:border-color 0.2s;"
+          onclick="document.getElementById('jerseyFileInput').click()"
+          onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#2a2a2a'">
+          👕
+        </div>
+        <div>
+          <input type="file" id="jerseyFileInput" accept="image/*" style="display:none;" onchange="previewJerseyImage(event)">
+          <button type="button" onclick="document.getElementById('jerseyFileInput').click()"
+            style="background:#1a1a1a;border:1px solid #333;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:8px 16px;border-radius:6px;cursor:pointer;">
+            Upload Jersey Image
+          </button>
+          <div id="jerseyFileName" style="font-size:11px;color:#555;margin-top:5px;">No image uploaded</div>
+          <input type="hidden" id="tJerseyImageUrl" value="">
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT QR CODES -->
+    <div class="modal-field">
+      <label>Payment QR Codes <span style="color:var(--muted);font-weight:400;">(up to 3, shown to players)</span></label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;">
+
+        <!-- GCash QR -->
+        <div style="text-align:center;">
+          <div id="qrPreview-gcash" onclick="document.getElementById('qrFile-gcash').click()"
+            style="width:100%;aspect-ratio:1;border-radius:8px;border:2px dashed #2a2a2a;background:#0f0f0f;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#2a2a2a'">
+            <img src="data:image/png;base64,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" style="width:42px;height:42px;object-fit:contain;border-radius:4px;">
+            <div style="margin-top:4px;font-size:10px;color:#888;">GCash</div>
+          </div>
+          <input type="file" id="qrFile-gcash" accept="image/*" style="display:none;" onchange="previewQR('gcash',event)">
+          <input type="hidden" id="qrUrl-gcash" value="">
+          <div style="font-size:10px;color:#444;margin-top:4px;">GCash QR</div>
+        </div>
+
+        <!-- Maya QR -->
+        <div style="text-align:center;">
+          <div id="qrPreview-maya" onclick="document.getElementById('qrFile-maya').click()"
+            style="width:100%;aspect-ratio:1;border-radius:8px;border:2px dashed #2a2a2a;background:#0f0f0f;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#2a2a2a'">
+            <img src="data:image/png;base64,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" style="width:42px;height:42px;object-fit:contain;border-radius:4px;">
+            <div style="margin-top:4px;font-size:10px;color:#888;">Maya</div>
+          </div>
+          <input type="file" id="qrFile-maya" accept="image/*" style="display:none;" onchange="previewQR('maya',event)">
+          <input type="hidden" id="qrUrl-maya" value="">
+          <div style="font-size:10px;color:#444;margin-top:4px;">Maya QR</div>
+        </div>
+
+        <!-- Bank QR -->
+        <div style="text-align:center;">
+          <div id="qrPreview-other" onclick="document.getElementById('qrFile-other').click()"
+            style="width:100%;aspect-ratio:1;border-radius:8px;border:2px dashed #2a2a2a;background:#0f0f0f;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#2a2a2a'">
+            <img src="data:image/png;base64,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" style="width:42px;height:42px;object-fit:contain;border-radius:4px;">
+            <div style="margin-top:4px;font-size:10px;color:#888;">Bank Transfer</div>
+          </div>
+          <input type="file" id="qrFile-other" accept="image/*" style="display:none;" onchange="previewQR('other',event)">
+          <input type="hidden" id="qrUrl-other" value="">
+          <div style="font-size:10px;color:#444;margin-top:4px;">Bank QR</div>
+        </div>
+
+      </div>
     </div>
     <div class="modal-field">
       <label>Location</label>
@@ -711,11 +937,11 @@
     <!-- 3 ACTION BUTTONS — sticky at bottom -->
     <div class="modal-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:1.2rem;position:sticky;bottom:0;background:#181818;padding:1rem 0 0;border-top:1px solid #2a2a2a;z-index:2;">
       <button class="btn-modal-cancel" onclick="closeTournamentModal()" style="margin:0;">Cancel</button>
-      <button style="margin:0;padding:12px 8px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;" onclick="submitTournament('Draft')" id="tSaveLaterBtn"
+      <button style="margin:0;padding:12px 8px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;" onclick="handleTournamentSave('Draft')" id="tSaveLaterBtn"
         onmouseover="this.style.borderColor='#888';this.style.color='#ccc'" onmouseout="this.style.borderColor='#444';this.style.color='#888'">
         Save Later
       </button>
-      <button class="btn-modal-submit" id="tSubmitBtn" onclick="submitTournament('Active')" style="margin:0;">Create Tournament</button>
+      <button class="btn-modal-submit" id="tSubmitBtn" onclick="handleTournamentSave('Active')" style="margin:0;">Create Tournament</button>
     </div>
   </div>
 </div>
@@ -777,12 +1003,20 @@
 <div class="modal-overlay" id="paymentChannelModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
   <div class="modal" style="max-width:440px;max-height:90vh;overflow-y:auto;">
     <div class="modal-header">
-      <div class="modal-title">💳 Confirm Payment Received</div>
+      <div class="modal-title">Confirm Payment Received</div>
       <button class="modal-close" onclick="cancelPaymentChannel()">✕</button>
     </div>
-    <div style="padding:0 0 0.5rem;font-size:12px;color:var(--muted);line-height:1.6;">
-      Record how payment was received. Reference number and screenshot are required.
+    <div style="padding:0 0 0.75rem;font-size:12px;color:var(--muted);line-height:1.6;">
+      Verify the player's reference number matches what they submitted.
     </div>
+
+    <!-- Player's submitted REF# (read-only) -->
+    <div class="modal-field">
+      <label>Player's Submitted REF#</label>
+      <div id="pcPlayerRef" style="background:#0a0a0a;border:1px solid #2a2a2a;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:700;color:#f5a623;letter-spacing:0.05em;">—</div>
+      <div style="font-size:11px;color:#555;margin-top:4px;">This is what the player entered when submitting their payment.</div>
+    </div>
+
     <div class="modal-field">
       <label>Payment Channel *</label>
       <select class="modal-input" id="pcChannel" style="appearance:none;cursor:pointer;">
@@ -795,37 +1029,26 @@
         <option value="Other">Other</option>
       </select>
     </div>
+
     <div class="modal-field">
-      <label>Reference Number *</label>
-      <input class="modal-input" type="text" id="pcReference" placeholder="e.g. GCash ref #123456789">
-      <div style="font-size:11px;color:#555;margin-top:4px;">Required for all channels. For Cash, write "CASH-[date]".</div>
+      <label>Confirm Reference Number *</label>
+      <input class="modal-input" type="text" id="pcReference" placeholder="Enter or confirm the REF#">
+      <div style="font-size:11px;color:#555;margin-top:4px;">Must match the player's submitted REF# above.</div>
     </div>
-    <div class="modal-field">
-      <label>Payment Screenshot *</label>
-      <div id="pcScreenshotDrop" style="border:2px dashed #2a2a2a;border-radius:8px;padding:1.2rem;text-align:center;cursor:pointer;transition:all 0.2s;background:#0f0f0f;"
-        onclick="document.getElementById('pcScreenshotFile').click()"
-        ondragover="event.preventDefault();this.style.borderColor='var(--primary)'"
-        ondragleave="this.style.borderColor='#2a2a2a'"
-        ondrop="handleScreenshotDrop(event)">
-        <div id="pcScreenshotPreview" style="display:none;margin-bottom:8px;">
-          <img id="pcScreenshotImg" style="max-width:100%;max-height:160px;border-radius:6px;object-fit:contain;">
-        </div>
-        <div id="pcScreenshotPlaceholder">
-          <div style="font-size:1.5rem;margin-bottom:6px;">📷</div>
-          <div style="font-size:12px;color:#666;">Click to upload or drag & drop</div>
-          <div style="font-size:11px;color:#444;margin-top:3px;">PNG, JPG, JPEG accepted</div>
-        </div>
-      </div>
-      <input type="file" id="pcScreenshotFile" accept="image/*" style="display:none;" onchange="handleScreenshotSelect(event)">
+
+    <div id="pcRefMismatch" style="display:none;padding:10px 14px;background:#1a0808;border:1px solid #3a1010;border-left:3px solid var(--primary);border-radius:6px;font-size:12px;color:#ff6b6b;margin-bottom:4px;">
+      REF# does not match what the player submitted. Please verify before confirming.
     </div>
+
     <div class="modal-field">
       <label>Notes <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
       <input class="modal-input" type="text" id="pcNotes" placeholder="e.g. Confirmed via Messenger DM">
     </div>
+
     <div id="pcError" style="display:none;color:#ff6b6b;font-size:12px;padding:8px 12px;background:#1a0808;border:1px solid #3a1010;border-radius:6px;"></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="cancelPaymentChannel()">Cancel</button>
-      <button class="btn-modal-submit" id="pcConfirmBtn" onclick="confirmPaymentChannel()">✅ Confirm Payment</button>
+      <button class="btn-modal-submit" id="pcConfirmBtn" onclick="confirmPaymentChannel()">Confirm Payment</button>
     </div>
   </div>
 </div>
@@ -838,15 +1061,23 @@
       <button class="modal-close" onclick="closeSponsorModal()">✕</button>
     </div>
 
-    <!-- Logo URL -->
+    <!-- Logo Upload -->
     <div class="modal-field">
-      <label>Logo URL</label>
-      <div style="display:flex;gap:12px;align-items:center;margin-top:4px;">
-        <div id="sponsorLogoPreview" style="width:64px;height:64px;border-radius:50%;border:2px dashed #2a2a2a;background:#0f0f0f;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#444;font-size:10px;text-align:center;">
+      <label>Logo</label>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;">
+        <div id="sponsorLogoPreview" onclick="document.getElementById('smLogoFile').click()"
+          style="width:88px;height:88px;border-radius:50%;border:2px dashed #2a2a2a;background:#0f0f0f;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#555;font-size:11px;font-weight:600;text-align:center;cursor:pointer;transition:border-color 0.2s;letter-spacing:0.05em;"
+          onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#2a2a2a'">
           + LOGO
         </div>
-        <input class="modal-input" type="text" id="smLogoUrl" placeholder="https://example.com/logo.png"
-          oninput="previewSponsorLogo()" style="flex:1;">
+        <div style="text-align:center;">
+          <input type="file" id="smLogoFile" accept="image/*" style="display:none;" onchange="previewSponsorLogo(event)">
+          <button type="button" onclick="document.getElementById('smLogoFile').click()"
+            style="background:#1a1a1a;border:1px solid #333;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:8px 20px;border-radius:6px;cursor:pointer;">
+            Upload Logo
+          </button>
+          <div id="smLogoFileName" style="font-size:11px;color:var(--muted);margin-top:5px;">No file chosen</div>
+        </div>
       </div>
     </div>
 
@@ -859,10 +1090,10 @@
     <div class="modal-field">
       <label>Sponsor Tier</label>
       <select class="modal-input" id="smTier" style="appearance:none;cursor:pointer;">
-        <option value="Platinum">🥇 Platinum</option>
-        <option value="Gold">🥈 Gold</option>
-        <option value="Silver" selected>🥉 Silver</option>
-        <option value="Bronze">🏅 Bronze</option>
+        <option value="Platinum">Platinum</option>
+        <option value="Gold">Gold</option>
+        <option value="Silver" selected>Silver</option>
+        <option value="Bronze">Bronze</option>
       </select>
     </div>
 
@@ -870,19 +1101,19 @@
       <label>Sponsored — Contributions</label>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
         <div style="display:grid;grid-template-columns:90px 1fr;align-items:center;gap:8px;">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">💰 Money</span>
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Money</span>
           <input class="modal-input" type="text" id="smMoney" placeholder="e.g. ₱10,000" style="padding:8px 12px;">
         </div>
         <div style="display:grid;grid-template-columns:90px 1fr;align-items:center;gap:8px;">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">🏸 Shuttles</span>
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Shuttles</span>
           <input class="modal-input" type="text" id="smShuttles" placeholder="e.g. 20 tubes" style="padding:8px 12px;">
         </div>
         <div style="display:grid;grid-template-columns:90px 1fr;align-items:center;gap:8px;">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">🍱 Foods</span>
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Foods</span>
           <input class="modal-input" type="text" id="smFoods" placeholder="e.g. Catering for 100 pax" style="padding:8px 12px;">
         </div>
         <div style="display:grid;grid-template-columns:90px 1fr;align-items:center;gap:8px;">
-          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">📦 Others</span>
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);">Others</span>
           <input class="modal-input" type="text" id="smOthers" placeholder="e.g. Tarpaulin, Trophy" style="padding:8px 12px;">
         </div>
       </div>
@@ -951,30 +1182,40 @@ let editingExpId     = null;
 /* ════════════════════════════════════════════
    CONSTANTS
 ════════════════════════════════════════════ */
-const STATUSES     = ['Pending Review','Awaiting Payment','Payment Not Received','Registered','Rejected','Cancelled'];
+const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Rejected','Cancelled'];
 const STATUS_CLASS = {
   'Pending Review':      's-pending',
   'Awaiting Payment':    's-payment',
+  'Payment Submitted':   's-submitted',
   'Payment Not Received':'s-notpaid',
   'Registered':          's-registered',
   'Rejected':            's-rejected',
   'Cancelled':           's-cancelled',
 };
 
-// Which statuses consume a slot
-const SLOT_CONSUMING = new Set(['Awaiting Payment','Payment Not Received','Registered']);
+const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered']);
 
-// Linear transition rules — what each status can move TO
+// What each status can transition TO — internal status values
 const STATUS_TRANSITIONS = {
-  'Pending Review':       ['Pending Review','Awaiting Payment','Rejected'],
-  'Awaiting Payment':     ['Awaiting Payment','Registered','Payment Not Received','Rejected'],
-  'Payment Not Received': ['Payment Not Received','Registered','Rejected'],
-  'Registered':           ['Registered'],
-  'Rejected':             ['Rejected','Pending Review'],
-  'Cancelled':            ['Cancelled','Pending Review'], // auto-cancelled can be reinstated
+  'Pending Review':      ['Pending Review','Awaiting Payment','Rejected'],
+  'Awaiting Payment':    ['Awaiting Payment','Payment Not Received','Rejected'],
+  'Payment Submitted':   ['Payment Submitted','Registered','Payment Not Received','Rejected'],
+  'Payment Not Received':['Payment Not Received','Registered','Rejected'],
+  'Registered':          ['Registered'],
+  'Rejected':            ['Rejected','Pending Review'],
+  'Cancelled':           ['Cancelled','Pending Review'],
 };
 
-const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Not Received','Registered']);
+// Human-readable labels shown in the dropdown (different from internal status values)
+const STATUS_LABELS = {
+  'Pending Review':      'Pending Review',
+  'Awaiting Payment':    'Approve',
+  'Rejected':            'Reject',
+  'Payment Not Received':'Payment Not Received',
+  'Payment Submitted':   'Payment Submitted',
+  'Registered':          'Registered',
+  'Cancelled':           'Cancelled',
+};
 const AGE_LEVELS   = ['MIXED 16 AND BELOW','WOMEN 16 AND BELOW','EXECUTIVE (40 AND ABOVE)'];
 const DEFAULT_LEVELS = [
   {key:'LEVEL H',                    label:'Level H'},
@@ -1125,85 +1366,194 @@ function openTournamentDashboard(id){
 }
 
 function editTournament(id){
-  const t = tournaments.find(t=>t.id===id);
+  const t = tournaments.find(x=>x.id===id);
   if(!t) return;
 
-  // Reset modal then pre-fill
-  openTournamentModal();
+  const setVal = (elId, v) => { const el=document.getElementById(elId); if(el) el.value=(v??''); };
+  const setHTML= (elId, v) => { const el=document.getElementById(elId); if(el) el.innerHTML=v; };
+  const setText= (elId, v) => { const el=document.getElementById(elId); if(el) el.textContent=v; };
 
-  // Wait a tick for flatpickr to init
+  // ── Reset upload state ──
+  const jerseyFile = document.getElementById('jerseyFileInput'); if(jerseyFile) jerseyFile.value='';
+  resetQRPreviews();
+
+  // ── Populate text fields ──
+  setVal('tName',           t.name||'');
+  setVal('tFreeJerseyCount',t.free_jersey_count||'');
+  setVal('tJerseyPrice',    t.jersey_price||'');
+  setVal('tLocation',       t.location||'');
+  setVal('tDesc',           t.description||'');
+  setVal('tStatus',         t.status||'Draft');
+  setVal('tAdminUser',      t.owner_name||currentUser.username);
+  setText('tournamentModalTitle','Edit Tournament');
+  setText('tSubmitBtn','Save Changes');
+
+  // ── Jersey image ──
+  const jerseyUrl = t.jersey_image_url||'';
+  setVal('tJerseyImageUrl', jerseyUrl);
+  if(jerseyUrl){
+    setHTML('jerseyPreview', `<img src="${jerseyUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`);
+    setText('jerseyFileName','Image already uploaded');
+  } else {
+    setHTML('jerseyPreview','👕');
+    setText('jerseyFileName','No image uploaded');
+  }
+
+  // ── QR codes ──
+  ['gcash','maya','other'].forEach(type => {
+    const url = t['payment_qr_'+type]||'';
+    setVal('qrUrl-'+type, url);
+    const prev = document.getElementById('qrPreview-'+type);
+    if(prev && url){
+      prev.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;
+    }
+  });
+
+  // ── Duration ──
+  const dur1 = document.getElementById('tDur1'), dur2 = document.getElementById('tDur2');
+  if(t.tournament_duration===2){ if(dur2) dur2.checked=true; if(dur1) dur1.checked=false; }
+  else                         { if(dur1) dur1.checked=true; if(dur2) dur2.checked=false; }
+
+  // ── Dates (Flatpickr) — use setTimeout so flatpickr is ready ──
   setTimeout(()=>{
-    document.getElementById('tName').value            = t.name || '';
-    document.getElementById('tFreeJerseyCount').value = t.free_jersey_count || '';
-    document.getElementById('tLocation').value        = t.location || '';
-    document.getElementById('tDesc').value            = t.description || '';
-    document.getElementById('tStatus').value          = t.status || 'Draft';
-    document.getElementById('tournamentModalTitle').textContent = 'Edit Tournament';
-    document.getElementById('tSubmitBtn').textContent = 'Save Changes';
-
     if(fpRegFrom   && t.event_date_from) fpRegFrom.setDate(t.event_date_from);
+    else if(fpRegFrom) fpRegFrom.clear();
     if(fpRegTo     && t.event_date_to)   fpRegTo.setDate(t.event_date_to);
+    else if(fpRegTo)   fpRegTo.clear();
     if(fpEarlyBird && t.early_bird_to)   fpEarlyBird.setDate(t.early_bird_to);
-    if(t.tournament_duration === 2){ document.getElementById('tDur2').checked=true; document.getElementById('tDur1').checked=false; }
-    else                           { document.getElementById('tDur1').checked=true; document.getElementById('tDur2').checked=false; }
-
-    updateStatusDot(t.status);
+    else if(fpEarlyBird) fpEarlyBird.clear();
     calcTournamentDate();
+  }, 60);
 
-    // Store id for update
-    document.getElementById('tSubmitBtn').onclick = ()=>updateTournament(id);
-    document.getElementById('tSaveLaterBtn').onclick = ()=>updateTournament(id,'Draft');
-  }, 50);
+  // ── Status dot ──
+  updateStatusDot(t.status);
+  document.getElementById('tError').style.display='none';
+
+  // ── Track that we're editing (not creating) ──
+  _editingTournamentId = id;
+  console.log('🟢 editTournament | _editingTournamentId set to:', _editingTournamentId);
+
+  // ── Open modal ──
+  document.getElementById('tournamentModal').classList.add('open');
+  setTimeout(()=>{ document.getElementById('tName')?.focus(); }, 80);
 }
 
 async function updateTournament(id, forceStatus){
-  const name  = document.getElementById('tName').value.trim();
-  const errEl = document.getElementById('tError');
-  if(!name){ errEl.textContent='Tournament name is required.'; errEl.style.display='block'; return; }
-  errEl.style.display='none';
+  console.log('🔴 updateTournament START | id:', id, '| forceStatus:', forceStatus);
+  const nameEl = document.getElementById('tName');
+  const errEl  = document.getElementById('tError');
+  const name   = nameEl?.value.trim();
+  console.log('   name:', name);
+  if(!name){ if(errEl){ errEl.textContent='Tournament name is required.'; errEl.style.display='block'; } return; }
+  if(errEl) errEl.style.display='none';
 
-  const status = forceStatus || document.getElementById('tStatus').value;
+  const status = forceStatus || document.getElementById('tStatus')?.value || 'Draft';
   const btn    = forceStatus ? document.getElementById('tSaveLaterBtn') : document.getElementById('tSubmitBtn');
-  const orig   = btn.textContent;
-  btn.textContent='⏳ Saving...'; btn.disabled=true;
-
-  const regFrom = document.getElementById('tDateFrom').value || null;
-  const regTo   = document.getElementById('tDateTo').value   || null;
-  const evtFrom = document.getElementById('tDateFrom')._evtFrom || null;
-  const evtTo   = document.getElementById('tDateTo')._evtTo   || null;
-  const dur     = parseInt(document.querySelector('input[name="tDuration"]:checked')?.value||'1');
-
-  const payload = {
-    name,
-    event_date_from: regFrom,
-    event_date_to:   regTo,
-    status,
-    location:    document.getElementById('tLocation').value.trim()||null,
-    description: document.getElementById('tDesc').value.trim()||null,
-  };
-  if(evtFrom)  payload.tournament_date_from = evtFrom;
-  if(evtTo)    payload.tournament_date_to   = evtTo;
-  if(dur)      payload.tournament_duration  = dur;
-  const eb = document.getElementById('tEarlyBirdTo').value;
-  if(eb)       payload.early_bird_to        = eb;
-  const jersey = parseInt(document.getElementById('tFreeJerseyCount').value);
-  if(jersey>0) payload.free_jersey_count    = jersey;
+  const orig   = btn?.textContent || '';
+  if(btn){ btn.textContent='Saving...'; btn.disabled=true; }
 
   try{
-    const res = await fetch(`${SB_URL}/rest/v1/tournaments?id=eq.${id}`,{
+    // ── Build payload ──
+    const payload = {
+      name,
+      status,
+      location:    (document.getElementById('tLocation')?.value  || '').trim() || null,
+      description: (document.getElementById('tDesc')?.value      || '').trim() || null,
+    };
+
+    const regFrom = document.getElementById('tDateFrom')?.value||null;
+    const regTo   = document.getElementById('tDateTo')?.value||null;
+    const eb      = document.getElementById('tEarlyBirdTo')?.value||null;
+    const evtFrom = document.getElementById('tDateFrom')?._evtFrom||null;
+    const evtTo   = document.getElementById('tDateTo')?._evtTo||null;
+    const dur     = parseInt(document.querySelector('input[name="tDuration"]:checked')?.value||'1');
+
+    if(regFrom)   payload.event_date_from        = regFrom;
+    if(regTo)     payload.event_date_to          = regTo;
+    if(eb)        payload.early_bird_to          = eb;
+    if(evtFrom)   payload.tournament_date_from   = evtFrom;
+    if(evtTo)     payload.tournament_date_to     = evtTo;
+    if(dur>0)     payload.tournament_duration    = dur;
+
+    const jersey = parseInt(document.getElementById('tFreeJerseyCount')?.value||'0');
+    if(jersey>0)  payload.free_jersey_count      = jersey;
+    const jPrice = parseInt(document.getElementById('tJerseyPrice')?.value||'0');
+    if(jPrice>0)  payload.jersey_price           = jPrice;
+
+    // Carry over existing media URLs
+    const existingJersey = document.getElementById('tJerseyImageUrl')?.value||'';
+    if(existingJersey) payload.jersey_image_url  = existingJersey;
+    ['gcash','maya','other'].forEach(type=>{
+      const url = document.getElementById('qrUrl-'+type)?.value||'';
+      if(url) payload['payment_qr_'+type] = url;
+    });
+
+    // ── PATCH (Promise.race timeout — AbortSignal not supported on file://) ──
+    console.log('   PATCH payload:', JSON.stringify(payload));
+    console.log('   PATCH URL:', `${SB_URL}/rest/v1/tournaments?id=eq.${id}`);
+
+    const fetchPromise = fetch(`${SB_URL}/rest/v1/tournaments?id=eq.${id}`,{
       method:'PATCH',
       headers:{...HDRS,'Prefer':'return=minimal'},
-      body:JSON.stringify(payload),
+      body: JSON.stringify(payload),
     });
-    if(!res.ok) throw new Error(await res.text());
-    // Reset button handlers back to create mode
-    document.getElementById('tSubmitBtn').onclick    = ()=>submitTournament('Active');
-    document.getElementById('tSaveLaterBtn').onclick = ()=>submitTournament('Draft');
+    const timeoutPromise = new Promise((_,reject)=>
+      setTimeout(()=>reject(new Error('TIMEOUT — Try opening from GitHub Pages instead of file://')), 12000)
+    );
+    const res = await Promise.race([fetchPromise, timeoutPromise]);
+    console.log('   PATCH response status:', res.status, res.ok ? '✅' : '❌');
+
+    if(!res.ok){
+      const txt = await res.text();
+      throw new Error(`${res.status}: ${txt}`);
+    }
+
+    // ── Upload new media files AFTER successful save ──
+    try{
+      const jFile = document.getElementById('jerseyFileInput')?.files?.[0];
+      if(jFile){
+        const ext = jFile.name.split('.').pop()||'jpg';
+        const url = await uploadToPublicStorage(jFile, `jerseys/tournament-${id}-${Date.now()}.${ext}`);
+        if(url) await fetch(`${SB_URL}/rest/v1/tournaments?id=eq.${id}`,{
+          method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+          body:JSON.stringify({jersey_image_url:url}),
+        });
+      }
+    }catch(e){ console.warn('Jersey upload (non-fatal):',e.message); }
+
+    for(const type of ['gcash','maya','other']){
+      try{
+        const qFile = document.getElementById('qrFile-'+type)?.files?.[0];
+        if(qFile){
+          const ext = qFile.name.split('.').pop()||'jpg';
+          const url = await uploadToPublicStorage(qFile, `qr/${type}-${id}-${Date.now()}.${ext}`);
+          if(url) await fetch(`${SB_URL}/rest/v1/tournaments?id=eq.${id}`,{
+            method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+            body:JSON.stringify({['payment_qr_'+type]:url}),
+          });
+        }
+      }catch(e){ console.warn(`QR ${type} upload (non-fatal):`,e.message); }
+    }
+
+    // ── Done — update local cache directly, no re-fetch needed ──
+    const idx = tournaments.findIndex(x=>x.id===id);
+    if(idx>-1){
+      tournaments[idx] = Object.assign({}, tournaments[idx], payload, {
+        jersey_image_url: payload.jersey_image_url || tournaments[idx].jersey_image_url,
+        payment_qr_gcash: payload.payment_qr_gcash || tournaments[idx].payment_qr_gcash,
+        payment_qr_maya:  payload.payment_qr_maya  || tournaments[idx].payment_qr_maya,
+        payment_qr_other: payload.payment_qr_other || tournaments[idx].payment_qr_other,
+      });
+    }
     closeTournamentModal();
-    await loadTournaments();
+    buildTournamentDropdown();
+    renderHomeCards();
+
   }catch(e){
-    errEl.textContent='Error: '+e.message; errEl.style.display='block';
-    btn.textContent=orig; btn.disabled=false;
+    console.error('❌ updateTournament ERROR:', e.name, e.message);
+    const msg = e.name==='AbortError' ? 'Request timed out. Check your connection.' : e.message;
+    if(errEl){ errEl.textContent='Error: '+msg; errEl.style.display='block'; }
+    if(btn){ btn.textContent=orig; btn.disabled=false; }
   }
 }
 
@@ -1211,27 +1561,52 @@ async function updateTournament(id, forceStatus){
    TOURNAMENTS
 ════════════════════════════════════════════ */
 async function loadTournaments(){
-  let url = `${SB_URL}/rest/v1/tournaments?select=id,name,owner_id,status,budget,event_date_from,event_date_to,early_bird_to,tournament_date_from,tournament_date_to,free_jersey_count,description,owner_name&order=created_at.desc`;
-  if(currentUser.role === 'admin'){
-    url += `&owner_id=eq.${currentUser.id}`;
+  // Use only the base columns that are guaranteed to exist
+  // New columns (jersey_price, jersey_image_url, payment_qr_*) added via SQL migration
+  const baseSelect = 'id,name,owner_id,status,budget,event_date_from,event_date_to,early_bird_to,tournament_date_from,tournament_date_to,tournament_duration,free_jersey_count,location,description,owner_name';
+  const extraSelect = ',jersey_price,jersey_image_url,payment_qr_gcash,payment_qr_maya,payment_qr_other';
+  let url = `${SB_URL}/rest/v1/tournaments?select=${baseSelect}${extraSelect}&order=created_at.desc`;
+  if(currentUser.role === 'admin') url += `&owner_id=eq.${currentUser.id}`;
+
+  try{
+    const res  = await fetch(url, {headers:HDRS});
+    let data = await res.json();
+
+    // If new columns missing, fall back to base columns only
+    if(!Array.isArray(data)){
+      const res2 = await fetch(`${SB_URL}/rest/v1/tournaments?select=${baseSelect}&order=created_at.desc`+(currentUser.role==='admin'?`&owner_id=eq.${currentUser.id}`:''), {headers:HDRS});
+      data = await res2.json();
+    }
+
+    if(!Array.isArray(data)) return; // give up gracefully
+
+    tournaments = data.map(t=>({
+      id:t.id, name:t.name, owner_id:t.owner_id,
+      owner_name:           t.owner_name || '?',
+      status:               t.status,
+      budget:               t.budget,
+      event_date_from:      t.event_date_from,
+      event_date_to:        t.event_date_to,
+      early_bird_to:        t.early_bird_to,
+      tournament_date_from: t.tournament_date_from,
+      tournament_date_to:   t.tournament_date_to,
+      tournament_duration:  t.tournament_duration,
+      free_jersey_count:    t.free_jersey_count,
+      jersey_price:         t.jersey_price,
+      jersey_image_url:     t.jersey_image_url,
+      payment_qr_gcash:     t.payment_qr_gcash,
+      payment_qr_maya:      t.payment_qr_maya,
+      payment_qr_other:     t.payment_qr_other,
+      location:             t.location,
+      description:          t.description,
+    }));
+    buildTournamentDropdown();
+    renderHomeCards();
+  }catch(e){
+    console.error('loadTournaments failed:', e.message);
+    buildTournamentDropdown();
+    renderHomeCards();
   }
-  const res  = await fetch(url, {headers:HDRS});
-  const data = await res.json();
-  tournaments = (data||[]).map(t=>({
-    id:t.id, name:t.name, owner_id:t.owner_id,
-    owner_name:          t.owner_name || '?',
-    status:              t.status,
-    budget:              t.budget,
-    event_date_from:     t.event_date_from,
-    event_date_to:       t.event_date_to,
-    early_bird_to:       t.early_bird_to,
-    tournament_date_from:t.tournament_date_from,
-    tournament_date_to:  t.tournament_date_to,
-    free_jersey_count:   t.free_jersey_count,
-    description:         t.description,
-  }));
-  buildTournamentDropdown();
-  renderHomeCards();
 }
 
 function buildTournamentDropdown(){
@@ -1278,9 +1653,9 @@ function clearTournamentUI(){
 }
 
 function showNoTournamentState(){
-  ['reg','pricing','exp','sponsor'].forEach(p=>{
+  ['reg','pricing','exp','sponsor','sales'].forEach(p=>{
     const nc = document.getElementById(p+'NoTournament');
-    const c  = document.getElementById(p+'Content') || document.getElementById(p==='reg'?'regContent':p+'Content');
+    const c  = document.getElementById(p+'Content');
     if(nc) nc.style.display='block';
     if(c)  c.style.display='none';
   });
@@ -1297,6 +1672,7 @@ function loadActiveTab(){
   else if(tabName==='pricing')  fetchPricing();
   else if(tabName==='expenses') fetchExpenses();
   else if(tabName==='sponsors') fetchSponsors();
+  else if(tabName==='sales')     fetchSales();
 }
 
 /* ── Tournament Modal ── */
@@ -1359,32 +1735,46 @@ function calcTournamentDate(){
 }
 
 function openTournamentModal(){
-  document.getElementById('tName').value          = '';
-  document.getElementById('tFreeJerseyCount').value = '';
-  document.getElementById('tLocation').value      = '';
-  document.getElementById('tAdminUser').value     = currentUser.username;
-  document.getElementById('tDesc').value          = '';
-  document.getElementById('tStatus').value        = 'Draft';
-  document.getElementById('tError').style.display = 'none';
-  document.getElementById('tWhenDisplay').style.display = 'none';
-  document.getElementById('tWhenResult').textContent   = '';
-  document.getElementById('tDur1').checked = true;
-  document.getElementById('tDur2').checked = false;
+  const setVal = (id, v) => { const el=document.getElementById(id); if(el) el.value=v; };
+  const setHTML= (id, v) => { const el=document.getElementById(id); if(el) el.innerHTML=v; };
+  const setText= (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
 
-  // Clear Flatpickr date pickers
+  setVal('tName',           '');
+  setVal('tFreeJerseyCount','');
+  setVal('tJerseyPrice',    '');
+  setVal('tJerseyImageUrl', '');
+  setVal('jerseyFileInput', '');
+  setHTML('jerseyPreview',  '👕');
+  setText('jerseyFileName', 'No image uploaded');
+  resetQRPreviews();
+  setVal('tLocation',  '');
+  setVal('tAdminUser', currentUser.username);
+  setVal('tDesc',      '');
+  setVal('tStatus',    'Draft');
+
+  const errEl = document.getElementById('tError');
+  if(errEl) errEl.style.display='none';
+  const whenDisp = document.getElementById('tWhenDisplay');
+  if(whenDisp) whenDisp.style.display='none';
+  setText('tWhenResult','');
+
+  const d1=document.getElementById('tDur1'); if(d1) d1.checked=true;
+  const d2=document.getElementById('tDur2'); if(d2) d2.checked=false;
+
   if(fpRegFrom)   { fpRegFrom.set('minDate', getPHToday()); fpRegFrom.clear(); }
   if(fpRegTo)     fpRegTo.clear();
   if(fpEarlyBird) fpEarlyBird.clear();
-  // Reset minDate constraints
   if(fpRegTo)     fpRegTo.set('minDate', null);
   if(fpEarlyBird) fpEarlyBird.set('maxDate', null);
 
   syncDurationLabels();
-  document.getElementById('tournamentModalTitle').textContent = 'New Tournament';
-  document.getElementById('tSubmitBtn').textContent = 'Create Tournament';
+  setText('tournamentModalTitle','New Tournament');
+  setText('tSubmitBtn','Create Tournament');
   updateStatusDot('Draft');
+  _editingTournamentId = null;
+  console.log('🟡 openTournamentModal | _editingTournamentId reset to null');
   document.getElementById('tournamentModal').classList.add('open');
-  setTimeout(()=>document.getElementById('tName').focus(), 80);
+  setTimeout(()=>{ const n=document.getElementById('tName'); if(n) n.focus(); }, 80);
 }
 
 function closeTournamentModal(){
@@ -1392,10 +1782,30 @@ function closeTournamentModal(){
 }
 
 async function submitTournament(status){
-  // status = 'Active' (Create Tournament) or 'Draft' (Save Later)
   const name  = document.getElementById('tName').value.trim();
   const errEl = document.getElementById('tError');
+
+  // ── Validate required fields ──
   if(!name){ errEl.textContent='Tournament name is required.'; errEl.style.display='block'; return; }
+
+  const regFrom = document.getElementById('tDateFrom').value || null;
+  const regTo   = document.getElementById('tDateTo').value   || null;
+  const earlyBird = document.getElementById('tEarlyBirdTo').value || null;
+
+  // Date validation
+  if(regFrom && regTo && regTo < regFrom){
+    errEl.textContent='⚠️ Registration Ends cannot be before Registration Starts.';
+    errEl.style.display='block'; return;
+  }
+  if(earlyBird && regFrom && earlyBird < regFrom){
+    errEl.textContent='⚠️ Early Bird Promo Ends cannot be before Registration Starts.';
+    errEl.style.display='block'; return;
+  }
+  if(earlyBird && regTo && earlyBird > regTo){
+    errEl.textContent='⚠️ Early Bird Promo Ends cannot be after Registration Ends.';
+    errEl.style.display='block'; return;
+  }
+
   errEl.style.display='none';
 
   // Update dot to reflect chosen action
@@ -1407,9 +1817,7 @@ async function submitTournament(status){
   const origText = btn.textContent;
   btn.textContent='⏳ Saving...'; btn.disabled=true;
 
-  // Dates
-  const regFrom = document.getElementById('tDateFrom').value || null;
-  const regTo   = document.getElementById('tDateTo').value   || null;
+  // Dates (already read & validated above)
   const evtFrom = document.getElementById('tDateFrom')._evtFrom || null;
   const evtTo   = document.getElementById('tDateTo')._evtTo   || null;
   const dur     = parseInt(document.querySelector('input[name="tDuration"]:checked')?.value||'1');
@@ -1445,6 +1853,25 @@ async function submitTournament(status){
     });
     if(!res.ok) throw new Error(await res.text());
     const [created] = await res.json();
+
+    // Upload jersey image and QR codes if selected
+    try{
+      const jerseyUrl = await uploadJerseyImage(created.id);
+      const qrUrls   = await uploadQRImages(created.id);
+      const patch = {};
+      if(jerseyUrl) patch.jersey_image_url = jerseyUrl;
+      if(qrUrls.gcash) patch.payment_qr_gcash = qrUrls.gcash;
+      if(qrUrls.maya)  patch.payment_qr_maya  = qrUrls.maya;
+      if(qrUrls.other) patch.payment_qr_other = qrUrls.other;
+      if(Object.keys(patch).length){
+        await fetch(`${SB_URL}/rest/v1/tournaments?id=eq.${created.id}`,{
+          method:'PATCH',
+          headers:{...HDRS,'Prefer':'return=minimal'},
+          body:JSON.stringify(patch),
+        });
+      }
+    }catch(je){ console.warn('Media upload failed:', je.message); }
+
     closeTournamentModal();
     await loadTournaments();
     openTournamentDashboard(created.id);
@@ -1490,6 +1917,7 @@ function showTab(name, event){
   else if(name==='pricing')  fetchPricing();
   else if(name==='expenses') fetchExpenses();
   else if(name==='sponsors') fetchSponsors();
+  else if(name==='sales')    fetchSales();
 }
 
 /* ════════════════════════════════════════════
@@ -1499,7 +1927,7 @@ async function fetchRegistrations(){
   if(!activeTournament){ showNoTournamentState(); return; }
   document.getElementById('regNoTournament').style.display='none';
   document.getElementById('regContent').style.display='block';
-  document.getElementById('tableBody').innerHTML=`<tr><td colspan="10"><div class="empty-state"><span class="icon">⏳</span><p>Loading...</p></div></td></tr>`;
+  document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon">⏳</span><p>Loading...</p></div></td></tr>`;
 
   try{
     const res = await fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTournament.id}&select=*&order=id.desc`,{headers:HDRS});
@@ -1508,7 +1936,7 @@ async function fetchRegistrations(){
     renderTable(allRegs);
     updateStats(allRegs);
   }catch(err){
-    document.getElementById('tableBody').innerHTML=`<tr><td colspan="10"><div class="empty-state"><span class="icon">⚠️</span><p>Failed: ${err.message}</p></div></td></tr>`;
+    document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon">⚠️</span><p>Failed: ${err.message}</p></div></td></tr>`;
   }
 }
 
@@ -1523,7 +1951,7 @@ function updateStats(data){
 function renderTable(data){
   document.getElementById('tableCount').textContent=`${data.length} record${data.length!==1?'s':''}`;
   if(!data.length){
-    document.getElementById('tableBody').innerHTML=`<tr><td colspan="10"><div class="empty-state"><span class="icon">📋</span><p>No registrations yet.</p></div></td></tr>`;
+    document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon">📋</span><p>No registrations yet.</p></div></td></tr>`;
     return;
   }
   document.getElementById('tableBody').innerHTML = data.map(r=>{
@@ -1533,7 +1961,7 @@ function renderTable(data){
     const status = r.Status||'Pending Review';
     const sClass = STATUS_CLASS[status]||'s-pending';
     const allowed = STATUS_TRANSITIONS[status] || [status];
-    const opts   = allowed.map(s=>`<option value="${s}"${status===s?' selected':''}>${s}</option>`).join('');
+    const opts   = allowed.map(s=>`<option value="${s}"${status===s?' selected':''}>${STATUS_LABELS[s]||s}</option>`).join('');
     // Payment deadline badge
     let deadlineBadge = '';
     if(status === 'Awaiting Payment' && r.payment_deadline){
@@ -1551,7 +1979,27 @@ function renderTable(data){
         <td>${r.Player1_Name||'—'}</td>
         <td>${r.Player2_Name||'—'}</td>
         <td style="color:var(--muted);font-size:12px;">${r.Email_Address||'—'}</td>
-        <td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.Notes||''}">${r.Notes||'—'}</td>
+        <td style="min-width:140px;max-width:200px;">
+          <input
+            type="text"
+            value="${((r.notes||r.Notes)||'').replace(/"/g,'&quot;')}"
+            placeholder="Add note..."
+            id="note-${r.id}"
+            onfocus="this.style.cssText='background:#111;border:1px solid var(--primary);border-radius:4px;color:var(--text);font-size:12px;width:100%;outline:none;padding:4px 8px;';"
+            onblur="this.style.cssText='background:transparent;border:1px solid transparent;border-radius:4px;color:var(--muted);font-size:12px;width:100%;outline:none;padding:4px 8px;';saveNote(${r.id},this.value);"
+            onkeydown="if(event.key==='Enter')this.blur();"
+            style="background:transparent;border:1px solid transparent;border-radius:4px;color:var(--muted);font-size:12px;width:100%;outline:none;padding:4px 8px;cursor:pointer;"
+            title="Click to edit note"
+          ></td>
+        <td style="text-align:center;">
+          ${r.payment_screenshot
+            ? `<button onclick="openScreenshot(this.dataset.url)" data-url="${r.payment_screenshot}"
+                style="background:#1a1a1a;border:1px solid #333;color:#60a5fa;font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;cursor:pointer;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;"
+                onmouseover="this.style.borderColor='#60a5fa'" onmouseout="this.style.borderColor='#333'">
+                Receipt
+              </button>`
+            : `<span style="font-size:11px;color:#333;">—</span>`}
+        </td>
         <td>
           <select class="status-select ${sClass}" id="sel-${r.id}" onchange="updateStatus(${r.id},this)">
             ${opts}
@@ -1561,7 +2009,7 @@ function renderTable(data){
         </td>
       </tr>
       <tr class="detail-row" id="detail-${r.id}">
-        <td colspan="10">
+        <td colspan="11">
           <div class="detail-inner">
             <div class="detail-item"><span class="detail-label">Phone</span><span class="detail-value">${r.Phone_Number||'—'}</span></div>
             <div class="detail-item"><span class="detail-label">P1 Facebook</span><span class="detail-value">${r.Player1_Facebook||'—'}</span></div>
@@ -1570,10 +2018,63 @@ function renderTable(data){
             ${r.Player2_Birthdate?`<div class="detail-item"><span class="detail-label">P2 Birthdate</span><span class="detail-value">${r.Player2_Birthdate} (Age ${r.Player2_Age})</span></div>`:''}
             ${r.payment_channel?`<div class="detail-item"><span class="detail-label">Payment</span><span class="detail-value">${r.payment_channel}${r.payment_reference?' · Ref: '+r.payment_reference:''}</span></div>`:''}
             ${r.payment_deadline?`<div class="detail-item"><span class="detail-label">Pay Deadline</span><span class="detail-value">${new Date(r.payment_deadline).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})}</span></div>`:''}
+            ${r.payment_reference?`<div class="detail-item"><span class="detail-label">Payment Ref #</span><span class="detail-value">${r.payment_reference}</span></div>`:''}
+            <div class="detail-item">
+              <span class="detail-label">Payment Form</span>
+              <span class="detail-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="color:var(--muted);font-size:11px;">payment-confirm.html?ref=${r.id}</span>
+                <button onclick="copyPaymentLink(${r.id}, this)"
+                  style="background:#1a1a1a;border:1px solid #333;color:#aaa;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;">
+                  Copy Link
+                </button>
+              </span>
+            </div>
           </div>
         </td>
       </tr>`;
   }).join('');
+}
+
+async function saveNote(regId, value){
+  const note = value.trim() || null;
+  const rec  = allRegs.find(r=>r.id===regId);
+  const cur  = rec ? (rec.notes ?? rec.Notes ?? null) : null;
+  if(cur === note) return; // no change
+  if(rec){ rec.notes = note; rec.Notes = note; }
+
+  const res = await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${regId}`,{
+    method:'PATCH',
+    headers:{...HDRS,'Prefer':'return=minimal'},
+    body: JSON.stringify({notes: note}),
+  });
+
+  const el = document.getElementById('note-'+regId);
+  if(res.ok){
+    if(el){ el.style.borderColor='#22c55e'; setTimeout(()=>{ el.style.borderColor='transparent'; },1500); }
+  } else {
+    const errText = await res.text();
+    if(el) el.style.borderColor='var(--primary)';
+    // If lowercase doesn't work, try uppercase
+    if(errText.includes('notes') || errText.includes('column')){
+      const res2 = await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${regId}`,{
+        method:'PATCH',
+        headers:{...HDRS,'Prefer':'return=minimal'},
+        body: JSON.stringify({Notes: note}),
+      });
+      if(res2.ok && el){ el.style.borderColor='#22c55e'; setTimeout(()=>{ el.style.borderColor='transparent'; },1500); }
+    }
+  }
+}
+
+function copyPaymentLink(regId, btn){
+  const base = window.location.href.replace(/admin\.html.*$/, '');
+  const url  = `${base}payment-confirm.html?ref=${regId}`;
+  navigator.clipboard.writeText(url).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = '#22c55e';
+    setTimeout(()=>{ btn.textContent=orig; btn.style.color='#aaa'; }, 2000);
+  });
 }
 
 function toggleDetail(id){
@@ -1642,12 +2143,12 @@ async function updateStatus(id, sel){
 
     // ── When marking payment received: prompt for payment channel ──
     if(newStatus === 'Registered'){
-      const channel = await promptPaymentChannel();
+      const playerRef = rec ? (rec.payment_reference || '') : '';
+      const channel = await promptPaymentChannel(playerRef);
       if(channel === null){ sel.value = oldStatus; sel.classList.remove('saving'); return; }
       extraFields.payment_channel     = channel.channel;
       extraFields.payment_reference   = channel.reference || null;
       extraFields.payment_notes       = channel.notes     || null;
-      if(channel.screenshotUrl) extraFields.payment_screenshot = channel.screenshotUrl;
     }
 
     // ── Save to Supabase ──
@@ -1664,6 +2165,70 @@ async function updateStatus(id, sel){
     updateStats(allRegs);
     saved.classList.add('show');
     setTimeout(()=>saved.classList.remove('show'),2000);
+
+    // ── Send emails after successful save ──
+    if(rec && newStatus === 'Awaiting Payment'){
+      // Approval email → player
+      const deadline   = new Date(Date.now() + 7*24*60*60*1000);
+      const deadlineFmt = deadline.toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+      const tName = activeTournament?.name||'';
+      const tDate = activeTournament?.tournament_date_from
+        ? new Date(activeTournament.tournament_date_from+'T00:00:00').toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'})
+        : 'TBD';
+      sendEmail('approval',{
+        player_email:    rec.Email_Address,
+        player_name:     rec.Player1_Name||'Player',
+        player2_name:    rec.Player2_Name||'',
+        team_name:       rec.Team_Name,
+        level:           rec.Level,
+        tournament_name: tName,
+        tournament_date: tDate,
+        location:        activeTournament?.location||'',
+        payment_deadline:deadlineFmt,
+        payment_link:    getPaymentLink(rec.id),
+        reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+      });
+    }
+
+    if(rec && newStatus === 'Rejected'){
+      sendEmail('rejected',{
+        player_email:    rec.Email_Address,
+        player_name:     rec.Player1_Name||'Player',
+        player2_name:    rec.Player2_Name||'',
+        team_name:       rec.Team_Name,
+        level:           rec.Level,
+        tournament_name: activeTournament?.name||'',
+        reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+      });
+    }
+
+    if(rec && newStatus === 'Registered'){
+      // Check if jersey eligible
+      const regsBefore = allRegs.filter(r=>
+        r.id < rec.id &&
+        ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)
+      ).length;
+      const freeCount = activeTournament?.free_jersey_count || 0;
+      const jerseyEligible = freeCount > 0 && (regsBefore + 1) <= freeCount;
+      const tDate = activeTournament?.tournament_date_from
+        ? new Date(activeTournament.tournament_date_from+'T00:00:00').toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'})
+        : 'TBD';
+      sendEmail('registered',{
+        player_email:      rec.Email_Address,
+        player_name:       rec.Player1_Name||'Player',
+        player2_name:      rec.Player2_Name||'',
+        team_name:         rec.Team_Name,
+        level:             rec.Level,
+        tournament_name:   activeTournament?.name||'',
+        tournament_date:   tDate,
+        location:          activeTournament?.location||'',
+        reg_ref:           `#${String(rec.id).padStart(5,'0')}`,
+        jersey_eligible:   jerseyEligible,
+        jersey_price:      activeTournament?.jersey_price||0,
+        jersey_image_url:  activeTournament?.jersey_image_url||'',
+        jersey_link:       getPaymentLink(rec.id)+'&jersey=1',
+      });
+    }
   }catch(err){
     alert('Failed: '+err.message);
     sel.value = oldStatus;
@@ -1675,11 +2240,10 @@ async function updateStatus(id, sel){
 function rebuildStatusDropdown(sel, currentStatus){
   const allowed = STATUS_TRANSITIONS[currentStatus] || [currentStatus];
   sel.innerHTML = '';
-  // Always show current first
   allowed.forEach(s=>{
     const opt = document.createElement('option');
     opt.value = s;
-    opt.textContent = s;
+    opt.textContent = STATUS_LABELS[s] || s;
     if(s === currentStatus) opt.selected = true;
     sel.appendChild(opt);
   });
@@ -1747,10 +2311,10 @@ function renderPricing(){
           ${p.is_custom?`<span style="font-size:10px;color:var(--muted);background:#222;border:1px solid #333;padding:1px 6px;border-radius:3px;">Custom</span>`:''}
         </div>
         <div class="pricing-toggle">
-          ${p.is_custom?`<button onclick="removeCustomPricingRow('${p.level_key}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>`:''}
+          ${p.is_custom?`<button onclick="removeCustomPricingRow(this.dataset.key)" data-key="${p.level_key}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>`:''}
           <span style="font-size:11px">${p.enabled?'Active':'N/A'}</span>
           <label class="toggle-switch">
-            <input type="checkbox" ${p.enabled?'checked':''} onchange="togglePricingLevel('${p.level_key}',this)">
+            <input type="checkbox" ${p.enabled?'checked':''} data-key="${p.level_key}" onchange="togglePricingLevel(this.dataset.key,this)">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -1764,7 +2328,8 @@ function renderPricing(){
               value="${p.price||0}" placeholder="${p.enabled?'Enter amount':'N/A'}"
               ${!p.enabled?'disabled':''}
               id="pinput-price-${safeKey}"
-              oninput="updatePricingLocal('${p.level_key}','price',this.value)">
+              data-key="${p.level_key}"
+              oninput="updatePricingLocal(this.dataset.key,'price',this.value)">
           </div>
         </div>
         <div class="slots-field">
@@ -1772,20 +2337,50 @@ function renderPricing(){
           <input class="slots-input" type="number" min="1" max="500"
             value="${slots}" ${!p.enabled?'disabled':''}
             id="pinput-slots-${safeKey}"
-            oninput="updatePricingLocal('${p.level_key}','total_slots',this.value)">
+            data-key="${p.level_key}"
+            oninput="updatePricingLocal(this.dataset.key,'total_slots',this.value)">
           <div class="slots-bar" style="margin-top:8px;"><div class="slots-fill ${fillCls}" style="width:${pct}%"></div></div>
           <div class="slots-meta">${filled} / ${slots} slots filled${pct>=100?' — <span style="color:var(--danger);font-weight:600;">FULL</span>':''}</div>
         </div>
         <div class="slots-field" style="max-width:120px;">
           <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Players / Team</label>
           <select class="slots-input" id="pinput-pc-${safeKey}" ${!p.enabled?'disabled':''}
-            onchange="updatePricingLocal('${p.level_key}','player_count',this.value)"
+            data-key="${p.level_key}"
+            onchange="updatePricingLocal(this.dataset.key,'player_count',this.value)"
             style="appearance:none;cursor:pointer;">
             <option value="1" ${(p.player_count||2)===1?'selected':''}>1 — Singles</option>
             <option value="2" ${(p.player_count||2)===2?'selected':''}>2 — Doubles</option>
           </select>
           <div style="font-size:10px;color:var(--muted);margin-top:4px;">
             ${p.price>0?`Team fee: ₱${((p.price||0)*(p.player_count||2)).toLocaleString()}`:'Set price to calculate'}
+          </div>
+        </div>
+        <div class="slots-field">
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">🥇 Champion Prize</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="color:var(--muted);font-size:13px;">₱</span>
+            <input class="slots-input" type="number" min="0" step="100"
+              id="pinput-champ-${safeKey}"
+              value="${p.champion_prize||0}"
+              placeholder="0"
+              ${!p.enabled?'disabled':''}
+              data-key="${p.level_key}"
+              oninput="updatePricingLocal(this.dataset.key,'champion_prize',this.value)"
+              style="font-size:13px;">
+          </div>
+        </div>
+        <div class="slots-field">
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">🥈 1st Runner Up Prize</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="color:var(--muted);font-size:13px;">₱</span>
+            <input class="slots-input" type="number" min="0" step="100"
+              id="pinput-runner-${safeKey}"
+              value="${p.runner_up_prize||0}"
+              placeholder="0"
+              ${!p.enabled?'disabled':''}
+              data-key="${p.level_key}"
+              oninput="updatePricingLocal(this.dataset.key,'runner_up_prize',this.value)"
+              style="font-size:13px;">
           </div>
         </div>
       </div>
@@ -1796,9 +2391,43 @@ function renderPricing(){
 function updatePricingLocal(key, field, value){
   const row = pricingRows.find(p=>p.level_key===key);
   if(!row) return;
-  if(field==='price')        row.price        = parseFloat(value)||0;
-  if(field==='total_slots')  row.total_slots  = parseInt(value)||1;
-  if(field==='player_count') row.player_count = parseInt(value)||2;
+
+  if(field==='price'){
+    const n = parseFloat(value);
+    if(value !== '' && (isNaN(n) || n < 0 || !Number.isFinite(n))){
+      // Show red border on input
+      const safeKey = key.replace(/[^a-zA-Z0-9]/g,'_');
+      const el = document.getElementById('pinput-price-'+safeKey);
+      if(el){ el.style.borderColor='var(--primary)'; el.title='Price must be a positive number'; }
+      return; // Don't save invalid value
+    }
+    row.price = n || 0;
+    const safeKey = key.replace(/[^a-zA-Z0-9]/g,'_');
+    const el = document.getElementById('pinput-price-'+safeKey);
+    if(el){ el.style.borderColor=''; el.title=''; }
+  }
+  if(field==='total_slots'){
+    const n = parseInt(value);
+    if(value !== '' && (isNaN(n) || n < 1 || n > 1000 || value.includes('.'))){
+      const safeKey = key.replace(/[^a-zA-Z0-9]/g,'_');
+      const el = document.getElementById('pinput-slots-'+safeKey);
+      if(el){ el.style.borderColor='var(--primary)'; el.title='Slots must be a whole number (1-1000)'; }
+      return;
+    }
+    row.total_slots = n || 1;
+    const safeKey = key.replace(/[^a-zA-Z0-9]/g,'_');
+    const el = document.getElementById('pinput-slots-'+safeKey);
+    if(el){ el.style.borderColor=''; el.title=''; }
+  }
+  if(field==='player_count')   row.player_count   = parseInt(value)||2;
+  if(field==='champion_prize'){
+    const n = parseInt(value);
+    row.champion_prize  = isNaN(n)||n<0 ? 0 : n;
+  }
+  if(field==='runner_up_prize'){
+    const n = parseInt(value);
+    row.runner_up_prize = isNaN(n)||n<0 ? 0 : n;
+  }
 }
 
 function togglePricingLevel(key, checkbox){
@@ -1810,30 +2439,97 @@ function togglePricingLevel(key, checkbox){
 
 async function savePricing(){
   if(!activeTournament) return;
+
+  // ── Validate all rows before saving ──
+  const validationErrors = [];
+  pricingRows.forEach(p => {
+    if(!p.enabled) return;
+    const price = parseFloat(p.price);
+    const slots = parseInt(p.total_slots);
+    if(isNaN(price) || price < 0)       validationErrors.push(`${p.label}: Price must be a positive number.`);
+    if(isNaN(slots) || slots < 1)       validationErrors.push(`${p.label}: Slots must be at least 1.`);
+    if(String(p.total_slots).includes('.')) validationErrors.push(`${p.label}: Slots must be a whole number (no decimals).`);
+  });
+  if(validationErrors.length){
+    alert('⚠️ Fix these errors before saving:\n\n' + validationErrors.join('\n'));
+    return;
+  }
+
+  const btn = document.querySelector('.btn-save-all');
   const msg = document.getElementById('pricingSavedMsg');
+  if(btn){ btn.textContent='⏳ Saving...'; btn.disabled=true; }
+
+  let errors = [];
   try{
     for(const p of pricingRows){
-      if(p.id){
-        // Update existing
-        await fetch(`${SB_URL}/rest/v1/pricing?id=eq.${p.id}`,{
+      const payload = {
+        enabled:     p.enabled,
+        price:       parseFloat(p.price)||0,
+        total_slots: parseInt(p.total_slots)||20,
+      };
+      // Add optional columns only if they exist (safe additions)
+      if(p.player_count   !== undefined) payload.player_count   = parseInt(p.player_count)||2;
+      if(p.champion_prize  !== undefined) payload.champion_prize  = parseInt(p.champion_prize)||0;
+      if(p.runner_up_prize !== undefined) payload.runner_up_prize = parseInt(p.runner_up_prize)||0;
+
+      const tryPatch = async (pl) => {
+        const res = await fetch(`${SB_URL}/rest/v1/pricing?id=eq.${p.id}`,{
           method:'PATCH',
           headers:{...HDRS,'Prefer':'return=minimal'},
-          body:JSON.stringify({enabled:p.enabled, price:p.price, total_slots:p.total_slots, player_count:p.player_count||2}),
+          body:JSON.stringify(pl),
         });
+        if(!res.ok){
+          const errText = await res.text();
+          // If a column doesn't exist yet, remove it and retry once
+          const colMatch = errText.match(/column[^"]*"([^"]+)"/i) ||
+                           errText.match(/'([^']+)' column/i);
+          if(colMatch){
+            const badCol = colMatch[1];
+            if(pl[badCol] !== undefined){
+              const fixed = {...pl};
+              delete fixed[badCol];
+              // Also retry without other optional cols if needed
+              const res2 = await fetch(`${SB_URL}/rest/v1/pricing?id=eq.${p.id}`,{
+                method:'PATCH',
+                headers:{...HDRS,'Prefer':'return=minimal'},
+                body:JSON.stringify(fixed),
+              });
+              if(!res2.ok) errors.push(`${p.label}: ${await res2.text()}`);
+              return;
+            }
+          }
+          errors.push(`${p.label}: ${errText}`);
+        }
+      };
+
+      if(p.id){
+        await tryPatch(payload);
       } else {
-        // Insert new
-        await fetch(`${SB_URL}/rest/v1/pricing`,{
+        const res = await fetch(`${SB_URL}/rest/v1/pricing`,{
           method:'POST',
           headers:{...HDRS,'Prefer':'return=minimal'},
-          body:JSON.stringify({tournament_id:activeTournament.id, level_key:p.level_key, label:p.label||p.level_key, enabled:p.enabled, price:p.price, total_slots:p.total_slots, player_count:p.player_count||2, is_custom:p.is_custom||false}),
+          body:JSON.stringify({
+            tournament_id: activeTournament.id,
+            level_key:     p.level_key,
+            label:         p.label||p.level_key,
+            is_custom:     p.is_custom||false,
+            ...payload,
+          }),
         });
+        if(!res.ok) errors.push(`${p.label}: ${await res.text()}`);
       }
     }
-    msg.style.display='inline';
-    setTimeout(()=>msg.style.display='none',3000);
+
+    if(errors.length){
+      alert('Some rows failed to save:\n\n'+errors.join('\n'));
+    } else {
+      if(msg){ msg.style.display='inline'; setTimeout(()=>msg.style.display='none',3000); }
+    }
     await fetchPricing();
   }catch(e){
     alert('Save failed: '+e.message);
+  }finally{
+    if(btn){ btn.textContent='Save All Changes'; btn.disabled=false; }
   }
 }
 
@@ -2088,11 +2784,11 @@ function renderSponsors(){
 }
 
 function addSponsor(){
-  // Open modal instead of inserting blank record
   document.getElementById('sponsorModalTitle').textContent = 'Add Sponsor';
   document.getElementById('smName').value     = '';
   document.getElementById('smTier').value     = 'Silver';
-  document.getElementById('smLogoUrl').value  = '';
+  document.getElementById('smLogoFile').value = '';
+  document.getElementById('smLogoFileName').textContent = 'No file chosen';
   document.getElementById('smMoney').value    = '';
   document.getElementById('smShuttles').value = '';
   document.getElementById('smFoods').value    = '';
@@ -2100,27 +2796,41 @@ function addSponsor(){
   document.getElementById('smError').style.display = 'none';
   document.getElementById('sponsorLogoPreview').innerHTML = '+ LOGO';
   document.getElementById('sponsorLogoPreview').style.background = '#0f0f0f';
+  _smLogoFile = null;
   document.getElementById('sponsorModal').classList.add('open');
   setTimeout(()=>document.getElementById('smName').focus(), 80);
 }
 
-function closeSponsorModal(){
-  document.getElementById('sponsorModal').classList.remove('open');
+let _smLogoFile = null;
+
+function previewSponsorLogo(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  _smLogoFile = file;
+  document.getElementById('smLogoFileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('sponsorLogoPreview');
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  };
+  reader.readAsDataURL(file);
 }
 
-function previewSponsorLogo(){
-  const url = document.getElementById('smLogoUrl').value.trim();
-  const preview = document.getElementById('sponsorLogoPreview');
-  if(url){
-    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='❌';this.parentElement.style.background='#1a0808';">`;
-  } else {
-    preview.innerHTML = '+ LOGO';
-    preview.style.background = '#0f0f0f';
-  }
+async function uploadSponsorLogo(file){
+  if(!file) return null;
+  const ext  = file.name.split('.').pop();
+  const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const res  = await fetch(`${SB_URL}/storage/v1/object/sponsor-logos/${path}`,{
+    method:'POST',
+    headers:{ 'Authorization':`Bearer ${SB_KEY}`, 'Content-Type':file.type },
+    body: file,
+  });
+  if(!res.ok) throw new Error('Logo upload failed: ' + await res.text());
+  return `${SB_URL}/storage/v1/object/public/sponsor-logos/${path}`;
 }
 
 async function submitSponsorModal(){
-  const name = document.getElementById('smName').value.trim();
+  const name  = document.getElementById('smName').value.trim();
   const errEl = document.getElementById('smError');
   if(!name){ errEl.textContent='Sponsor name is required.'; errEl.style.display='block'; return; }
   errEl.style.display='none';
@@ -2128,30 +2838,37 @@ async function submitSponsorModal(){
   const btn = document.getElementById('smSaveBtn');
   btn.textContent = '⏳ Saving...'; btn.disabled = true;
 
-  const payload = {
-    tournament_id: activeTournament.id,
-    name,
-    tier:     document.getElementById('smTier').value || 'Silver',
-    logo_url: document.getElementById('smLogoUrl').value.trim() || null,
-    money:    document.getElementById('smMoney').value.trim() || '',
-    shuttles: document.getElementById('smShuttles').value.trim() || '',
-    foods:    document.getElementById('smFoods').value.trim() || '',
-    others:   document.getElementById('smOthers').value.trim() || '',
-  };
+  try{
+    // Upload logo if a file was chosen
+    let logoUrl = null;
+    if(_smLogoFile){
+      btn.textContent = '⏳ Uploading logo...';
+      logoUrl = await uploadSponsorLogo(_smLogoFile);
+    }
 
-  try {
-    const res = await fetch(`${SB_URL}/rest/v1/sponsors`, {
-      method: 'POST',
-      headers: { ...HDRS, 'Prefer': 'return=minimal' },
-      body: JSON.stringify(payload),
+    const payload = {
+      tournament_id: activeTournament.id,
+      name,
+      tier:     document.getElementById('smTier').value || 'Silver',
+      logo_url: logoUrl,
+      money:    document.getElementById('smMoney').value.trim() || '',
+      shuttles: document.getElementById('smShuttles').value.trim() || '',
+      foods:    document.getElementById('smFoods').value.trim() || '',
+      others:   document.getElementById('smOthers').value.trim() || '',
+    };
+
+    const res = await fetch(`${SB_URL}/rest/v1/sponsors`,{
+      method:'POST',
+      headers:{...HDRS,'Prefer':'return=minimal'},
+      body:JSON.stringify(payload),
     });
     if(!res.ok) throw new Error(await res.text());
     closeSponsorModal();
     await fetchSponsors();
-  } catch(e) {
+  }catch(e){
     errEl.textContent = 'Save failed: ' + e.message;
-    errEl.style.display = 'block';
-    btn.textContent = '💾 Save Sponsor'; btn.disabled = false;
+    errEl.style.display='block';
+    btn.textContent='💾 Save Sponsor'; btn.disabled=false;
   }
 }
 
@@ -2214,54 +2931,27 @@ async function removeSponsor(id){
    PAYMENT CHANNEL PROMPT
 ════════════════════════════════════════════ */
 let _resolvePaymentChannel = null;
+let _pcPlayerRef = '';
 
-function promptPaymentChannel(){
+function promptPaymentChannel(playerRef){
   return new Promise(resolve=>{
     _resolvePaymentChannel = resolve;
-    document.getElementById('pcChannel').value     = '';
-    document.getElementById('pcReference').value   = '';
-    document.getElementById('pcNotes').value       = '';
-    document.getElementById('pcError').style.display = 'none';
-    document.getElementById('pcScreenshotPreview').style.display  = 'none';
-    document.getElementById('pcScreenshotPlaceholder').style.display = 'block';
-    document.getElementById('pcScreenshotFile').value = '';
-    document.getElementById('pcConfirmBtn').textContent = '✅ Confirm Payment';
-    document.getElementById('pcConfirmBtn').disabled   = false;
-    _pcScreenshotFile = null;
-    const modal = document.getElementById('paymentChannelModal');
-    modal.style.display = 'flex';
+    _pcPlayerRef = playerRef || '';
+    document.getElementById('pcChannel').value   = '';
+    document.getElementById('pcReference').value = playerRef || ''; // pre-fill with player's ref
+    document.getElementById('pcNotes').value     = '';
+    document.getElementById('pcError').style.display      = 'none';
+    document.getElementById('pcRefMismatch').style.display= 'none';
+    document.getElementById('pcConfirmBtn').textContent   = 'Confirm Payment';
+    document.getElementById('pcConfirmBtn').disabled      = false;
+
+    // Show player's submitted REF#
+    const playerRefEl = document.getElementById('pcPlayerRef');
+    if(playerRefEl) playerRefEl.textContent = playerRef || '(none submitted)';
+
+    document.getElementById('paymentChannelModal').style.display = 'flex';
     setTimeout(()=>document.getElementById('pcChannel').focus(), 80);
   });
-}
-
-let _pcScreenshotFile = null;
-
-function handleScreenshotSelect(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  _pcScreenshotFile = file;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('pcScreenshotImg').src = e.target.result;
-    document.getElementById('pcScreenshotPreview').style.display = 'block';
-    document.getElementById('pcScreenshotPlaceholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-function handleScreenshotDrop(event){
-  event.preventDefault();
-  document.getElementById('pcScreenshotDrop').style.borderColor = '#2a2a2a';
-  const file = event.dataTransfer.files[0];
-  if(!file || !file.type.startsWith('image/')) return;
-  _pcScreenshotFile = file;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('pcScreenshotImg').src = e.target.result;
-    document.getElementById('pcScreenshotPreview').style.display = 'block';
-    document.getElementById('pcScreenshotPlaceholder').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
 }
 
 async function confirmPaymentChannel(){
@@ -2269,35 +2959,24 @@ async function confirmPaymentChannel(){
   const reference = document.getElementById('pcReference').value.trim();
   const notes     = document.getElementById('pcNotes').value.trim();
   const errEl     = document.getElementById('pcError');
+  const mismatchEl= document.getElementById('pcRefMismatch');
+
+  errEl.style.display='none';
+  mismatchEl.style.display='none';
 
   if(!channel){   errEl.textContent='Please select a payment channel.'; errEl.style.display='block'; return; }
   if(!reference){ errEl.textContent='Reference number is required.';    errEl.style.display='block'; return; }
-  if(!_pcScreenshotFile){ errEl.textContent='Please upload a payment screenshot.'; errEl.style.display='block'; return; }
 
-  errEl.style.display='none';
-  const btn = document.getElementById('pcConfirmBtn');
-  btn.textContent='⏳ Uploading...'; btn.disabled=true;
-
-  // Upload screenshot to Supabase Storage
-  let screenshotUrl = null;
-  try{
-    const ext      = _pcScreenshotFile.name.split('.').pop();
-    const path     = `payments/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const upRes    = await fetch(`${SB_URL}/storage/v1/object/payment-screenshots/${path}`,{
-      method:'POST',
-      headers:{ 'Authorization':`Bearer ${SB_KEY}`, 'Content-Type':_pcScreenshotFile.type },
-      body: _pcScreenshotFile,
-    });
-    if(upRes.ok){
-      screenshotUrl = `${SB_URL}/storage/v1/object/public/payment-screenshots/${path}`;
-    } else {
-      // Non-fatal — proceed without URL if storage bucket not set up yet
-      console.warn('Screenshot upload failed:', await upRes.text());
-    }
-  }catch(e){ console.warn('Storage upload error:', e); }
+  // Warn if REF# doesn't match player's submitted REF#
+  if(_pcPlayerRef && reference.trim().toLowerCase() !== _pcPlayerRef.trim().toLowerCase()){
+    mismatchEl.style.display='block';
+    // Don't block — show warning but let admin override with confirmation
+    const proceed = confirm(`REF# mismatch!\n\nPlayer submitted: "${_pcPlayerRef}"\nYou entered: "${reference}"\n\nConfirm anyway?`);
+    if(!proceed) return;
+  }
 
   document.getElementById('paymentChannelModal').style.display = 'none';
-  if(_resolvePaymentChannel) _resolvePaymentChannel({channel, reference, notes, screenshotUrl});
+  if(_resolvePaymentChannel) _resolvePaymentChannel({channel, reference, notes});
   _resolvePaymentChannel = null;
 }
 
@@ -2305,6 +2984,202 @@ function cancelPaymentChannel(){
   document.getElementById('paymentChannelModal').style.display = 'none';
   if(_resolvePaymentChannel) _resolvePaymentChannel(null);
   _resolvePaymentChannel = null;
+}
+
+async function openScreenshot(url){
+  const lb    = document.getElementById('screenshotLightbox');
+  const img   = document.getElementById('screenshotLightboxImg');
+  const errEl = document.getElementById('screenshotError');
+  const linkEl= document.getElementById('screenshotDirectLink');
+
+  // Reset state — hide error, show spinner text
+  img.style.display = 'none';
+  errEl.style.display = 'none';
+  linkEl.href = url;
+  lb.style.display = 'flex';
+
+  // Set up load/error handlers BEFORE setting src
+  img.onload  = () => { img.style.display='block'; errEl.style.display='none'; };
+  img.onerror = () => { img.style.display='none';  errEl.style.display='block'; };
+
+  try{
+    const match = url.match(/payment-screenshots\/(.+)$/);
+    if(!match){ img.src = url; return; }
+    const path = match[1];
+
+    const res = await fetch(`${SB_URL}/storage/v1/object/sign/payment-screenshots/${path}`,{
+      method:'POST',
+      headers:{...HDRS},
+      body:JSON.stringify({expiresIn: 3600}),
+    });
+
+    if(res.ok){
+      const data = await res.json();
+      img.src = `${SB_URL}/storage/v1${data.signedURL}`;
+    } else {
+      img.src = url;
+    }
+  }catch(e){
+    img.src = url;
+  }
+}
+function closeScreenshot(){
+  document.getElementById('screenshotLightbox').style.display = 'none';
+  document.getElementById('screenshotLightboxImg').src = '';
+}
+// Close on Escape key
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeScreenshot(); });
+
+/* ════════════════════════════════════════════
+   SALES DASHBOARD
+════════════════════════════════════════════ */
+async function fetchSales(){
+  const noT = document.getElementById('salesNoTournament');
+  const con  = document.getElementById('salesContent');
+  if(!activeTournament){ noT.style.display='block'; con.style.display='none'; return; }
+  noT.style.display='none'; con.style.display='block';
+
+  try{
+    const [regRes, expRes, sprRes, priceRes] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTournament.id}&select=id,Status,Level`,{headers:HDRS}),
+      fetch(`${SB_URL}/rest/v1/expenses?tournament_id=eq.${activeTournament.id}&select=amount,category,status`,{headers:HDRS}),
+      fetch(`${SB_URL}/rest/v1/sponsors?tournament_id=eq.${activeTournament.id}&select=name,tier,money,shuttles,foods,others`,{headers:HDRS}),
+      fetch(`${SB_URL}/rest/v1/pricing?tournament_id=eq.${activeTournament.id}&enabled=eq.true&select=level_key,label,price,total_slots,player_count,champion,runner_up`,{headers:HDRS}),
+    ]);
+    const regs    = regRes.ok   ? await regRes.json()   : [];
+    const exps    = expRes.ok   ? await expRes.json()   : [];
+    const sponsors= sprRes.ok   ? await sprRes.json()   : [];
+    const pricing = priceRes.ok ? await priceRes.json() : [];
+    renderSales(regs, exps, sponsors, pricing);
+  }catch(e){ console.error('fetchSales error:', e); }
+}
+
+function renderSales(regs, exps, sponsors, pricing){
+  const fmt = n => `₱${Number(n||0).toLocaleString()}`;
+  const COLLECTED_STATUSES = new Set(['Registered']);
+  const PENDING_STATUSES   = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received']);
+
+  const levelMap = {};
+  pricing.forEach(p=>{
+    const pc = p.player_count||2;
+    levelMap[p.level_key] = {
+      label:p.label||p.level_key, price:p.price||0, pc, teamPrice:(p.price||0)*pc,
+      total_slots:p.total_slots||0,
+      champion_prize: p.champion_prize||0,
+      runner_up_prize: p.runner_up_prize||0,
+      collected:0, pending:0, filled:0,
+    };
+  });
+
+  regs.forEach(r=>{
+    const lv = levelMap[r.Level]; if(!lv) return;
+    if(COLLECTED_STATUSES.has(r.Status)){ lv.collected++; lv.filled++; }
+    else if(PENDING_STATUSES.has(r.Status)){ lv.pending++; lv.filled++; }
+  });
+
+  let totalCollected=0,totalPending=0,totalMax=0,totalSlots=0,totalFilled=0;
+  Object.values(levelMap).forEach(lv=>{
+    totalCollected+=lv.collected*lv.teamPrice;
+    totalPending  +=lv.pending  *lv.teamPrice;
+    totalMax      +=lv.total_slots*lv.teamPrice;
+    totalSlots    +=lv.total_slots;
+    totalFilled   +=lv.filled;
+  });
+
+  const totalExpenses = exps.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const netProfit     = totalCollected - totalExpenses;
+  const fillRate      = totalSlots>0 ? Math.round(totalFilled/totalSlots*100) : 0;
+
+  document.getElementById('salesCollected').textContent   = fmt(totalCollected);
+  document.getElementById('salesCollectedSub').textContent= `${regs.filter(r=>COLLECTED_STATUSES.has(r.Status)).length} registered teams`;
+  document.getElementById('salesPending').textContent     = fmt(totalPending);
+  document.getElementById('salesPendingSub').textContent  = `${regs.filter(r=>PENDING_STATUSES.has(r.Status)).length} awaiting payment`;
+  document.getElementById('salesMax').textContent         = fmt(totalMax);
+  document.getElementById('salesExpenses').textContent    = fmt(totalExpenses);
+  document.getElementById('salesExpensesSub').textContent = `${exps.length} expense entries`;
+  const netEl = document.getElementById('salesNet');
+  netEl.textContent  = fmt(Math.abs(netProfit));
+  netEl.style.color  = netProfit>=0?'#22c55e':'#e8372a';
+  document.getElementById('salesNetSub').textContent  = netProfit>=0?'Profit':'Loss';
+  document.getElementById('salesFillRate').textContent= fillRate+'%';
+  document.getElementById('salesFillSub').textContent = `${totalFilled} / ${totalSlots} total slots`;
+
+  // Per-Level Table
+  const tbody = document.getElementById('salesLevelTable');
+  const rows  = Object.values(levelMap);
+  tbody.innerHTML = !rows.length
+    ? `<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--muted);">No levels configured.</td></tr>`
+    : rows.map(lv=>{
+        const pct = lv.total_slots>0?Math.round(lv.filled/lv.total_slots*100):0;
+        const bar = pct>=100?'#e8372a':pct>=70?'#f5a623':'#22c55e';
+        return `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 14px;">
+            <div style="font-weight:600;font-size:13px;">${lv.label}</div>
+            <div style="height:4px;background:#222;border-radius:2px;margin-top:5px;width:80px;"><div style="height:100%;width:${pct}%;background:${bar};border-radius:2px;"></div></div>
+          </td>
+          <td style="padding:10px 14px;text-align:center;color:var(--muted);">${lv.total_slots}</td>
+          <td style="padding:10px 14px;text-align:center;font-weight:700;color:${pct>=100?'var(--primary)':'var(--text)'};">${lv.filled}</td>
+          <td style="padding:10px 14px;text-align:right;color:var(--muted);">${lv.price>0?fmt(lv.teamPrice):'TBA'}</td>
+          <td style="padding:10px 14px;text-align:right;color:#22c55e;font-weight:600;">${fmt(lv.collected*lv.teamPrice)}</td>
+          <td style="padding:10px 14px;text-align:right;color:#f5a623;">${fmt(lv.pending*lv.teamPrice)}</td>
+          <td style="padding:10px 14px;text-align:right;color:${lv.champion_prize>0?'#f5a623':'var(--muted)'};">${lv.champion_prize>0?fmt(lv.champion_prize):'—'}</td>
+          <td style="padding:10px 14px;text-align:right;color:${lv.runner_up_prize>0?'#60a5fa':'var(--muted)'};">${lv.runner_up_prize>0?fmt(lv.runner_up_prize):'—'}</td>
+        </tr>`;
+      }).join('');
+
+  // Expenses by Category
+  const catMap = {};
+  exps.forEach(e=>{ catMap[e.category]=(catMap[e.category]||0)+parseFloat(e.amount||0); });
+  const expDiv = document.getElementById('salesExpenseBreakdown');
+  expDiv.innerHTML = !exps.length
+    ? '<div style="color:var(--muted);font-size:12px;">No expenses recorded yet.</div>'
+    : Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>
+        `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1e1e1e;font-size:13px;">
+          <span style="color:var(--muted);">${cat}</span>
+          <span style="font-weight:600;color:var(--primary);">${fmt(amt)}</span>
+        </div>`).join('')
+      + `<div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:13px;">
+          <span style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;">Total</span>
+          <span style="font-weight:800;color:var(--primary);font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;">${fmt(totalExpenses)}</span>
+        </div>`;
+
+  // Sponsors
+  const tierColor = {Platinum:'#e2e8f0',Gold:'#f5a623',Silver:'#94a3b8',Bronze:'#c97d4e'};
+  const sprDiv = document.getElementById('salesSponsorList');
+  sprDiv.innerHTML = !sponsors.length
+    ? '<div style="color:var(--muted);font-size:12px;">No sponsors added yet.</div>'
+    : sponsors.map(s=>`
+        <div style="padding:8px 0;border-bottom:1px solid #1e1e1e;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-weight:700;font-size:13px;">${s.name}</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#1a1a1a;color:${tierColor[s.tier]||'#888'};">${s.tier}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.7;">
+            ${s.money?`💰 ${s.money}<br>`:''}${s.shuttles?`🏸 ${s.shuttles}<br>`:''}
+            ${s.foods?`🍱 ${s.foods}<br>`:''}${s.others?`📦 ${s.others}`:''}
+          </div>
+        </div>`).join('');
+
+  // P&L
+  document.getElementById('salesPLBody').innerHTML = `
+    <div style="display:grid;gap:8px;max-width:400px;">
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e1e1e;">
+        <span style="color:var(--muted);font-size:13px;">Collected Revenue</span>
+        <span style="font-weight:700;color:#22c55e;">${fmt(totalCollected)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e1e1e;">
+        <span style="color:var(--muted);font-size:13px;">Pending Revenue</span>
+        <span style="font-weight:700;color:#f5a623;">${fmt(totalPending)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1e1e1e;">
+        <span style="color:var(--muted);font-size:13px;">Total Expenses</span>
+        <span style="font-weight:700;color:#e8372a;">− ${fmt(totalExpenses)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0 4px;border-top:2px solid #2a2a2a;">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;">Net ${netProfit>=0?'Profit':'Loss'}</span>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:${netProfit>=0?'#22c55e':'#e8372a'};">${fmt(Math.abs(netProfit))}</span>
+      </div>
+    </div>`;
 }
 
 /* ════════════════════════════════════════════
@@ -2418,6 +3293,161 @@ function getPHToday(){
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
   const phNow = new Date(utc + 8 * 60 * 60000);
   return phNow.toISOString().split('T')[0];
+}
+
+async function previewJerseyImage(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('jerseyPreview');
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;
+    document.getElementById('jerseyFileName').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewQR(type, event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('qrPreview-'+type);
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadToPublicStorage(file, path){
+  const res = await fetch(`${SB_URL}/storage/v1/object/sponsor-logos/${path}`,{
+    method:'POST',
+    headers:{ 'Authorization':`Bearer ${SB_KEY}`, 'Content-Type':file.type },
+    body: file,
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return `${SB_URL}/storage/v1/object/public/sponsor-logos/${path}`;
+}
+
+async function uploadJerseyImage(tournamentId){
+  const fileInput = document.getElementById('jerseyFileInput');
+  const file = fileInput.files[0];
+  if(!file) return document.getElementById('tJerseyImageUrl').value || null;
+  const ext  = file.name.split('.').pop()||'jpg';
+  return await uploadToPublicStorage(file, `jerseys/tournament-${tournamentId}-${Date.now()}.${ext}`);
+}
+
+async function uploadQRImages(tournamentId){
+  const urls = {};
+  for(const type of ['gcash','maya','other']){
+    const fileInput = document.getElementById('qrFile-'+type);
+    const file = fileInput.files[0];
+    const existing = document.getElementById('qrUrl-'+type).value;
+    if(file){
+      const ext = file.name.split('.').pop()||'jpg';
+      urls[type] = await uploadToPublicStorage(file, `qr/${type}-${tournamentId}-${Date.now()}.${ext}`);
+    } else if(existing){
+      urls[type] = existing;
+    }
+  }
+  return urls;
+}
+
+const QR_LOGOS = {'gcash':'data:image/png;base64,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','maya':'data:image/png;base64,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','other':'data:image/png;base64,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'};
+const QR_LABELS = {'gcash':'GCash','maya':'Maya','other':'Bank Transfer'};
+
+function resetQRPreviews(){
+  ['gcash','maya','other'].forEach(function(type){
+    document.getElementById('qrUrl-'+type).value = '';
+    document.getElementById('qrFile-'+type).value = '';
+    var el = document.getElementById('qrPreview-'+type);
+    if(el) el.innerHTML = '<img src="'+QR_LOGOS[type]+'" style="width:42px;height:42px;object-fit:contain;border-radius:4px;"><div style="margin-top:4px;font-size:10px;color:#888;">'+QR_LABELS[type]+'</div>';
+  });
+}
+
+let _editingTournamentId = null; // null = creating new, number = editing existing
+
+function handleTournamentSave(status){
+  console.log('🔵 handleTournamentSave called | status:', status, '| _editingTournamentId:', _editingTournamentId);
+  if(_editingTournamentId !== null){
+    console.log('   → calling updateTournament(', _editingTournamentId, ')');
+    updateTournament(_editingTournamentId, status === 'Draft' ? 'Draft' : null);
+  } else {
+    console.log('   → calling submitTournament(', status, ')');
+    submitTournament(status);
+  }
+}
+
+async function openEmailSettings(){
+  try{
+    const res  = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}&select=notification_email`,{headers:HDRS});
+    const data = await res.json();
+    document.getElementById('notifEmail').value = (data&&data.length) ? (data[0].notification_email||'') : '';
+  }catch(e){ document.getElementById('notifEmail').value=''; }
+  document.getElementById('siteBaseUrl').value = localStorage.getItem('siteBaseUrl')||'';
+  document.getElementById('emailSettingsMsg').style.display='none';
+  document.getElementById('emailSettingsModal').style.display='flex';
+}
+
+async function saveEmailSettings(){
+  const email   = document.getElementById('notifEmail').value.trim();
+  const siteUrl = document.getElementById('siteBaseUrl').value.trim();
+  const msgEl   = document.getElementById('emailSettingsMsg');
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    msgEl.textContent='Please enter a valid email address.';
+    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;';
+    return;
+  }
+  // Save site URL to localStorage (no DB needed)
+  if(siteUrl) localStorage.setItem('siteBaseUrl', siteUrl);
+  else localStorage.removeItem('siteBaseUrl');
+
+  const res = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}`,{
+    method:'PATCH',
+    headers:{...HDRS,'Prefer':'return=minimal'},
+    body:JSON.stringify({notification_email: email||null}),
+  });
+  if(res.ok){
+    msgEl.textContent='✓ Saved!';
+    msgEl.style.cssText='display:block;background:#0d1a0d;color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:8px 12px;border-radius:6px;';
+    setTimeout(closeEmailSettings, 1500);
+  } else {
+    msgEl.textContent='Save failed.';
+    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;';
+  }
+}
+
+/* ════════════════════════════════════════════
+   EMAIL HELPER — calls Supabase Edge Function
+════════════════════════════════════════════ */
+const EDGE_URL = `${SB_URL}/functions/v1/send-email`;
+
+async function sendEmail(type, data){
+  try{
+    const res = await fetch(EDGE_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':`Bearer ${SB_KEY}`,
+      },
+      body: JSON.stringify({type, data}),
+    });
+    const result = await res.json();
+    if(!res.ok) console.warn('Email send failed:', result);
+    return result;
+  }catch(e){
+    console.warn('Email edge function error:', e.message);
+    return null;
+  }
+}
+
+// Get base URL for payment confirm link
+function getPaymentLink(regId){
+  // Use saved site URL, fallback to current location
+  const saved = localStorage.getItem('siteBaseUrl');
+  const base  = saved && saved.trim()
+    ? saved.trim().replace(/\/$/, '') + '/'
+    : window.location.href.replace(/admin\.html.*$/, '');
+  return `${base}payment-confirm.html?ref=${regId}`;
 }
 
 function initDatePickers(){

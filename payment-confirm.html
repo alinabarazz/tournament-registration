@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit Payment — Badminton Tournament</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--primary:#e8372a;--bg:#0a0a0a;--card:#141414;--border:#2a2a2a;--text:#f0f0f0;--muted:#666;--success:#22c55e;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+  .container{width:100%;max-width:480px;}
+  .logo{text-align:center;margin-bottom:1.5rem;}
+  .logo-title{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary);}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .card-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#1a0f0f,#141414);}
+  .card-title{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
+  .card-sub{font-size:12px;color:var(--muted);}
+  .card-body{padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
+  .info-box{background:#0f0f0f;border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:12px 14px;}
+  .info-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;}
+  .info-row:not(:last-child){border-bottom:1px solid #1e1e1e;}
+  .info-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;}
+  .info-val{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:var(--text);text-align:right;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+  .field input,.field select{background:#0f0f0f;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:12px 14px;transition:border-color 0.2s;width:100%;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--primary);}
+  .field input[readonly]{color:#888;cursor:not-allowed;background:#0a0a0a;}
+  .field select{appearance:none;cursor:pointer;}
+  .err{font-size:11px;color:var(--primary);display:none;margin-top:2px;}
+  .err.show{display:block;}
+  .cash-note{display:none;padding:10px 14px;background:#0d1a0d;border:1px solid rgba(34,197,94,0.2);border-left:3px solid #22c55e;border-radius:8px;font-size:12px;color:#22c55e;line-height:1.6;}
+  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;background:#0f0f0f;}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:rgba(232,55,42,0.04);}
+  .upload-icon{font-size:1.8rem;margin-bottom:0.4rem;}
+  .upload-hint{font-size:12px;color:var(--muted);margin-top:4px;}
+  .preview-wrap{display:none;position:relative;}
+  .preview-img{width:100%;max-height:200px;object-fit:contain;border-radius:10px;border:1px solid var(--border);}
+  .preview-remove{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .btn{width:100%;padding:14px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;font-size:1.05rem;cursor:pointer;border:none;transition:all 0.2s;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:#c0281c;}
+  .btn-primary:disabled{background:#2a2a2a;color:#555;cursor:not-allowed;}
+  .success-page{display:none;text-align:center;padding:2rem 1.5rem;}
+  .success-icon{width:72px;height:72px;background:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 1rem;animation:pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);}
+  @keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  .success-title{font-family:'Barlow Condensed',sans-serif;font-size:1.7rem;font-weight:800;text-transform:uppercase;margin-bottom:0.5rem;}
+  .success-msg{font-size:13px;color:var(--muted);line-height:1.7;max-width:320px;margin:0 auto;}
+  .jersey-free{background:linear-gradient(135deg,#0d1f0d,#141414);border:1px solid rgba(34,197,94,0.35);border-radius:12px;padding:1.25rem;margin-top:1.25rem;text-align:center;}
+  .jersey-free-title{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;color:#22c55e;letter-spacing:0.06em;margin-bottom:6px;}
+  .jersey-free-msg{font-size:12px;color:#ccc;line-height:1.6;}
+  .jersey-paid{background:#161616;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-top:1.25rem;text-align:center;}
+  .jersey-paid-title{font-family:'Barlow Condensed',sans-serif;font-size:0.95rem;font-weight:800;text-transform:uppercase;color:var(--muted);letter-spacing:0.06em;margin-bottom:6px;}
+  .jersey-paid-msg{font-size:12px;color:#555;line-height:1.6;}
+  .error-page{display:none;text-align:center;padding:2.5rem 1.5rem;}
+  .error-icon{font-size:3rem;margin-bottom:1rem;}
+  .error-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;color:var(--primary);margin-bottom:0.5rem;}
+  .error-msg{font-size:13px;color:var(--muted);line-height:1.7;}
+  .loading{text-align:center;padding:3rem;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="logo">
+    <div class="logo-title">Payment Confirmation</div>
+  </div>
+
+  <!-- Loading -->
+  <div class="card" id="loadingState">
+    <div class="loading">Loading your registration...</div>
+  </div>
+
+  <!-- Error -->
+  <div class="card" id="errorState" style="display:none;">
+    <div class="error-page" style="display:block;">
+      <div class="error-icon">❌</div>
+      <div class="error-title">Link Invalid</div>
+      <div class="error-msg" id="errorMsg">This payment link is invalid or has already been used.</div>
+    </div>
+  </div>
+
+  <!-- Main Form -->
+  <div class="card" id="mainForm" style="display:none;">
+    <div class="card-header">
+      <div class="card-title">Submit Payment Proof</div>
+      <div class="card-sub">Upload your payment screenshot to confirm your slot.</div>
+    </div>
+    <div class="card-body">
+
+      <div class="info-box" id="regInfoBox"></div>
+
+      <div class="field">
+        <label>Registration REF#</label>
+        <input type="text" id="regRef" readonly>
+      </div>
+
+      <div class="field">
+        <label>Payment Method <span style="color:var(--primary);">*</span></label>
+        <select id="payMethod" onchange="onMethodChange()">
+          <option value="">— Select payment method —</option>
+          <option value="GCash">GCash</option>
+          <option value="Maya">Maya</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cash">Cash</option>
+          <option value="Messenger">Messenger</option>
+        </select>
+        <span class="err" id="err-payMethod">Please select a payment method.</span>
+      </div>
+
+      <div class="cash-note" id="cashNote">
+        For <strong>Cash payments</strong> — write your name and contact number below as REF#. Bring the exact amount to the organizer. Screenshot is optional.
+      </div>
+
+      <div class="field">
+        <label id="refLabel">REF# <span style="color:var(--primary);">*</span></label>
+        <input type="text" id="payRef" placeholder="Enter your REF#">
+        <span class="err" id="err-payRef">REF# is required.</span>
+      </div>
+
+      <div class="field">
+        <label>Payment Screenshot <span style="color:var(--primary);" id="screenshotReq">*</span></label>
+        <div class="upload-zone" id="uploadZone"
+          onclick="document.getElementById('fileInput').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="handleDrop(event)">
+          <div class="upload-icon">📷</div>
+          <div style="font-size:13px;font-weight:600;">Click to upload or drag &amp; drop</div>
+          <div class="upload-hint">PNG, JPG, JPEG &bull; Max 5MB</div>
+        </div>
+        <div class="preview-wrap" id="previewWrap">
+          <img id="previewImg" class="preview-img" alt="Preview">
+          <button class="preview-remove" onclick="removeFile()">x</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+        <span class="err" id="err-screenshot">Please upload a payment screenshot.</span>
+      </div>
+
+      <div style="padding:10px 14px;background:#1a1a00;border:1px solid rgba(245,166,35,0.25);border-left:3px solid #f5a623;border-radius:8px;font-size:12px;color:#f5a623;line-height:1.6;">
+        Make sure your screenshot clearly shows the <strong>amount</strong>, <strong>reference number</strong>, and <strong>recipient details</strong>. Blurry or cropped screenshots will be rejected.
+      </div>
+
+      <div id="submitError" style="display:none;color:#ff6b6b;font-size:12px;padding:10px 14px;background:#1a0808;border:1px solid #3a1010;border-radius:8px;"></div>
+
+      <button class="btn btn-primary" id="submitBtn" onclick="submitPayment()">Submit Payment Proof</button>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="card" id="successState" style="display:none;">
+    <div class="success-page" style="display:block;">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Payment Submitted!</div>
+      <div class="success-msg">
+        Your payment proof has been submitted successfully.<br>
+        The organizer will review and confirm your registration shortly.
+      </div>
+      <div id="jerseySection"></div>
+    </div>
+  </div>
+
+</div>
+<script>
+const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
+const HDRS = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+let regData = null;
+let _uploadFile = null;
+let _isCash = false;
+
+function onMethodChange(){
+  const method = document.getElementById('payMethod').value;
+  _isCash = method === 'Cash';
+  document.getElementById('cashNote').style.display = _isCash ? 'block' : 'none';
+  document.getElementById('screenshotReq').style.display = _isCash ? 'none' : 'inline';
+  const refLabel = document.getElementById('refLabel');
+  const payRef = document.getElementById('payRef');
+  if(_isCash){
+    refLabel.innerHTML = 'Your Name &amp; Contact <span style="color:var(--muted);font-weight:400;">(optional)</span>';
+    payRef.placeholder = 'e.g. Juan Dela Cruz 09123456789';
+  } else if(method==='GCash'){
+    refLabel.innerHTML = 'GCash REF# <span style="color:var(--primary);">*</span>';
+    payRef.placeholder = 'e.g. 1234567890';
+  } else if(method==='Maya'){
+    refLabel.innerHTML = 'Maya Transaction ID <span style="color:var(--primary);">*</span>';
+    payRef.placeholder = 'e.g. TXN-XXXXXXXXXX';
+  } else if(method==='Bank Transfer'){
+    refLabel.innerHTML = 'Bank Reference # <span style="color:var(--primary);">*</span>';
+    payRef.placeholder = 'e.g. 12-digit bank ref';
+  } else {
+    refLabel.innerHTML = 'REF# <span style="color:var(--primary);">*</span>';
+    payRef.placeholder = 'Enter your REF#';
+  }
+  hideErr('err-payMethod');
+}
+
+function show(id){
+  ['loadingState','errorState','mainForm','successState'].forEach(function(s){
+    document.getElementById(s).style.display = s===id?'block':'none';
+  });
+}
+function showError(msg){
+  document.getElementById('errorMsg').textContent = msg;
+  show('errorState');
+}
+function showErr(id){ document.getElementById(id).classList.add('show'); }
+function hideErr(id){ document.getElementById(id).classList.remove('show'); }
+
+async function init(){
+  const params = new URLSearchParams(window.location.search);
+  const rawRef = params.get('ref');
+  if(!rawRef){ showError('No registration reference found in this link.'); return; }
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+rawRef+'&select=id,Status,Team_Name,Level,Email_Address,Player1_Name,Player2_Name,tournament_id,payment_screenshot',{headers:HDRS});
+    const data = await res.json();
+    if(!data||!data.length){ showError('Registration not found. Please check your link or contact the organizer.'); return; }
+    regData = data[0];
+    if(regData.Status !== 'Awaiting Payment'){
+      if(regData.payment_screenshot) showError('Payment proof already submitted. The organizer is reviewing it.');
+      else if(regData.Status==='Registered') showError('Your registration is already confirmed. Nothing else needed.');
+      else if(regData.Status==='Rejected'||regData.Status==='Cancelled') showError('Your registration has been '+regData.Status.toLowerCase()+'. Please contact the organizer.');
+      else showError('Your registration status is "'+regData.Status+'". No action needed at this time.');
+      return;
+    }
+    document.getElementById('regRef').value = '#'+String(regData.id).padStart(5,'0');
+    document.getElementById('regInfoBox').innerHTML =
+      '<div class="info-row"><span class="info-label">Tournament</span><span class="info-val" id="tournamentName">Loading...</span></div>'+
+      '<div class="info-row"><span class="info-label">Team</span><span class="info-val">'+(regData.Team_Name||'—')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Level</span><span class="info-val">'+(regData.Level||'—')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Players</span><span class="info-val">'+[regData.Player1_Name,regData.Player2_Name].filter(Boolean).join(' & ')+'</span></div>';
+    fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,free_jersey_count',{headers:HDRS})
+      .then(function(r){return r.json();})
+      .then(function(d){ if(d&&d.length) document.getElementById('tournamentName').textContent=d[0].name; });
+    show('mainForm');
+  }catch(e){ showError('Failed to load registration: '+e.message); }
+}
+
+function handleFileSelect(e){ setFile(e.target.files[0]); }
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  var file = e.dataTransfer.files[0];
+  if(file && file.type.startsWith('image/')) setFile(file);
+}
+function setFile(file){
+  if(!file) return;
+  if(file.size > 5*1024*1024){ alert('File too large. Max 5MB.'); return; }
+  _uploadFile = file;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('uploadZone').style.display = 'none';
+    hideErr('err-screenshot');
+  };
+  reader.readAsDataURL(file);
+}
+function removeFile(){
+  _uploadFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('previewWrap').style.display = 'none';
+  document.getElementById('uploadZone').style.display = 'block';
+}
+
+async function checkJersey(){
+  try{
+    var tRes = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,free_jersey_count',{headers:HDRS});
+    var tData = await tRes.json();
+    if(!tData||!tData.length) return;
+    var freeCount = parseInt(tData[0].free_jersey_count)||0;
+    var jerseySection = document.getElementById('jerseySection');
+    if(freeCount <= 0){ jerseySection.innerHTML=''; return; }
+    var rRes = await fetch(SB_URL+'/rest/v1/registrations?tournament_id=eq.'+regData.tournament_id+'&id=lt.'+regData.id+'&select=id',{headers:HDRS});
+    var rData = await rRes.json();
+    var position = (rData||[]).length + 1;
+    var players = [regData.Player1_Name,regData.Player2_Name].filter(Boolean).join(' & ');
+    if(position <= freeCount){
+      jerseySection.innerHTML =
+        '<div class="jersey-free">'+
+        '<div style="font-size:2rem;margin-bottom:8px;">👕</div>'+
+        '<div class="jersey-free-title">Free Jersey Eligible!</div>'+
+        '<div class="jersey-free-msg">Congratulations <strong style="color:#fff;">'+players+'</strong>!<br>'+
+        'You are registration <strong style="color:#22c55e;">#'+position+'</strong> — within the first '+freeCount+' registrations.<br>'+
+        'Your free jerseys will be provided on tournament day.</div>'+
+        '</div>';
+    } else {
+      jerseySection.innerHTML =
+        '<div class="jersey-paid">'+
+        '<div class="jersey-paid-title">Jersey Available for Purchase</div>'+
+        '<div class="jersey-paid-msg">Hi <strong style="color:#ccc;">'+players+'</strong>,<br>'+
+        'Free jerseys have been claimed (first '+freeCount+' registrations only).<br>'+
+        'You may still purchase a jersey — contact the organizer for pricing and details.</div>'+
+        '</div>';
+    }
+  }catch(e){ console.warn('Jersey check failed:',e); }
+}
+
+async function submitPayment(){
+  var method = document.getElementById('payMethod').value;
+  var payRef = document.getElementById('payRef').value.trim();
+  var ok = true;
+  if(!method){ showErr('err-payMethod'); ok=false; } else hideErr('err-payMethod');
+  if(!_isCash && !payRef){ showErr('err-payRef'); ok=false; } else hideErr('err-payRef');
+  if(!_isCash && !_uploadFile){ showErr('err-screenshot'); ok=false; } else hideErr('err-screenshot');
+  if(!ok) return;
+
+  var finalRef = payRef || ('CASH-'+Date.now());
+  var btn = document.getElementById('submitBtn');
+  var errBox = document.getElementById('submitError');
+  btn.textContent='Uploading...'; btn.disabled=true;
+  errBox.style.display='none';
+
+  try{
+    var screenshotUrl = null;
+    if(_uploadFile){
+      var ext = (_uploadFile.name.split('.').pop())||'jpg';
+      var path = 'payments/reg-'+regData.id+'-'+Date.now()+'.'+ext;
+      var upRes = await fetch(SB_URL+'/storage/v1/object/payment-screenshots/'+path,{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+SB_KEY,'Content-Type':_uploadFile.type},
+        body:_uploadFile,
+      });
+      if(!upRes.ok) throw new Error('Screenshot upload failed: '+(await upRes.text()));
+      screenshotUrl = SB_URL+'/storage/v1/object/public/payment-screenshots/'+path;
+    }
+
+    btn.textContent='Saving...';
+    var patchRes = await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+regData.id,{
+      method:'PATCH',
+      headers:Object.assign({},HDRS,{'Prefer':'return=minimal'}),
+      body:JSON.stringify({
+        Status:'Payment Submitted',
+        payment_channel:method,
+        payment_reference:finalRef,
+        payment_screenshot:screenshotUrl,
+        payment_date:new Date().toISOString().split('T')[0],
+      }),
+    });
+    if(!patchRes.ok) throw new Error('Failed to save: '+(await patchRes.text()));
+
+    // Admin notification
+    try{
+      var tRes2 = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,owner_id',{headers:HDRS});
+      var tData2 = await tRes2.json();
+      var tournament = (tData2&&tData2[0])||{};
+      var uRes = await fetch(SB_URL+'/rest/v1/users?id=eq.'+tournament.owner_id+'&select=notification_email,username',{headers:HDRS});
+      var uData = await uRes.json();
+      var admin = (uData&&uData[0])||{};
+      if(admin.notification_email){
+        await fetch(SB_URL+'/functions/v1/send-email',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+          body:JSON.stringify({
+            type:'payment_received_admin',
+            data:{
+              admin_email:admin.notification_email,
+              admin_name:admin.username||'Admin',
+              team_name:regData.Team_Name,
+              level:regData.Level,
+              player1:regData.Player1_Name||'—',
+              player2:regData.Player2_Name||'',
+              reg_ref:'#'+String(regData.id).padStart(5,'0'),
+              payment_ref:finalRef,
+              payment_method:method,
+              screenshot_url:screenshotUrl,
+              tournament_name:tournament.name||'',
+            }
+          }),
+        });
+      }
+    }catch(e){ console.warn('Admin notify failed:',e); }
+
+    show('successState');
+    await checkJersey();
+
+  }catch(e){
+    errBox.textContent = e.message;
+    errBox.style.display = 'block';
+    btn.textContent='Submit Payment Proof'; btn.disabled=false;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

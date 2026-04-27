@@ -90,8 +90,30 @@
 <body>
 <div class="container">
   <a class="back-home" href="index.html">← Back to Home</a>
+
+  <!-- TOURNAMENT CONTEXT BANNER (shown when loaded via link/QR) -->
+  <div id="tournamentContextBanner" style="display:none;background:linear-gradient(135deg,#1a0f0f,#141414);border:1px solid rgba(232,55,42,0.35);border-left:4px solid var(--primary);border-radius:10px;padding:14px 18px;margin-bottom:1.5rem;">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;font-weight:600;margin-bottom:4px;">You are registering for</div>
+    <div id="tournamentContextName" style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;text-transform:uppercase;color:var(--text);letter-spacing:0.05em;"></div>
+    <div id="tournamentContextMeta" style="font-size:12px;color:var(--muted);margin-top:4px;"></div>
+  </div>
+
+  <!-- CLOSED PAGE -->
+  <div id="pageClosed" style="display:none;">
+    <div class="card">
+      <div style="text-align:center;padding:2rem 1rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;text-transform:uppercase;margin-bottom:0.5rem;">Registration Closed</div>
+        <p style="color:var(--muted);font-size:0.95rem;margin-bottom:1.5rem;" id="closedMsg">This tournament is no longer accepting registrations.</p>
+        <a href="index.html" style="display:inline-block;background:var(--primary);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.95rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:12px 28px;border-radius:8px;text-decoration:none;">← Back to Home</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN FORM WRAPPER -->
+  <div id="mainForm">
   <div class="page-header">
-    <div class="badge">Official Registration</div>
+    <div class="badge" id="registrationBadge">Official Registration</div>
     <h1>Tournament<br><span>Registration</span></h1>
     <p>Fill in your team details to register for the tournament.</p>
   </div>
@@ -213,6 +235,7 @@
       </div>
     </div>
   </div>
+  </div><!-- /mainForm -->
 </div>
 
 <script>
@@ -229,49 +252,172 @@
   let activeTournamentId = null;
   let pricingCache       = [];   // [{level_key, label, enabled, price, total_slots, filled_slots, available_slots}]
 
+  function showClosedPage(msg){
+    document.getElementById('mainForm').style.display = 'none';
+    document.getElementById('pageClosed').style.display = 'block';
+    if(msg) document.getElementById('closedMsg').textContent = msg;
+  }
+
+  function showTournamentBanner(t){
+    let meta = [];
+    if(t.owner_name) meta.push(`by ${t.owner_name}`);
+    // Show EVENT/TOURNAMENT date, not registration date
+    if(t.tournament_date_from){
+      const d = new Date(t.tournament_date_from).toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+      meta.push(`🏸 Event starts ${d}`);
+    } else if(t.event_date_from){
+      // fallback if tournament_date_from not set
+      const d = new Date(t.event_date_from).toLocaleDateString('en-PH',{month:'long',day:'numeric',year:'numeric'});
+      meta.push(`📅 Reg. opens ${d}`);
+    }
+    if(t.location) meta.push(`📍 ${t.location}`);
+    document.getElementById('tournamentContextName').textContent = t.name;
+    document.getElementById('tournamentContextMeta').textContent = meta.join('  ·  ');
+    document.getElementById('tournamentContextBanner').style.display = 'block';
+    const badge = document.getElementById('registrationBadge');
+    if(badge) badge.textContent = t.name || 'Official Registration';
+  }
+
+  function isRegistrationOpen(t){
+    // Check date window if set; otherwise fall back to status===Active
+    const now = new Date();
+    // Use PH time by setting offset (+8h)
+    const phOffset = 8 * 60;
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const phNow = new Date(utc + phOffset * 60000);
+    if(t.event_date_from && t.event_date_to){
+      const from = new Date(t.event_date_from + 'T00:00:00');
+      const to   = new Date(t.event_date_to   + 'T23:59:59');
+      return phNow >= from && phNow <= to;
+    }
+    return t.status === 'Active';
+  }
+
   async function loadActiveTournament(){
-    // Load the first "Active" tournament found (publicly visible)
+    // ── Check for ?t=ID in the URL (QR / direct link) ──
+    const params = new URLSearchParams(window.location.search);
+    const urlTournamentId = params.get('t');
+
     try{
-      const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?status=eq.Active&order=created_at.desc&limit=1&select=id,name,status`,{headers:SB_HDRS});
-      const data = await res.json();
-      if(data && data.length){
-        activeTournamentId = data[0].id;
-        // Update page header badge if you have one
-        const badge = document.querySelector('.badge');
-        if(badge) badge.textContent = data[0].name || 'Official Registration';
+      if(urlTournamentId){
+        // Load the specific tournament from the link
+        const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?id=eq.${urlTournamentId}&select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,location`,{headers:SB_HDRS});
+        const data = await res.json();
+        if(!data || !data.length){
+          showClosedPage('This registration link is invalid or the tournament no longer exists.');
+          return;
+        }
+        const t = data[0];
+        if(!isRegistrationOpen(t)){
+          showClosedPage(`Registration for "${t.name}" has been closed.`);
+          return;
+        }
+        activeTournamentId = t.id;
+        showTournamentBanner(t);
         await loadPricingFromDB();
       } else {
-        // No active tournament — show placeholder
-        buildLevelOptions([]);
+        // No URL param — load the first Active tournament (original behavior)
+        const res  = await fetch(`${SUPABASE_URL}/rest/v1/tournaments?status=eq.Active&order=created_at.desc&limit=1&select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,location`,{headers:SB_HDRS});
+        const data = await res.json();
+        if(data && data.length){
+          activeTournamentId = data[0].id;
+          showTournamentBanner(data[0]);
+          await loadPricingFromDB();
+        } else {
+          showClosedPage('There are no active tournaments open for registration at this time.');
+        }
       }
     }catch(e){ console.error('Failed to load tournament:',e); buildLevelOptions([]); }
   }
 
   async function loadPricingFromDB(){
     if(!activeTournamentId){ buildLevelOptions([]); return; }
+
+    // Show loading state in the level dropdown
+    const sel = document.getElementById('level');
+    sel.innerHTML = '<option value="">⏳ Loading levels...</option>';
+    sel.disabled = true;
+
     try{
-      const res  = await fetch(`${SUPABASE_URL}/rest/v1/v_slot_summary?tournament_id=eq.${activeTournamentId}`,{headers:SB_HDRS});
-      pricingCache = res.ok ? await res.json() : [];
-      buildLevelOptions(pricingCache);
-    }catch(e){ console.error('Pricing fetch failed:',e); buildLevelOptions([]); }
+      // 1st attempt: use the slot summary view (includes filled/available counts)
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/v_slot_summary?tournament_id=eq.${activeTournamentId}&order=label.asc`,
+        {headers:SB_HDRS}
+      );
+
+      if(res.ok){
+        const data = await res.json();
+        if(data && data.length){
+          pricingCache = data;
+          buildLevelOptions(pricingCache);
+          return; // buildLevelOptions already re-enables the select
+        }
+      }
+
+      // 2nd attempt: fallback to raw pricing table if view fails or is empty
+      console.warn('v_slot_summary unavailable — falling back to pricing table');
+      const fallback = await fetch(
+        `${SUPABASE_URL}/rest/v1/pricing?tournament_id=eq.${activeTournamentId}&enabled=eq.true&order=label.asc`,
+        {headers:SB_HDRS}
+      );
+      if(fallback.ok){
+        const raw = await fallback.json();
+        // Map raw rows to expected shape (no slot counts available in fallback)
+        pricingCache = (raw||[]).map(p=>({
+          ...p,
+          filled_slots:    0,
+          available_slots: p.total_slots,
+        }));
+        buildLevelOptions(pricingCache);
+      } else {
+        buildLevelOptions([]);
+      }
+    }catch(e){
+      console.error('Pricing fetch failed:',e);
+      buildLevelOptions([]);
+    }
   }
 
   function buildLevelOptions(rows){
     const sel = document.getElementById('level');
-    while(sel.options.length > 1) sel.remove(1);
-    if(!rows.length){
-      const opt=document.createElement('option'); opt.value=''; opt.disabled=true; opt.textContent='No active tournament'; sel.appendChild(opt); return;
+    // Clear ALL options including the ⏳ loading placeholder
+    sel.innerHTML = '';
+    sel.disabled = false;
+
+    // Add the default blank option
+    const blank = document.createElement('option');
+    blank.value = ''; blank.textContent = '— Select a level —';
+    sel.appendChild(blank);
+
+    const activeRows = rows.filter(r => r.enabled !== false);
+
+    if(!activeRows.length){
+      const opt = document.createElement('option');
+      opt.value = ''; opt.disabled = true;
+      opt.textContent = rows.length ? 'No levels are active for this tournament' : 'No levels found';
+      sel.appendChild(opt);
+      return;
     }
-    rows.filter(r=>r.enabled).forEach(r=>{
+
+    activeRows.forEach(r => {
       const avail  = r.available_slots ?? null;
       const isFull = avail !== null && avail <= 0;
-      let label    = r.label || r.level_key;
-      if(avail !== null) label += ` — ${Math.max(0,avail)} slot${avail!==1?'s':''} available`;
+      const price  = r.price > 0 ? r.price : null;
+      const pc     = r.player_count || 2;
+      const priceLabel = price ? ` — ₱${price.toLocaleString()}/player` : '';
+
+      let label = r.label || r.level_key;
+      if(priceLabel) label += priceLabel;
+      if(avail !== null) label += ` · ${Math.max(0, avail)} slot${avail !== 1 ? 's' : ''} left`;
       if(isFull) label += ' (FULL)';
+
       const opt = document.createElement('option');
-      opt.value = r.level_key;
-      opt.textContent = label;
-      if(isFull) opt.disabled = true;
+      opt.value            = r.level_key;
+      opt.textContent      = label;
+      opt.disabled         = isFull;
+      opt.dataset.price    = price || 0;
+      opt.dataset.playerCount = pc;
+      if(isFull) opt.style.color = '#555';
       sel.appendChild(opt);
     });
   }
@@ -282,17 +428,37 @@
     if(!key){ infoBox.style.display='none'; return; }
     const d = pricingCache.find(r=>r.level_key===key);
     if(!d){ infoBox.style.display='none'; return; }
-    const price    = d.price ? `₱${Number(d.price).toLocaleString()}` : 'TBA';
-    const slots    = d.total_slots   || 0;
-    const filled   = d.filled_slots  || 0;
-    const avail    = d.available_slots ?? (slots - filled);
-    const pct      = slots>0 ? Math.min(100, Math.round(filled/slots*100)) : 0;
+
+    const pricePerPlayer = d.price || 0;
+    const pc             = d.player_count || 2;
+    const teamPrice      = pricePerPlayer * pc;
+    const priceDisplay   = pricePerPlayer > 0
+      ? `<span style="color:var(--primary);font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;">₱${teamPrice.toLocaleString()}</span>
+         <span style="color:var(--muted);font-size:11px;"> / team &nbsp;(₱${pricePerPlayer.toLocaleString()} × ${pc} player${pc>1?'s':''})</span>`
+      : `<span style="color:var(--muted);">TBA</span>`;
+
+    const slots  = d.total_slots   || 0;
+    const filled = d.filled_slots  || 0;
+    const avail  = d.available_slots ?? (slots - filled);
+    const pct    = slots>0 ? Math.min(100, Math.round(filled/slots*100)) : 0;
     const barColor = pct>=100?'#e8372a':pct>=75?'#f5a623':'#22c55e';
+
     infoBox.style.display='block';
     infoBox.innerHTML=`
-      <strong style="color:var(--text)">Registration Fee:</strong> <span style="color:var(--primary);font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;">${price}</span><br>
-      <strong style="color:var(--text)">Slots Available:</strong> <span style="color:${avail<=0?'var(--primary)':'var(--success)'};">${Math.max(0,avail)} / ${slots}</span><br>
-      <div style="height:5px;background:#222;border-radius:4px;margin-top:6px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.4s;"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:2px;">Entry Fee</div>
+          <div>${priceDisplay}</div>
+          ${pricePerPlayer > 0 ? `<div style="font-size:11px;color:#f5a623;margin-top:4px;">💡 Please prepare this amount upon registration approval.</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:2px;">Slots</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:${avail<=0?'var(--primary)':'var(--success)'};">${Math.max(0,avail)} / ${slots}</div>
+        </div>
+      </div>
+      <div style="height:5px;background:#222;border-radius:4px;margin-top:10px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width 0.4s;"></div>
+      </div>
     `;
   }
 
@@ -324,12 +490,38 @@
     if(n===2){document.getElementById('step1').className='step done';document.getElementById('step2').className='step active';document.getElementById('line1').className='step-line done';}
   }
 
-  function goToPage2(){
+  async function goToPage2(){
     const level=document.getElementById('level').value, team=document.getElementById('teamName').value.trim();
     let ok=true;
     if(!level){showError('err-level','Please select a level.');ok=false;}else showError('err-level','');
     if(!team){showError('err-teamName','Please enter your team name.');ok=false;}else showError('err-teamName','');
     if(!ok)return;
+
+    // Live slot recheck before proceeding to Step 2
+    const btn = document.querySelector('#page1 .btn-primary');
+    const origText = btn.textContent;
+    btn.textContent='⏳ Checking slots...'; btn.disabled=true;
+    try{
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/v_slot_summary?tournament_id=eq.${activeTournamentId}&level_key=eq.${encodeURIComponent(level)}&select=available_slots,label`,
+        {headers:SB_HDRS}
+      );
+      if(res.ok){
+        const data = await res.json();
+        if(data && data.length){
+          const avail = data[0].available_slots;
+          if(avail <= 0){
+            showError('err-level',`Sorry — ${data[0].label} just filled up. Please choose another level.`);
+            btn.textContent=origText; btn.disabled=false;
+            // Refresh dropdown with latest counts
+            await loadPricingFromDB();
+            return;
+          }
+        }
+      }
+    }catch(e){ /* non-fatal — allow through if check fails */ }
+    btn.textContent=origText; btn.disabled=false;
+
     document.getElementById('banner-p2').textContent=`${level} | Team: ${team}`;
     const rule=getActiveRule();
     document.getElementById('p1-age-fields').style.display=rule?'block':'none';

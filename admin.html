@@ -2537,8 +2537,7 @@ async function savePricing(){
     if(errors.length){
       alert('Some rows failed to save:\n\n'+errors.join('\n'));
     } else {
-      localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'pricing'}));
-      window.location.reload();
+      if(msg){ msg.style.display='inline'; setTimeout(()=>msg.style.display='none',2000); }
     }
     await fetchPricing();
   }catch(e){
@@ -2578,8 +2577,8 @@ async function submitCategory(){
   });
 
   if(res.ok){
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'pricing'}));
-    window.location.reload();
+    closeCategoryModal();
+    await fetchPricing();
   } else {
     const err = await res.text();
     errEl.textContent = 'Save failed: ' + err;
@@ -2593,8 +2592,7 @@ async function removeCustomPricingRow(key){
   const row = pricingRows.find(p=>p.level_key===key);
   if(row?.id){
     await fetch(`${SB_URL}/rest/v1/pricing?id=eq.${row.id}`,{method:'DELETE',headers:HDRS});
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'pricing'}));
-    window.location.reload();
+    await fetchPricing();
   }
 }
 
@@ -2722,8 +2720,8 @@ async function submitExpense(){
       });
       if(!res.ok) throw new Error(await res.text());
     }
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'expenses'}));
-    window.location.reload();
+    closeExpenseModal();
+    await fetchExpenses();
   } catch(e) {
     alert('Save failed: ' + e.message);
     submitBtn.textContent = origText;
@@ -2736,10 +2734,8 @@ function editExpense(id){ openExpenseModal(id); }
 async function deleteExpense(id){
   if(!confirm('Delete this expense?')) return;
   const res = await fetch(`${SB_URL}/rest/v1/expenses?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok){
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'expenses'}));
-    window.location.reload();
-  } else alert('Delete failed.');
+  if(res.ok) await fetchExpenses();
+  else alert('Delete failed.');
 }
 
 /* ════════════════════════════════════════════
@@ -2885,12 +2881,8 @@ async function submitSponsorModal(){
       body:JSON.stringify(payload),
     });
     if(!res.ok) throw new Error(await res.text());
-    // Reload to clear file:// CORS cache, restore tab
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({
-      tournamentId: activeTournament.id,
-      tab: 'sponsors',
-    }));
-    window.location.reload();
+    closeSponsorModal();
+    await fetchSponsors();
   }catch(e){
     errEl.textContent = 'Save failed: ' + e.message;
     errEl.style.display='block';
@@ -2920,10 +2912,10 @@ async function saveSponsor(id){
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await res.text());
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({
-      tournamentId: activeTournament.id, tab: 'sponsors',
-    }));
-    window.location.reload();
+    btn.textContent = '✓ Saved!';
+    btn.style.background = '#22c55e';
+    await fetchSponsors();
+    setTimeout(() => { btn.textContent = '💾 Save'; btn.style.background = ''; btn.disabled = false; }, 1500);
   } catch(e) {
     btn.textContent = '❌ Failed';
     btn.style.background = 'var(--danger, #e8372a)';
@@ -2935,10 +2927,7 @@ async function saveSponsor(id){
 async function removeSponsor(id){
   if(!confirm('Remove this sponsor?')) return;
   const res = await fetch(`${SB_URL}/rest/v1/sponsors?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok){
-    localStorage.setItem('_reloadAfterSave', JSON.stringify({tournamentId:activeTournament.id,tab:'sponsors'}));
-    window.location.reload();
-  }
+  if(res.ok) await fetchSponsors();
 }
 
 /* ════════════════════════════════════════════

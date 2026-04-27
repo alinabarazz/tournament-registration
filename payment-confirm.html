@@ -96,6 +96,8 @@
         <input type="text" id="regRef" readonly>
       </div>
 
+      <div id="qrSection"></div>
+
       <div class="field">
         <label>Payment Method <span style="color:var(--primary);">*</span></label>
         <select id="payMethod" onchange="onMethodChange()">
@@ -231,9 +233,33 @@ async function init(){
       '<div class="info-row"><span class="info-label">Team</span><span class="info-val">'+(regData.Team_Name||'—')+'</span></div>'+
       '<div class="info-row"><span class="info-label">Level</span><span class="info-val">'+(regData.Level||'—')+'</span></div>'+
       '<div class="info-row"><span class="info-label">Players</span><span class="info-val">'+[regData.Player1_Name,regData.Player2_Name].filter(Boolean).join(' & ')+'</span></div>';
-    fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,free_jersey_count',{headers:HDRS})
+    fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,free_jersey_count,jersey_image_url,jersey_price,payment_qr_gcash,payment_qr_maya,payment_qr_other,tournament_date_from,location',{headers:HDRS})
       .then(function(r){return r.json();})
-      .then(function(d){ if(d&&d.length) document.getElementById('tournamentName').textContent=d[0].name; });
+      .then(function(d){
+        if(d&&d.length){
+          document.getElementById('tournamentName').textContent=d[0].name;
+          // Show payment QR codes if available
+          var qrs = [
+            {key:'payment_qr_gcash', label:'GCash'},
+            {key:'payment_qr_maya',  label:'Maya'},
+            {key:'payment_qr_other', label:'Other'},
+          ].filter(function(q){ return d[0][q.key]; });
+          if(qrs.length){
+            var qrHtml = '<div style="margin-top:1rem;">'
+              +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:8px;">Scan to Pay</div>'
+              +'<div style="display:grid;grid-template-columns:repeat('+qrs.length+',1fr);gap:10px;">';
+            qrs.forEach(function(q){
+              qrHtml += '<div style="text-align:center;">'
+                +'<img src="'+d[0][q.key]+'" style="width:100%;max-width:140px;border-radius:8px;border:1px solid #2a2a2a;">'
+                +'<div style="font-size:11px;color:var(--muted);margin-top:4px;">'+q.label+'</div>'
+                +'</div>';
+            });
+            qrHtml += '</div></div>';
+            var qrDiv = document.getElementById('qrSection');
+            if(qrDiv) qrDiv.innerHTML = qrHtml;
+          }
+        }
+      });
     show('mainForm');
   }catch(e){ showError('Failed to load registration: '+e.message); }
 }
@@ -267,35 +293,71 @@ function removeFile(){
 
 async function checkJersey(){
   try{
-    var tRes = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,free_jersey_count',{headers:HDRS});
+    var tRes = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,free_jersey_count,jersey_image_url,jersey_price,tournament_date_from,location',{headers:HDRS});
     var tData = await tRes.json();
     if(!tData||!tData.length) return;
-    var freeCount = parseInt(tData[0].free_jersey_count)||0;
+    var t = tData[0];
+    var freeJerseyPlayers = parseInt(t.free_jersey_count)||0;
+    var jerseyImg   = t.jersey_image_url||'';
+    var jerseyPrice = parseInt(t.jersey_price)||0;
+    var location    = t.location||'the venue';
     var jerseySection = document.getElementById('jerseySection');
-    if(freeCount <= 0){ jerseySection.innerHTML=''; return; }
+    if(freeJerseyPlayers <= 0){ jerseySection.innerHTML=''; return; }
+
+    var eligibleTeams = Math.ceil(freeJerseyPlayers / 2);
     var rRes = await fetch(SB_URL+'/rest/v1/registrations?tournament_id=eq.'+regData.tournament_id+'&id=lt.'+regData.id+'&select=id',{headers:HDRS});
     var rData = await rRes.json();
     var position = (rData||[]).length + 1;
     var players = [regData.Player1_Name,regData.Player2_Name].filter(Boolean).join(' & ');
-    if(position <= freeCount){
+    var regRef  = '#'+String(regData.id).padStart(5,'0');
+
+    // Jersey image — clickable to zoom
+    var imgHtml = jerseyImg
+      ? '<div style="display:inline-block;position:relative;cursor:zoom-in;" onclick="openJerseyZoom(\''+jerseyImg+'\')" title="Click to zoom">'
+        +'<img src="'+jerseyImg+'" alt="Jersey" style="width:90px;height:90px;object-fit:contain;border-radius:8px;margin:8px auto;display:block;border:1px solid rgba(255,255,255,0.1);">'
+        +'<div style="position:absolute;bottom:10px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;pointer-events:none;">🔍</div>'
+        +'</div>'
+      : '<div style="font-size:2rem;margin:8px 0;">👕</div>';
+
+    if(position <= eligibleTeams){
       jerseySection.innerHTML =
         '<div class="jersey-free">'+
-        '<div style="font-size:2rem;margin-bottom:8px;">👕</div>'+
+        imgHtml+
         '<div class="jersey-free-title">Free Jersey Eligible!</div>'+
-        '<div class="jersey-free-msg">Congratulations <strong style="color:#fff;">'+players+'</strong>!<br>'+
-        'You are registration <strong style="color:#22c55e;">#'+position+'</strong> — within the first '+freeCount+' registrations.<br>'+
-        'Your free jerseys will be provided on tournament day.</div>'+
-        '</div>';
+        '<div class="jersey-free-msg">'+
+        'Congrats <strong style="color:#fff;">'+players+'</strong>! '+
+        'You\'re team <strong style="color:#22c55e;">#'+position+'</strong> of '+eligibleTeams+' free jersey teams.<br><br>'+
+        'Show <strong style="color:#fff;">REF# <span style="color:#22c55e;">'+regRef+'</span></strong> '+
+        'to the admin at <strong style="color:#fff;">'+location+'</strong> on tournament day.'+
+        '</div></div>';
     } else {
+      var purchaseHtml = jerseyPrice > 0
+        ? '<div style="font-size:12px;color:#f5a623;font-weight:700;margin:6px 0;">\u20b1'+jerseyPrice.toLocaleString()+' per jersey</div>'
+          +'<a href="'+window.location.href+'&jersey=1" style="display:inline-block;background:#333;color:#fff;text-decoration:none;padding:8px 20px;border-radius:6px;font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:11px;border:1px solid #555;">Purchase Jersey</a>'
+        : '<div style="font-size:11px;color:#666;line-height:1.6;">Contact the organizer at the venue for pricing.</div>';
       jerseySection.innerHTML =
         '<div class="jersey-paid">'+
+        imgHtml+
         '<div class="jersey-paid-title">Jersey Available for Purchase</div>'+
-        '<div class="jersey-paid-msg">Hi <strong style="color:#ccc;">'+players+'</strong>,<br>'+
-        'Free jerseys have been claimed (first '+freeCount+' registrations only).<br>'+
-        'You may still purchase a jersey — contact the organizer for pricing and details.</div>'+
-        '</div>';
+        '<div class="jersey-paid-msg">Hi <strong style="color:#ccc;">'+players+'</strong> — free jerseys claimed (first '+eligibleTeams+' teams).</div>'+
+        purchaseHtml+'</div>';
     }
   }catch(e){ console.warn('Jersey check failed:',e); }
+}
+
+// Jersey zoom lightbox
+function openJerseyZoom(src){
+  var lb = document.getElementById('jerseyLightbox');
+  if(!lb){
+    lb = document.createElement('div');
+    lb.id = 'jerseyLightbox';
+    lb.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:1rem;';
+    lb.onclick = function(){ this.remove(); };
+    document.body.appendChild(lb);
+  }
+  lb.innerHTML = '<img src="'+src+'" style="max-width:92vw;max-height:88vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.8);">'
+    +'<button onclick="event.stopPropagation();this.parentNode.remove()" style="position:fixed;top:1rem;right:1rem;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.3rem;width:36px;height:36px;border-radius:50%;cursor:pointer;">✕</button>';
+  document.body.appendChild(lb);
 }
 
 async function submitPayment(){

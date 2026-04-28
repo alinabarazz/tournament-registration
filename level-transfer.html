@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level Transfer Request</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  :root{--primary:#e8372a;--bg:#0a0a0a;--card:#141414;--border:#2a2a2a;--text:#f0f0f0;--muted:#666;--success:#22c55e;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+  .container{width:100%;max-width:480px;}
+  .logo{text-align:center;margin-bottom:1.5rem;}
+  .logo-title{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:#60a5fa;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .card-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#0a0f1a,#141414);}
+  .card-title{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
+  .card-sub{font-size:12px;color:var(--muted);}
+  .card-body{padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
+  .info-box{background:#0f0f0f;border:1px solid var(--border);border-left:3px solid #60a5fa;border-radius:8px;padding:12px 14px;}
+  .info-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;}
+  .info-row:not(:last-child){border-bottom:1px solid #1e1e1e;}
+  .info-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;}
+  .info-val{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;text-align:right;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+  .field select{background:#0f0f0f;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.95rem;padding:12px 14px;transition:border-color 0.2s;width:100%;appearance:none;cursor:pointer;}
+  .field select:focus{outline:none;border-color:#60a5fa;}
+  .conflict-box{padding:12px 14px;background:#1a0808;border:1px solid rgba(232,55,42,0.35);border-left:3px solid var(--primary);border-radius:8px;font-size:12px;color:#ff6b6b;line-height:1.7;display:none;}
+  .info-banner{padding:10px 14px;background:#0d1020;border:1px solid rgba(96,165,250,0.25);border-left:3px solid #60a5fa;border-radius:8px;font-size:12px;color:#93c5fd;line-height:1.6;}
+  .btn{width:100%;padding:13px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;font-size:1rem;cursor:pointer;border:none;transition:all 0.2s;}
+  .btn-primary{background:#1a56db;color:#fff;}
+  .btn-primary:hover{background:#1d4ed8;}
+  .btn-primary:disabled{background:#2a2a2a;color:#555;cursor:not-allowed;}
+  .btn-back{background:#1a1a1a;color:#aaa;border:1px solid #333;margin-top:6px;}
+  .btn-back:hover{background:#222;}
+  .loading{text-align:center;padding:3rem;color:var(--muted);}
+  .error-page{text-align:center;padding:2.5rem;}
+  .error-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;color:var(--primary);margin-bottom:0.5rem;}
+  .success-page{text-align:center;padding:2rem 1.5rem;}
+  .success-icon{width:64px;height:64px;background:#1a56db;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 1rem;animation:pop 0.5s ease;}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  .success-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;margin-bottom:0.5rem;}
+  .success-msg{font-size:13px;color:var(--muted);line-height:1.7;max-width:320px;margin:0 auto;}
+  .level-option{background:#0f0f0f;border:1px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;transition:all 0.2s;margin-bottom:6px;}
+  .level-option:hover,.level-option.selected{border-color:#60a5fa;background:#0d1020;}
+  .level-option.full{opacity:0.5;cursor:not-allowed;border-color:var(--border)!important;background:#0f0f0f!important;}
+  .level-option.conflict{border-color:rgba(232,55,42,0.4);background:#1a0808;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <div class="logo-title"><i class="bi bi-arrow-left-right"></i> Level Transfer</div>
+  </div>
+
+  <div class="card" id="loadingState">
+    <div class="loading">Loading available levels...</div>
+  </div>
+
+  <div class="card" id="errorState" style="display:none;">
+    <div class="error-page">
+      <div style="font-size:2.5rem;margin-bottom:1rem;"><i class="bi bi-x-circle"></i></div>
+      <div class="error-title">Cannot Process</div>
+      <div style="font-size:13px;color:var(--muted);" id="errorMsg">This link is invalid.</div>
+    </div>
+  </div>
+
+  <div class="card" id="mainForm" style="display:none;">
+    <div class="card-header">
+      <div class="card-title">Request Level Transfer</div>
+      <div class="card-sub">Select a new level to transfer your registration to.</div>
+    </div>
+    <div class="card-body">
+
+      <div class="info-box" id="regInfoBox"></div>
+
+      <div class="info-banner">
+        <i class="bi bi-info-circle-fill"></i> <strong>Your previous level has been dissolved.</strong><br>
+        Select a new level below. The organizer will review and confirm your transfer.
+        You can also <a href="#" id="cancelLink" style="color:#60a5fa;">cancel your registration instead</a>.
+      </div>
+
+      <div class="field">
+        <label>Select New Level *</label>
+        <div id="levelOptions"></div>
+      </div>
+
+      <div class="conflict-box" id="conflictBox"></div>
+
+      <div id="selectedLevelPreview" style="display:none;background:#0d1020;border:1px solid rgba(96,165,250,0.3);border-radius:8px;padding:12px 14px;font-size:13px;">
+        <div style="font-size:10px;color:#60a5fa;text-transform:uppercase;font-weight:700;margin-bottom:4px;">Selected Level</div>
+        <div id="selectedLevelName" style="font-weight:700;font-size:1rem;"></div>
+        <div id="selectedLevelDetails" style="font-size:11px;color:var(--muted);margin-top:3px;"></div>
+      </div>
+
+      <div id="submitError" style="display:none;color:#ff6b6b;font-size:12px;padding:10px 14px;background:#1a0808;border:1px solid #3a1010;border-radius:8px;"></div>
+
+      <button class="btn btn-primary" id="submitBtn" onclick="submitTransfer()" disabled style="opacity:0.5;">Request Transfer</button>
+      <button class="btn btn-back" onclick="window.history.back()">Go Back</button>
+    </div>
+  </div>
+
+  <div class="card" id="successState" style="display:none;">
+    <div class="success-page">
+      <div class="success-icon"><i class="bi bi-check-lg"></i></div>
+      <div class="success-title">Transfer Requested!</div>
+      <div class="success-msg">
+        Your transfer request has been submitted. The organizer will review and confirm your new level.<br><br>
+        You will receive an email once approved.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
+const HDRS = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+var regData = null;
+var selectedLevel = null;
+var fromLevel = '';
+
+function show(id){
+  ['loadingState','errorState','mainForm','successState'].forEach(function(s){
+    document.getElementById(s).style.display = s===id?'block':'none';
+  });
+}
+function showError(msg){ document.getElementById('errorMsg').textContent=msg; show('errorState'); }
+
+async function init(){
+  var params   = new URLSearchParams(window.location.search);
+  var rawRef   = params.get('ref');
+  fromLevel    = params.get('from')||'';
+  if(!rawRef){ showError('No registration reference found.'); return; }
+  try{
+    var res  = await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+rawRef+'&select=id,Status,Team_Name,Level,Email_Address,Player1_Name,Player2_Name,tournament_id',{headers:HDRS});
+    var data = await res.json();
+    if(!data||!data.length){ showError('Registration not found.'); return; }
+    regData = data[0];
+
+    // Set cancel link
+    document.getElementById('cancelLink').href = 'cancel-request.html?ref='+regData.id;
+
+    // Load tournament and available levels
+    var tRes  = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,id',{headers:HDRS});
+    var tData = await tRes.json();
+    var tName = tData&&tData[0] ? tData[0].name : 'Tournament';
+
+    var pRes  = await fetch(SB_URL+'/rest/v1/pricing?tournament_id=eq.'+regData.tournament_id+'&enabled=eq.true&select=level_key,label,price,total_slots,player_count',{headers:HDRS});
+    var levels = pRes.ok ? await pRes.json() : [];
+
+    // Get slot counts
+    var rRes  = await fetch(SB_URL+'/rest/v1/registrations?tournament_id=eq.'+regData.tournament_id+'&select=Level,Status',{headers:HDRS});
+    var allRegs = rRes.ok ? await rRes.json() : [];
+    var slotMap = {};
+    allRegs.forEach(function(r){
+      if(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)){
+        slotMap[r.Level] = (slotMap[r.Level]||0)+1;
+      }
+    });
+
+    // Check for same-player conflicts in other levels
+    var p1 = (regData.Player1_Name||'').trim().toLowerCase();
+    var p2 = (regData.Player2_Name||'').trim().toLowerCase();
+    var conflictLevels = {};
+    allRegs.forEach(function(r){
+      if(!['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)) return;
+      // We'd need player names here — for now just check level-team combos
+    });
+
+    // Also check conflicts via separate query
+    var cRes = await fetch(SB_URL+'/rest/v1/registrations?tournament_id=eq.'+regData.tournament_id
+      +'&select=Level,Status,Player1_Name,Player2_Name'
+      +'&Status=in.("Awaiting Payment","Payment Submitted","Payment Not Received","Registered")',{headers:HDRS});
+    var cRegs = cRes.ok ? await cRes.json() : [];
+    cRegs.forEach(function(r){
+      var rp1 = (r.Player1_Name||'').trim().toLowerCase();
+      var rp2 = (r.Player2_Name||'').trim().toLowerCase();
+      if((p1&&(rp1===p1||rp2===p1))||(p2&&(rp1===p2||rp2===p2))){
+        conflictLevels[r.Level] = r; // this player is already in this level
+      }
+    });
+
+    document.getElementById('regInfoBox').innerHTML =
+      '<div class="info-row"><span class="info-label">Tournament</span><span class="info-val">'+tName+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Team</span><span class="info-val">'+(regData.Team_Name||'—')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Players</span><span class="info-val">'+(([regData.Player1_Name,regData.Player2_Name].filter(Boolean).join(' & '))||'—')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Current Level</span><span class="info-val" style="color:#e8372a;text-decoration:line-through;">'+(fromLevel||regData.Level)+'</span></div>';
+
+    // Render level options
+    var available = levels.filter(function(l){ return l.level_key !== (fromLevel||regData.Level); });
+    var optionsHtml = '';
+    available.forEach(function(l){
+      var filled  = slotMap[l.level_key]||0;
+      var total   = l.total_slots||20;
+      var isFull  = filled >= total;
+      var hasConflict = !!conflictLevels[l.level_key];
+      var fee     = l.price ? '₱'+((l.price||0)*(l.player_count||2)).toLocaleString()+'/team' : 'Free';
+      var slotStr = (total-filled)+' slots left';
+      var cls     = isFull?'level-option full':hasConflict?'level-option conflict':'level-option';
+      var badge   = isFull?'<span style="font-size:10px;color:#e8372a;font-weight:700;margin-left:6px;">FULL</span>'
+                  :hasConflict?'<span style="font-size:10px;color:#ff6b6b;font-weight:700;margin-left:6px;"><i class="bi bi-exclamation-triangle-fill"></i> CONFLICT</span>':'';
+      var disabledAttr = (isFull||hasConflict)?'':'onclick="selectLevel(\''+l.level_key+'\',\''+l.label+'\',\''+fee+'\',\''+slotStr+'\')"';
+      var conflictNote = hasConflict?('<div style="font-size:10px;color:#ff6b6b;margin-top:4px;"><i class="bi bi-x-circle-fill"></i> '+
+        [regData.Player1_Name,regData.Player2_Name].filter(Boolean).find(function(n){ return conflictLevels[l.level_key]; })+
+        ' already has an active registration in this level. <strong>Transfer blocked.</strong> Contact organizer to resolve.</div>'):'';
+      optionsHtml += '<div class="'+cls+'" id="opt-'+l.level_key+'" '+disabledAttr+'>'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+        +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;">'+l.label+badge+'</div>'
+        +'<div style="font-size:11px;color:var(--muted);">'+fee+' · '+slotStr+'</div>'
+        +'</div>'+conflictNote+'</div>';
+    });
+    document.getElementById('levelOptions').innerHTML = optionsHtml || '<div style="color:var(--muted);font-size:13px;">No other levels available.</div>';
+    show('mainForm');
+  }catch(e){ showError('Failed to load: '+e.message); }
+}
+
+function selectLevel(key, label, fee, slots){
+  selectedLevel = key;
+  document.querySelectorAll('.level-option').forEach(function(el){ el.classList.remove('selected'); });
+  var opt = document.getElementById('opt-'+key);
+  if(opt) opt.classList.add('selected');
+  document.getElementById('selectedLevelPreview').style.display='block';
+  document.getElementById('selectedLevelName').textContent = label;
+  document.getElementById('selectedLevelDetails').textContent = fee+' · '+slots;
+  var btn = document.getElementById('submitBtn');
+  btn.disabled=false; btn.style.opacity='1';
+}
+
+async function submitTransfer(){
+  if(!selectedLevel){ return; }
+  var errBox = document.getElementById('submitError');
+  var btn    = document.getElementById('submitBtn');
+  errBox.style.display='none';
+  btn.textContent='Submitting...'; btn.disabled=true;
+  try{
+    var patchRes = await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+regData.id,{
+      method:'PATCH',
+      headers:Object.assign({},HDRS,{'Prefer':'return=minimal'}),
+      body:JSON.stringify({
+        Status:'Transfer Requested',
+        notes:'TRANSFER REQUEST: '+(fromLevel||regData.Level)+' → '+selectedLevel,
+      }),
+    });
+    if(!patchRes.ok) throw new Error(await patchRes.text());
+
+    // Notify admin
+    try{
+      var tRes  = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,owner_id',{headers:HDRS});
+      var tData = await tRes.json();
+      var tourney = (tData&&tData[0])||{};
+      if(tourney.owner_id){
+        var uRes  = await fetch(SB_URL+'/rest/v1/users?id=eq.'+tourney.owner_id+'&select=notification_email,username',{headers:HDRS});
+        var uData = await uRes.json();
+        var admin = (uData&&uData[0])||{};
+        if(admin.notification_email){
+          await fetch(SB_URL+'/functions/v1/send-email',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+            body:JSON.stringify({
+              type:'registration_submitted',
+              data:{
+                admin_email:     admin.notification_email,
+                admin_name:      admin.username||'Organizer',
+                player_name:     regData.Player1_Name||'Player',
+                player2_name:    regData.Player2_Name||'',
+                team_name:       regData.Team_Name,
+                level:           'Transfer: '+(fromLevel||regData.Level)+' → '+selectedLevel,
+                tournament_name: tourney.name||'',
+                reg_ref:         '#'+String(regData.id).padStart(5,'0'),
+                dashboard_url:   '',
+              },
+            }),
+          });
+        }
+      }
+    }catch(e){ console.warn('Admin notify failed:',e); }
+
+    show('successState');
+  }catch(e){
+    errBox.textContent = e.message;
+    errBox.style.display = 'block';
+    btn.textContent='Request Transfer'; btn.disabled=false;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

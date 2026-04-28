@@ -106,13 +106,13 @@
   .table-count{font-size:12px;color:var(--muted);}
   .table-scroll{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;min-width:900px;}
-  thead th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+  thead th{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#ccc;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
   tbody tr{border-bottom:1px solid #1a1a1a;transition:background 0.15s;}
   tbody tr:last-child{border-bottom:none;}
   tbody tr:hover{background:#1a1a1a;}
   tbody td{padding:12px 16px;font-size:13px;vertical-align:middle;}
-  .level-badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;background:#1e1e1e;border:1px solid var(--border);border-radius:4px;color:var(--muted);text-transform:uppercase;white-space:nowrap;}
-  .level-badge.age{border-color:rgba(232,55,42,0.3);color:var(--primary);background:rgba(232,55,42,0.05);}
+  .level-badge{display:inline-block;font-size:10px;font-weight:800;padding:3px 9px;background:#1e2a1e;border:1px solid rgba(34,197,94,0.3);border-radius:4px;color:#22c55e;text-transform:uppercase;white-space:nowrap;letter-spacing:0.04em;}
+  .level-badge.age{border-color:rgba(232,55,42,0.4);color:var(--primary);background:rgba(232,55,42,0.08);}
   .status-select{background:#111;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:12px;padding:5px 10px;cursor:pointer;appearance:none;min-width:160px;transition:border-color 0.2s;}
   .status-select:focus{outline:none;border-color:var(--primary);}
   .status-select.saving{opacity:0.5;pointer-events:none;}
@@ -184,7 +184,7 @@
   .exp-sum-val{font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;}
   .exp-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
   .exp-table{width:100%;border-collapse:collapse;}
-  .exp-table thead th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+  .exp-table thead th{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#ccc;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
   .exp-table tbody tr{border-bottom:1px solid #1a1a1a;}
   .exp-table tbody tr:last-child{border-bottom:none;}
   .exp-table tbody tr:hover{background:#1a1a1a;}
@@ -283,6 +283,7 @@
   .t-status-pill.Cancelled{background:rgba(232,55,42,0.1);border:1px solid rgba(232,55,42,0.3);color:var(--primary);}
   .t-status-pill.Cancellation-Requested{background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.4);color:#f5a623;}
   .s-cancel-req{background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.35);color:#f5a623;}
+  .s-transfer-req{background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.35);color:#60a5fa;}
 
   .modal::-webkit-scrollbar{width:6px;}
   .modal::-webkit-scrollbar-track{background:#111;border-radius:4px;}
@@ -418,6 +419,7 @@
   <button class="tab-btn" onclick="showTab('expenses',event)">Expenses</button>
   <button class="tab-btn" onclick="showTab('sponsors',event)">Sponsors</button>
   <button class="tab-btn" onclick="showTab('sales',event)">Sales</button>
+  <button class="tab-btn" onclick="showTab('brackets',event)">Brackets</button>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -683,11 +685,189 @@
 
   </div>
 </div>
+
+<!-- ══ TAB 6 · BRACKETS ══ -->
+<div class="tab-panel" id="tab-brackets">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;">
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;">Brackets</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Set up and manage tournament brackets per level.</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="openDissolveLevelModal()" style="background:#1a1a1a;border:1px solid #e8372a44;color:#e8372a;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:10px 16px;border-radius:8px;cursor:pointer;">Dissolve Level</button>
+      <button onclick="openBracketSetup()" style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:10px 20px;border-radius:8px;cursor:pointer;">+ Setup Bracket</button>
+    </div>
+  </div>
+  <div id="bracketsContainer">
+    <div style="text-align:center;padding:3rem;color:var(--muted);font-size:13px;">No brackets set up yet. Click "Setup Bracket" to create one.</div>
+  </div>
 </div>
 
+</div>
 </div><!-- /mainDashboard -->
 
 </div><!-- /app -->
+
+<!-- ══ REJECTION NOTES MODAL ══ -->
+<div class="modal-overlay" id="rejectionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header" style="border-left:4px solid var(--primary);">
+      <div class="modal-title" style="color:var(--primary);">Rejection Notes</div>
+      <button class="modal-close" onclick="cancelRejection()">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
+      The reason will be included in the rejection email sent to the player.
+    </div>
+    <div class="modal-field">
+      <label>Quick Reason</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;" id="rejectionReasons">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:#0f0f0f;font-size:12px;transition:background 0.15s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#0f0f0f'">
+          <input type="radio" name="rejReason" value="Level mismatch — player age/skill doesn't qualify for this level" style="accent-color:var(--primary);"> Level mismatch
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:#0f0f0f;font-size:12px;transition:background 0.15s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#0f0f0f'">
+          <input type="radio" name="rejReason" value="Incomplete registration information" style="accent-color:var(--primary);"> Incomplete information
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:#0f0f0f;font-size:12px;transition:background 0.15s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#0f0f0f'">
+          <input type="radio" name="rejReason" value="Duplicate registration detected" style="accent-color:var(--primary);"> Duplicate registration
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:#0f0f0f;font-size:12px;transition:background 0.15s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#0f0f0f'">
+          <input type="radio" name="rejReason" value="Registration period for this level has closed" style="accent-color:var(--primary);"> Level closed / full
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:#0f0f0f;font-size:12px;transition:background 0.15s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='#0f0f0f'">
+          <input type="radio" name="rejReason" value="other" style="accent-color:var(--primary);"> Other (see notes below)
+        </label>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Additional Notes <span style="color:var(--muted);font-weight:400;">(optional — sent to player)</span></label>
+      <textarea class="modal-input" id="rejectionNotes" rows="3" placeholder="e.g. Please re-register with your correct date of birth..." style="resize:none;font-size:13px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="cancelRejection()">Cancel</button>
+      <button class="btn-modal-submit" onclick="confirmRejection()" style="background:var(--primary);">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DISSOLVE LEVEL MODAL ══ -->
+<div class="modal-overlay" id="dissolveLevelModal" onclick="if(event.target===this)closeDissolveLevelModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
+  <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header" style="border-left:4px solid var(--primary);">
+      <div class="modal-title" style="color:var(--primary);">Dissolve Level</div>
+      <button class="modal-close" onclick="closeDissolveLevelModal()">✕</button>
+    </div>
+    <div style="font-size:12px;color:#f5a623;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:6px;padding:10px 14px;margin-bottom:1rem;line-height:1.6;">
+      <strong>This will notify all registered teams</strong> that their level has been dissolved. They will receive an email with options to transfer to another level or cancel their registration.
+    </div>
+    <div class="modal-field">
+      <label>Level to Dissolve *</label>
+      <select class="modal-input" id="dlLevel" onchange="onDissolveLevelChange()" style="appearance:none;cursor:pointer;">
+        <option value="">— Select level —</option>
+      </select>
+      <div id="dlLevelInfo" style="font-size:11px;color:var(--muted);margin-top:4px;"></div>
+    </div>
+    <div class="modal-field">
+      <label>Message to Players</label>
+      <textarea class="modal-input" id="dlMessage" rows="3" style="resize:none;font-size:13px;"
+        placeholder="e.g. Due to insufficient registrations, Level H has been dissolved. We apologize for the inconvenience.">Due to insufficient registrations, this level has been dissolved. We sincerely apologize for the inconvenience.</textarea>
+    </div>
+    <div id="dlAffectedTeams" style="display:none;background:#0f0f0f;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:4px;">
+      <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:8px;">Affected Teams</div>
+      <div id="dlTeamList"></div>
+    </div>
+    <div id="dlError" style="display:none;color:#ff6b6b;font-size:12px;padding:8px 12px;background:#1a0808;border:1px solid #3a1010;border-radius:6px;"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeDissolveLevelModal()">Cancel</button>
+      <button class="btn-modal-submit" id="dlConfirmBtn" onclick="confirmDissolveLevel()" style="background:var(--primary);">Send Dissolution Emails</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BRACKET SETUP MODAL ══ -->
+<div class="modal-overlay" id="bracketSetupModal" onclick="if(event.target===this)closeBracketSetup()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
+  <div class="modal" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div class="modal-title">Setup Bracket</div>
+      <button class="modal-close" onclick="closeBracketSetup()">✕</button>
+    </div>
+    <div style="padding:0 0 0.5rem;font-size:12px;color:var(--muted);line-height:1.6;">Configure how registered teams will be distributed into brackets.</div>
+
+    <div class="modal-field">
+      <label>Level *</label>
+      <select class="modal-input" id="bsLevel" onchange="onBracketLevelChange()">
+        <option value="">— Select level —</option>
+      </select>
+      <div id="bsLevelInfo" style="font-size:11px;color:var(--muted);margin-top:4px;"></div>
+    </div>
+
+    <div class="modal-field">
+      <label>Format *</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <label id="fmt-rr" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#1a1a1a;border:2px solid var(--primary);border-radius:8px;cursor:pointer;">
+          <input type="radio" name="bsFormat" value="round_robin" checked onchange="onFormatChange(this.value)" style="accent-color:var(--primary);">
+          <div><div style="font-size:12px;font-weight:700;">Round Robin</div><div style="font-size:10px;color:var(--muted);">All teams play each other</div></div>
+        </label>
+        <label id="fmt-se" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+          <input type="radio" name="bsFormat" value="single_elim" onchange="onFormatChange(this.value)" style="accent-color:var(--primary);">
+          <div><div style="font-size:12px;font-weight:700;">Single Elimination</div><div style="font-size:10px;color:var(--muted);">Lose once, you're out</div></div>
+        </label>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="modal-field">
+        <label>Number of Brackets *</label>
+        <input class="modal-input" type="number" id="bsNumGroups" min="1" max="16" value="2" oninput="onBracketParamsChange()">
+      </div>
+      <div class="modal-field">
+        <label>Slots per Bracket *</label>
+        <input class="modal-input" type="number" id="bsSlotsPerGroup" min="2" max="16" value="4" oninput="onBracketParamsChange()">
+      </div>
+    </div>
+
+    <!-- Validation summary -->
+    <div id="bsValidation" style="display:none;padding:12px 14px;border-radius:8px;font-size:12px;line-height:1.7;margin-bottom:4px;"></div>
+
+    <!-- Seeding -->
+    <div class="modal-field">
+      <label>Team Seeding</label>
+      <select class="modal-input" id="bsSeeding" style="appearance:none;cursor:pointer;">
+        <option value="auto_random">Auto — Random (recommended)</option>
+        <option value="auto_order">Auto — By registration order</option>
+        <option value="manual">Manual — I'll assign teams myself</option>
+      </select>
+    </div>
+
+    <div id="bsError" style="display:none;color:#ff6b6b;font-size:12px;padding:8px 12px;background:#1a0808;border:1px solid #3a1010;border-radius:6px;"></div>
+
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeBracketSetup()">Cancel</button>
+      <button class="btn-modal-cancel" onclick="saveBracket('draft')" style="background:#222;border:1px solid #444;color:#aaa;">Save Draft</button>
+      <button class="btn-modal-submit" id="bsSaveBtn" onclick="saveBracket('published')">Generate Brackets</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PLAYER CONFLICT MODAL ══ -->
+<div class="modal-overlay" id="conflictModal" onclick="" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;align-items:center;justify-content:center;padding:1rem;">
+  <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header">
+      <div class="modal-title" style="color:#f5a623;">Player Conflicts Detected</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
+      The following player names appear in multiple registrations for the same level. Please confirm if they are the same person or different people before generating brackets.
+    </div>
+    <div id="conflictList"></div>
+    <div style="font-size:11px;color:#555;margin-top:0.75rem;padding:10px;background:#0f0f0f;border-radius:6px;line-height:1.6;">
+      Marking as <strong style="color:#e8372a;">Same Person</strong> will prevent them from being placed in the same bracket.<br>
+      Marking as <strong style="color:#22c55e;">Different People</strong> treats them as unrelated teams — no restriction.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="cancelConflictResolution()">Cancel</button>
+      <button class="btn-modal-submit" id="conflictProceedBtn" onclick="proceedAfterConflicts()" disabled style="opacity:0.5;">All Resolved — Proceed</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ EMAIL SETTINGS MODAL ══ -->
 <div class="modal-overlay" id="emailSettingsModal" onclick="if(event.target===this)closeEmailSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
@@ -1220,7 +1400,7 @@ let editingExpId     = null;
 /* ════════════════════════════════════════════
    CONSTANTS
 ════════════════════════════════════════════ */
-const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Rejected','Cancelled','Cancellation Requested'];
+const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Rejected','Cancelled','Cancellation Requested','Transfer Requested'];
 const STATUS_CLASS = {
   'Pending Review':         's-pending',
   'Awaiting Payment':       's-payment',
@@ -1230,11 +1410,11 @@ const STATUS_CLASS = {
   'Rejected':               's-rejected',
   'Cancelled':              's-cancelled',
   'Cancellation Requested': 's-cancel-req',
+  'Transfer Requested':     's-transfer-req',
 };
 
-const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Cancellation Requested']);
+const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Cancellation Requested','Transfer Requested']);
 
-// What each status can transition TO — internal status values
 const STATUS_TRANSITIONS = {
   'Pending Review':          ['Pending Review','Awaiting Payment','Rejected'],
   'Awaiting Payment':        ['Awaiting Payment','Payment Not Received','Rejected'],
@@ -1244,9 +1424,9 @@ const STATUS_TRANSITIONS = {
   'Rejected':                ['Rejected','Pending Review'],
   'Cancelled':               ['Cancelled','Pending Review'],
   'Cancellation Requested':  ['Cancellation Requested','Cancelled','Registered'],
+  'Transfer Requested':      ['Transfer Requested','Registered','Cancelled'],
 };
 
-// Human-readable labels shown in the dropdown (different from internal status values)
 const STATUS_LABELS = {
   'Pending Review':          'Pending Review',
   'Awaiting Payment':        'Approve',
@@ -1256,6 +1436,7 @@ const STATUS_LABELS = {
   'Registered':              'Registered',
   'Cancelled':               'Cancelled',
   'Cancellation Requested':  'Request Cancellation',
+  'Transfer Requested':      'Transfer Requested',
 };
 const AGE_LEVELS   = ['MIXED 16 AND BELOW','WOMEN 16 AND BELOW','EXECUTIVE (40 AND ABOVE)'];
 const DEFAULT_LEVELS = [
@@ -1295,12 +1476,20 @@ async function doLogin(){
   if(!user||!pass){errEl.textContent='Please fill in both fields.';errEl.style.display='block';return;}
 
   try{
-    const res = await fetch(`${SB_URL}/rest/v1/users?username=eq.${encodeURIComponent(user)}&select=id,username,password,role`,{headers:HDRS});
+    const res = await fetch(`${SB_URL}/rest/v1/users?username=eq.${encodeURIComponent(user)}&select=id,username,password,role,notification_email,site_base_url`,{headers:HDRS});
     const data = await res.json();
     if(!data||!data.length){errEl.textContent='Invalid username or password.';errEl.style.display='block';return;}
     const user_record = data[0];
     if(user_record.password !== pass){errEl.textContent='Invalid username or password.';errEl.style.display='block';return;}
-    currentUser = {id:user_record.id, username:user_record.username, role:user_record.role};
+    currentUser = {
+      id:                 user_record.id,
+      username:           user_record.username,
+      role:               user_record.role,
+      notification_email: user_record.notification_email||'',
+      site_base_url:      user_record.site_base_url||'',
+    };
+    // Cache site URL
+    if(user_record.site_base_url) localStorage.setItem('siteBaseUrl', user_record.site_base_url);
     sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
     initApp();
   }catch(e){
@@ -1742,6 +1931,7 @@ function loadActiveTab(){
   else if(tabName==='expenses') fetchExpenses();
   else if(tabName==='sponsors') fetchSponsors();
   else if(tabName==='sales')     fetchSales();
+  else if(tabName==='brackets')  fetchBrackets();
 }
 
 /* ── Tournament Modal ── */
@@ -1756,6 +1946,7 @@ function updateStatusDot(val){
     'Completed': { color:'#f5a623', bg:'rgba(245,166,35,0.12)', border:'rgba(245,166,35,0.3)', text:'#f5a623', label:'Done'      },
     'Cancelled': { color:'#e8372a', bg:'rgba(232,55,42,0.12)',  border:'rgba(232,55,42,0.3)',  text:'#e8372a', label:'Cancelled' },
     'Cancellation Requested': { color:'#f5a623', bg:'rgba(245,166,35,0.12)', border:'rgba(245,166,35,0.35)', text:'#f5a623', label:'Cancel Req.' },
+    'Transfer Requested':     { color:'#60a5fa', bg:'rgba(96,165,250,0.12)', border:'rgba(96,165,250,0.35)', text:'#60a5fa', label:'Transfer Req.' },
   };
   const s = map[val] || map['Draft'];
   circle.style.background  = s.color;
@@ -1997,6 +2188,7 @@ function showTab(name, event){
   else if(name==='expenses') fetchExpenses();
   else if(name==='sponsors') fetchSponsors();
   else if(name==='sales')    fetchSales();
+  else if(name==='brackets') fetchBrackets();
 }
 
 /* ════════════════════════════════════════════
@@ -2053,7 +2245,7 @@ function renderTable(data){
       <tr id="row-${r.id}">
         <td><button class="expand-btn" onclick="toggleDetail(${r.id})">▸</button></td>
         <td class="ref-cell">${ref}</td>
-        <td style="color:var(--muted);font-size:12px;white-space:nowrap;">${date}<br><span style="font-size:10px;color:#555;">${time}</span></td>
+        <td style="font-size:12px;white-space:nowrap;"><span style="color:#ccc;font-weight:600;">${date}</span><br><span style="font-size:10px;color:#555;">${time}</span></td>
         <td><span class="level-badge ${isAge?'age':''}">${r.Level||'—'}</span></td>
         <td style="font-weight:600">${r.Team_Name||'—'}</td>
         <td>${r.Player1_Name||'—'}</td>
@@ -2214,12 +2406,27 @@ async function updateStatus(id, sel){
       if(pRow) pRow.filled_slots = Math.max(0,(pRow.filled_slots||0)-1);
     }
 
-    // ── When approving: set approved_at + payment_deadline (7 days) ──
-    if(newStatus === 'Awaiting Payment'){
+    // ── When approving: check for duplicate player in same level ──
+    if(newStatus === 'Awaiting Payment' && rec){
+      const dupWarning = checkDuplicatePlayer(rec);
+      if(dupWarning){
+        const proceed = confirm(`⚠️ Player Conflict Detected!\n\n${dupWarning}\n\nThis may be the same person registered twice under different teams.\n\nApprove anyway?`);
+        if(!proceed){ sel.value = oldStatus; sel.classList.remove('saving'); return; }
+      }
       const now      = new Date();
       const deadline = new Date(now.getTime() + 7*24*60*60*1000);
       extraFields.approved_at      = now.toISOString();
       extraFields.payment_deadline = deadline.toISOString();
+    }
+
+    // ── When rejecting: prompt for rejection reason ──
+    if(newStatus === 'Rejected'){
+      const rejection = await promptRejectionNotes();
+      if(rejection === null){ sel.value = oldStatus; sel.classList.remove('saving'); return; }
+      if(rejection.notes) extraFields.notes = rejection.notes;
+      extraFields.cancelled_at = new Date().toISOString();
+      // Store rejection reason for email
+      _pendingRejectionReason = rejection;
     }
 
     // ── When marking payment received: prompt for payment channel ──
@@ -2269,11 +2476,13 @@ async function updateStatus(id, sel){
         payment_deadline:deadlineFmt,
         payment_link:    getPaymentLink(rec.id),
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
-        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+        admin_email:     currentUser?.notification_email || '',
       });
     }
 
     if(rec && newStatus === 'Rejected'){
+      const rr = _pendingRejectionReason || {};
+      _pendingRejectionReason = null;
       sendEmail('rejected',{
         player_email:    rec.Email_Address,
         player_name:     rec.Player1_Name||'Player',
@@ -2282,7 +2491,9 @@ async function updateStatus(id, sel){
         level:           rec.Level,
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
-        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+        admin_email:     currentUser?.notification_email || '',
+        rejection_reason: rr.reason || '',
+        rejection_notes:  rr.notes  || '',
       });
     }
 
@@ -2311,11 +2522,30 @@ async function updateStatus(id, sel){
         jersey_image_url:  activeTournament?.jersey_image_url||'',
         jersey_link:       getPaymentLink(rec.id)+'&jersey=1',
         cancel_link:       getCancelLink(rec.id),
-        admin_email:       currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+        admin_email:       currentUser?.notification_email || '',
       });
     }
 
-    if(rec && newStatus === 'Cancelled' && oldStatus === 'Cancellation Requested'){
+    if(rec && newStatus === 'Registered' && oldStatus === 'Transfer Requested'){
+      // Admin approved transfer — update level to requested_level stored in notes
+      const noteMatch = (rec.notes||'').match(/TRANSFER REQUEST: .* → (\S+)/);
+      const newLevel  = noteMatch ? noteMatch[1] : null;
+      if(newLevel) extraFields.Level = newLevel;
+      sendEmail('transfer_approved',{
+        player_email:    rec.Email_Address,
+        player_name:     rec.Player1_Name||'Player',
+        player2_name:    rec.Player2_Name||'',
+        team_name:       rec.Team_Name,
+        from_level:      rec.Level,
+        to_level:        newLevel||rec.Level,
+        tournament_name: activeTournament?.name||'',
+        reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+        admin_email:     currentUser?.notification_email||'',
+      });
+    }
+
+    if(rec && newStatus === 'Cancelled' && oldStatus === 'Transfer Requested'){
+      // Admin denied transfer — send cancellation email (they chose to withdraw)
       sendEmail('cancellation_approved',{
         player_email:    rec.Email_Address,
         player_name:     rec.Player1_Name||'Player',
@@ -2324,7 +2554,7 @@ async function updateStatus(id, sel){
         level:           rec.Level,
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
-        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+        admin_email:     currentUser?.notification_email||'',
       });
     }
 
@@ -2337,7 +2567,7 @@ async function updateStatus(id, sel){
         level:           rec.Level,
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
-        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+        admin_email:     currentUser?.notification_email || '',
       });
     }
 
@@ -3656,6 +3886,592 @@ function markAllRead(){
 function startNotifPolling(){
   fetchNotifications();
   setInterval(fetchNotifications, 30000);
+}
+
+/* ════════════════════════════════════════════
+   BRACKETS SYSTEM
+════════════════════════════════════════════ */
+let bracketData       = [];     // saved brackets for active tournament
+let _bsPendingPayload = null;   // bracket payload waiting for conflict resolution
+let _conflictResolutions = {};  // { playerName: 'same'|'different' }
+let _pendingConflicts    = [];  // conflicts awaiting resolution
+
+// ── Load brackets for active tournament ──
+async function fetchBrackets(){
+  if(!activeTournament) return;
+  try{
+    const res  = await fetch(`${SB_URL}/rest/v1/brackets?tournament_id=eq.${activeTournament.id}&select=id,level_key,format,num_groups,slots_per_group,status,created_at&order=created_at.desc`,{headers:HDRS});
+    bracketData = res.ok ? (await res.json()) : [];
+    renderBrackets();
+  }catch(e){ console.warn('fetchBrackets failed:', e); }
+}
+
+// ── Render brackets list ──
+async function renderBrackets(){
+  const container = document.getElementById('bracketsContainer');
+  if(!bracketData.length){
+    container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted);font-size:13px;">No brackets set up yet. Click "Setup Bracket" to create one.</div>';
+    return;
+  }
+
+  // Load bracket groups + slots for each bracket
+  let html = '<div style="display:flex;flex-direction:column;gap:1.5rem;">';
+  for(const b of bracketData){
+    const statusColor = b.status==='published'?'#22c55e':'#f5a623';
+    const statusLabel = b.status==='published'?'Published':'Draft';
+    const formatLabel = b.format==='round_robin'?'Round Robin':'Single Elimination';
+
+    // Fetch groups with slots
+    const gRes = await fetch(`${SB_URL}/rest/v1/bracket_groups?bracket_id=eq.${b.id}&select=id,group_number,name,bracket_slots(id,slot_number,is_bye,registration_id,registrations(Team_Name,Player1_Name,Player2_Name))&order=group_number.asc`,{headers:HDRS});
+    const groups = gRes.ok ? (await gRes.json()) : [];
+
+    html += `
+    <div class="card">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;">${b.level_key}</div>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:${statusColor}22;border:1px solid ${statusColor}44;color:${statusColor};">${statusLabel}</span>
+          <span style="font-size:10px;color:var(--muted);">${formatLabel} · ${b.num_groups} brackets · ${b.slots_per_group} slots each</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${b.status==='draft'?`<button onclick="publishBracket(${b.id})" style="background:#22c55e22;border:1px solid #22c55e44;color:#22c55e;font-size:11px;font-weight:700;padding:5px 12px;border-radius:5px;cursor:pointer;">Publish</button>`:''}
+          <button onclick="deleteBracket(${b.id})" style="background:#e8372a22;border:1px solid #e8372a44;color:var(--primary);font-size:11px;font-weight:700;padding:5px 10px;border-radius:5px;cursor:pointer;">Delete</button>
+        </div>
+      </div>
+      <div style="padding:1rem 1.25rem;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+          ${groups.map(g=>{
+            const slots = (g.bracket_slots||[]).sort((a,b)=>a.slot_number-b.slot_number);
+            return `<div style="background:#0f0f0f;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+              <div style="padding:8px 12px;background:#1a1a1a;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">${g.name}</div>
+              ${slots.map((s,i)=>{
+                const reg = s.registrations;
+                if(s.is_bye || !reg) return `<div style="padding:7px 12px;border-bottom:1px solid #1a1a1a;font-size:11px;color:#444;font-style:italic;display:flex;align-items:center;gap:6px;"><span style="color:#333;font-weight:700;">${i+1}.</span> BYE</div>`;
+                return `<div style="padding:7px 12px;border-bottom:1px solid #1a1a1a;font-size:11px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="color:var(--muted);font-weight:700;">${i+1}.</span>
+                    <div>
+                      <div style="font-weight:700;color:#f0f0f0;">${reg.Team_Name||'—'}</div>
+                      <div style="color:#666;font-size:10px;">${[reg.Player1_Name,reg.Player2_Name].filter(Boolean).join(' & ')}</div>
+                    </div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ── Open setup modal ──
+function openBracketSetup(){
+  document.getElementById('bsLevel').innerHTML = '<option value="">— Select level —</option>';
+  if(pricingRows&&pricingRows.length){
+    pricingRows.filter(p=>p.enabled).forEach(p=>{
+      const hasBracket = bracketData.some(b=>b.level_key===p.level_key);
+      document.getElementById('bsLevel').innerHTML += `<option value="${p.level_key}" ${hasBracket?'disabled':''}>
+        ${p.label||p.level_key}${hasBracket?' (bracket exists)':''}
+      </option>`;
+    });
+  }
+  document.getElementById('bsNumGroups').value = '2';
+  document.getElementById('bsSlotsPerGroup').value = '4';
+  document.getElementById('bsValidation').style.display = 'none';
+  document.getElementById('bsError').style.display = 'none';
+  document.getElementById('bsLevelInfo').textContent = '';
+  document.querySelector('input[name="bsFormat"][value="round_robin"]').checked = true;
+  document.getElementById('bracketSetupModal').style.display = 'flex';
+}
+
+function closeBracketSetup(){
+  document.getElementById('bracketSetupModal').style.display = 'none';
+}
+
+function onFormatChange(val){
+  document.getElementById('fmt-rr').style.borderColor = val==='round_robin'?'var(--primary)':'var(--border)';
+  document.getElementById('fmt-se').style.borderColor = val==='single_elim'?'var(--primary)':'var(--border)';
+}
+
+async function onBracketLevelChange(){
+  const level = document.getElementById('bsLevel').value;
+  if(!level) return;
+  const registered = allRegs.filter(r=>r.Level===level && ['Registered','Payment Submitted','Payment Not Received','Awaiting Payment'].includes(r.Status));
+  const confirmed  = allRegs.filter(r=>r.Level===level && r.Status==='Registered');
+  const infoEl = document.getElementById('bsLevelInfo');
+  infoEl.innerHTML = `<strong style="color:#f0f0f0;">${registered.length}</strong> registered · <strong style="color:#22c55e;">${confirmed.length}</strong> confirmed (Registered status)`;
+  onBracketParamsChange();
+}
+
+function onBracketParamsChange(){
+  const level = document.getElementById('bsLevel').value;
+  if(!level) return;
+  const numGroups    = parseInt(document.getElementById('bsNumGroups').value)||0;
+  const slotsPerGroup= parseInt(document.getElementById('bsSlotsPerGroup').value)||0;
+  const totalSlots   = numGroups * slotsPerGroup;
+  const registered   = allRegs.filter(r=>r.Level===level && ['Registered','Payment Submitted','Awaiting Payment'].includes(r.Status));
+  const teamCount    = registered.length;
+  const diff         = totalSlots - teamCount;
+  const valEl        = document.getElementById('bsValidation');
+
+  let msgs = [];
+  let type = 'ok'; // ok | warn | error
+
+  if(diff > 0){
+    msgs.push(`<strong>${diff} BYE slot${diff>1?'s':''}</strong> will be added (${teamCount} teams, ${totalSlots} total slots)`);
+    type = 'warn';
+  } else if(diff < 0){
+    msgs.push(`<strong style="color:#ff6b6b;">Too many teams!</strong> ${teamCount} registered but only ${totalSlots} slots available (${numGroups}×${slotsPerGroup}). Increase brackets or slots per bracket.`);
+    type = 'error';
+  } else {
+    msgs.push(`<strong style="color:#22c55e;">Perfect fit!</strong> ${teamCount} teams fill exactly ${totalSlots} slots`);
+  }
+
+  // Minimum viable check
+  if(slotsPerGroup < 4){
+    msgs.push(`<strong style="color:#ff6b6b;">Warning: ${slotsPerGroup} slots per bracket is below the minimum of 4.</strong> A bracket with fewer than 4 teams is not a real tournament. Consider merging levels or waiting for more registrations.`);
+    if(type !== 'error') type = 'warn';
+  }
+
+  if(teamCount < 4){
+    msgs.push(`<strong style="color:#ff6b6b;">Only ${teamCount} team${teamCount!==1?'s':''} registered.</strong> Minimum 4 teams needed for a meaningful tournament. Consider keeping this level open longer or merging with another level.`);
+    if(type !== 'error') type = 'warn';
+  }
+
+  // Rule 4 — uneven distribution
+  if(diff===0 && teamCount % numGroups !== 0){
+    msgs.push(`<strong style="color:#f5a623;">Uneven brackets</strong> — teams cannot split evenly into ${numGroups} groups. Consider ${numGroups-1} or ${numGroups+1} brackets.`);
+    type = 'warn';
+  }
+
+  valEl.style.display = 'block';
+  valEl.style.background = type==='error'?'#1a0808':type==='warn'?'#1a1000':'#0d1a0d';
+  valEl.style.border = `1px solid ${type==='error'?'#3a1010':type==='warn'?'rgba(245,166,35,0.3)':'rgba(34,197,94,0.2)'}`;
+  valEl.style.borderLeft = `3px solid ${type==='error'?'var(--primary)':type==='warn'?'#f5a623':'#22c55e'}`;
+  valEl.style.borderRadius = '0 6px 6px 0';
+  valEl.style.color = type==='error'?'#ff6b6b':type==='warn'?'#f5a623':'#22c55e';
+  valEl.innerHTML = msgs.join('<br>');
+
+  const btn = document.getElementById('bsSaveBtn');
+  btn.disabled = type === 'error';
+  btn.style.opacity = type === 'error' ? '0.5' : '1';
+}
+
+// ── Detect player conflicts ──
+function detectConflicts(registrations){
+  const conflicts = [];
+  const seen = {}; // playerName_lowercase → [reg, ...]
+
+  registrations.forEach(r=>{
+    [r.Player1_Name, r.Player2_Name].filter(Boolean).forEach(name=>{
+      const key = name.trim().toLowerCase();
+      if(!seen[key]) seen[key] = [];
+      seen[key].push(r);
+    });
+  });
+
+  Object.entries(seen).forEach(([key, regs])=>{
+    if(regs.length > 1){
+      // Check if already resolved
+      const existing = _conflictResolutions[key];
+      if(!existing){
+        conflicts.push({playerName: regs[0].Player1_Name || regs[0].Player2_Name, key, registrations: regs});
+      }
+    }
+  });
+
+  return conflicts;
+}
+
+// ── Save bracket ──
+async function saveBracket(status){
+  const level        = document.getElementById('bsLevel').value;
+  const format       = document.querySelector('input[name="bsFormat"]:checked')?.value || 'round_robin';
+  const numGroups    = parseInt(document.getElementById('bsNumGroups').value)||0;
+  const slotsPerGroup= parseInt(document.getElementById('bsSlotsPerGroup').value)||0;
+  const seeding      = document.getElementById('bsSeeding').value;
+  const errEl        = document.getElementById('bsError');
+
+  if(!level){ errEl.textContent='Please select a level.'; errEl.style.display='block'; return; }
+  if(numGroups<1||slotsPerGroup<2){ errEl.textContent='Invalid bracket configuration.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  const registered = allRegs.filter(r=>r.Level===level && ['Registered','Payment Submitted','Awaiting Payment'].includes(r.Status));
+
+  // ── Check R1 + Player Conflict ──
+  const conflicts = detectConflicts(registered);
+  if(conflicts.length && status==='published'){
+    _pendingConflicts = conflicts;
+    _bsPendingPayload = {level, format, numGroups, slotsPerGroup, seeding, status, registrations: registered};
+    openConflictModal(conflicts);
+    return;
+  }
+
+  await _generateBrackets({level, format, numGroups, slotsPerGroup, seeding, status, registrations: registered});
+}
+
+// ── Actually generate and save brackets ──
+async function _generateBrackets({level, format, numGroups, slotsPerGroup, seeding, status, registrations}){
+  const btn = document.getElementById('bsSaveBtn');
+  const orig = btn.textContent;
+  btn.textContent='Saving...'; btn.disabled=true;
+
+  try{
+    // Delete existing bracket for this level if any
+    const existing = bracketData.find(b=>b.level_key===level);
+    if(existing){
+      await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${existing.id}`,{method:'DELETE',headers:HDRS});
+    }
+
+    // Create bracket record
+    const bRes = await fetch(`${SB_URL}/rest/v1/brackets`,{
+      method:'POST',
+      headers:{...HDRS,'Prefer':'return=representation'},
+      body:JSON.stringify({tournament_id:activeTournament.id, level_key:level, format, num_groups:numGroups, slots_per_group:slotsPerGroup, status}),
+    });
+    if(!bRes.ok) throw new Error(await bRes.text());
+    const [bracket] = await bRes.json();
+
+    // Seed teams
+    let teams = [...registrations];
+    if(seeding==='auto_random') teams = teams.sort(()=>Math.random()-0.5);
+
+    // Apply player conflict rules — same person in different regs → different groups
+    const assignedGroups = {}; // playerKey → groupIndex
+    const groupAssignments = Array.from({length:numGroups},()=>[]);
+
+    teams.forEach(team=>{
+      const playerKeys = [team.Player1_Name,team.Player2_Name].filter(Boolean).map(n=>n.trim().toLowerCase());
+      // Find first group where no player key conflicts
+      let placed = false;
+      for(let g=0;g<numGroups;g++){
+        const groupPlayerKeys = groupAssignments[g].flatMap(t=>[t.Player1_Name,t.Player2_Name].filter(Boolean).map(n=>n.trim().toLowerCase()));
+        // Check Rule 1: no same player
+        const hasPlayerConflict = playerKeys.some(k=>groupPlayerKeys.includes(k) && _conflictResolutions[k]!=='different');
+        // Check Rule 2: same team name warning (don't block, just note)
+        const hasSameTeamName = groupAssignments[g].some(t=>t.Team_Name?.toLowerCase()===team.Team_Name?.toLowerCase());
+        if(!hasPlayerConflict && groupAssignments[g].length < slotsPerGroup){
+          groupAssignments[g].push(team);
+          placed = true;
+          break;
+        }
+      }
+      if(!placed){
+        // Force into least-full group (Rule 1 violated but no other option)
+        const leastFull = groupAssignments.reduce((min,g,i)=>g.length<groupAssignments[min].length?i:min,0);
+        groupAssignments[leastFull].push(team);
+      }
+    });
+
+    // Save groups and slots
+    const groupNames = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P'];
+    for(let g=0;g<numGroups;g++){
+      const gRes = await fetch(`${SB_URL}/rest/v1/bracket_groups`,{
+        method:'POST',
+        headers:{...HDRS,'Prefer':'return=representation'},
+        body:JSON.stringify({bracket_id:bracket.id, group_number:g+1, name:`Group ${groupNames[g]}`}),
+      });
+      if(!gRes.ok) throw new Error(await gRes.text());
+      const [group] = await gRes.json();
+
+      const slots = [];
+      groupAssignments[g].forEach((team,i)=>{
+        slots.push({group_id:group.id, slot_number:i+1, registration_id:team.id, is_bye:false});
+      });
+      // Fill remaining slots with BYEs
+      for(let s=groupAssignments[g].length; s<slotsPerGroup; s++){
+        slots.push({group_id:group.id, slot_number:s+1, registration_id:null, is_bye:true});
+      }
+      if(slots.length){
+        await fetch(`${SB_URL}/rest/v1/bracket_slots`,{
+          method:'POST',
+          headers:{...HDRS,'Prefer':'return=minimal'},
+          body:JSON.stringify(slots),
+        });
+      }
+    }
+
+    // Check Rule 2 — same team names in same group (warn after saving)
+    const warnings = [];
+    groupAssignments.forEach((grp,gi)=>{
+      const names = grp.map(t=>t.Team_Name?.toLowerCase());
+      const dupes = names.filter((n,i)=>n&&names.indexOf(n)!==i);
+      if(dupes.length) warnings.push(`Group ${groupNames[gi]} has teams with the same name: ${[...new Set(dupes)].join(', ')}`);
+    });
+
+    closeBracketSetup();
+    await fetchBrackets();
+    showTab('brackets');
+
+    if(warnings.length){
+      alert('Brackets saved!\n\nWarning — same team names in same group:\n'+warnings.join('\n')+'\n\nPlease verify these are different teams.');
+    }
+
+  }catch(e){
+    document.getElementById('bsError').textContent = 'Save failed: '+e.message;
+    document.getElementById('bsError').style.display = 'block';
+    btn.textContent=orig; btn.disabled=false;
+  }
+}
+
+// ── Conflict resolution modal ──
+function openConflictModal(conflicts){
+  const list = document.getElementById('conflictList');
+  list.innerHTML = conflicts.map((c,ci)=>`
+    <div style="background:#0f0f0f;border:1px solid #2a2a2a;border-radius:8px;padding:12px 14px;margin-bottom:10px;" id="conflict-block-${ci}">
+      <div style="font-size:12px;font-weight:700;color:#f5a623;margin-bottom:8px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> "${c.playerName}" appears in ${c.registrations.length} registrations for the same level
+      </div>
+      ${c.registrations.map(r=>`
+        <div style="font-size:11px;color:#ccc;padding:4px 8px;background:#141414;border-radius:4px;margin-bottom:4px;">
+          <strong style="color:#fff;">${r.Team_Name}</strong> — ${[r.Player1_Name,r.Player2_Name].filter(Boolean).join(' & ')} (${r.Status})
+        </div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button onclick="resolveConflict('${c.key}','same',${ci})" id="res-same-${ci}"
+          style="flex:1;padding:8px;background:#1a0808;border:1px solid #3a1010;color:#ff6b6b;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">
+          Same Person — Keep separate brackets
+        </button>
+        <button onclick="resolveConflict('${c.key}','different',${ci})" id="res-diff-${ci}"
+          style="flex:1;padding:8px;background:#0d1a0d;border:1px solid rgba(34,197,94,0.3);color:#22c55e;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;">
+          Different People — Allow same bracket
+        </button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('conflictModal').style.display = 'flex';
+  checkAllConflictsResolved();
+}
+
+function resolveConflict(key, resolution, idx){
+  _conflictResolutions[key] = resolution;
+  const block = document.getElementById('conflict-block-'+idx);
+  const color = resolution==='same'?'rgba(232,55,42,0.15)':'rgba(34,197,94,0.1)';
+  const border= resolution==='same'?'rgba(232,55,42,0.4)':'rgba(34,197,94,0.3)';
+  const label = resolution==='same'?'Marked as Same Person — will be in different brackets':'Marked as Different People — may be in same bracket';
+  const lcolor= resolution==='same'?'#ff6b6b':'#22c55e';
+  block.style.background = color;
+  block.style.border = `1px solid ${border}`;
+  block.innerHTML += `<div style="font-size:11px;color:${lcolor};font-weight:700;margin-top:8px;"><i class="bi bi-check-circle-fill"></i> ${label}</div>`;
+  document.getElementById('res-same-'+idx).disabled = true;
+  document.getElementById('res-diff-'+idx).disabled = true;
+  checkAllConflictsResolved();
+}
+
+function checkAllConflictsResolved(){
+  const allResolved = _pendingConflicts.every(c=>_conflictResolutions[c.key]);
+  const btn = document.getElementById('conflictProceedBtn');
+  btn.disabled = !allResolved;
+  btn.style.opacity = allResolved ? '1' : '0.5';
+}
+
+async function proceedAfterConflicts(){
+  document.getElementById('conflictModal').style.display = 'none';
+  _pendingConflicts = [];
+  if(_bsPendingPayload){
+    await _generateBrackets(_bsPendingPayload);
+    _bsPendingPayload = null;
+  }
+}
+
+function cancelConflictResolution(){
+  document.getElementById('conflictModal').style.display = 'none';
+  _pendingConflicts = [];
+  _bsPendingPayload = null;
+}
+
+async function publishBracket(id){
+  await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${id}`,{method:'PATCH',headers:{...HDRS,'Prefer':'return=minimal'},body:JSON.stringify({status:'published'})});
+  await fetchBrackets();
+}
+
+async function deleteBracket(id){
+  const confirmed = await showConfirmDelete('Delete Bracket','Are you sure? All group and slot assignments will be permanently deleted.');
+  if(!confirmed) return;
+  await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${id}`,{method:'DELETE',headers:HDRS});
+  await fetchBrackets();
+}
+
+/* ════════════════════════════════════════════
+   LEVEL DISSOLUTION
+════════════════════════════════════════════ */
+function openDissolveLevelModal(){
+  const sel = document.getElementById('dlLevel');
+  sel.innerHTML = '<option value="">— Select level —</option>';
+  if(pricingRows){
+    pricingRows.filter(p=>p.enabled).forEach(p=>{
+      const count = allRegs.filter(r=>r.Level===p.level_key && ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length;
+      sel.innerHTML += `<option value="${p.level_key}">${p.label||p.level_key} (${count} registered)</option>`;
+    });
+  }
+  document.getElementById('dlLevelInfo').textContent = '';
+  document.getElementById('dlAffectedTeams').style.display = 'none';
+  document.getElementById('dlError').style.display = 'none';
+  document.getElementById('dissolveLevelModal').style.display = 'flex';
+}
+
+function closeDissolveLevelModal(){
+  document.getElementById('dissolveLevelModal').style.display = 'none';
+}
+
+function onDissolveLevelChange(){
+  const level = document.getElementById('dlLevel').value;
+  if(!level) return;
+  const affected = allRegs.filter(r=>r.Level===level && ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status));
+  const infoEl = document.getElementById('dlLevelInfo');
+  const teamsEl = document.getElementById('dlAffectedTeams');
+  const listEl  = document.getElementById('dlTeamList');
+  infoEl.innerHTML = `<strong style="color:${affected.length?'#f5a623':'#22c55e'}">${affected.length}</strong> team${affected.length!==1?'s':''} will be notified.`;
+  if(affected.length){
+    teamsEl.style.display = 'block';
+    listEl.innerHTML = affected.map(r=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #1e1e1e;font-size:12px;">
+        <div>
+          <span style="font-weight:700;color:#f0f0f0;">${r.Team_Name}</span>
+          <span style="color:#555;margin-left:6px;">${[r.Player1_Name,r.Player2_Name].filter(Boolean).join(' & ')}</span>
+        </div>
+        <span style="font-size:10px;color:var(--muted);">${r.Status}</span>
+      </div>`).join('');
+  } else {
+    teamsEl.style.display = 'none';
+  }
+}
+
+async function confirmDissolveLevel(){
+  const level   = document.getElementById('dlLevel').value;
+  const message = document.getElementById('dlMessage').value.trim();
+  const errEl   = document.getElementById('dlError');
+  if(!level){ errEl.textContent='Please select a level.'; errEl.style.display='block'; return; }
+  if(!message){ errEl.textContent='Please provide a message to players.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  const affected = allRegs.filter(r=>r.Level===level && ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status));
+  if(!affected.length){ closeDissolveLevelModal(); return; }
+
+  const btn = document.getElementById('dlConfirmBtn');
+  btn.textContent='Sending...'; btn.disabled=true;
+
+  // Available levels for transfer (all levels except the dissolved one)
+  const availableLevels = (pricingRows||[]).filter(p=>p.enabled && p.level_key!==level).map(p=>p.label||p.level_key);
+
+  let sent = 0, failed = 0;
+  for(const reg of affected){
+    try{
+      // Update status to Cancelled (level dissolved = forced cancellation, player can re-register at new level)
+      await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${reg.id}`,{
+        method:'PATCH',
+        headers:{...HDRS,'Prefer':'return=minimal'},
+        body:JSON.stringify({
+          Status:'Cancelled',
+          notes:`LEVEL DISSOLVED: ${level}. Player notified to transfer or cancel.`,
+        }),
+      });
+      // Send dissolution email
+      sendEmail('level_dissolved',{
+        player_email:    reg.Email_Address,
+        admin_email:     currentUser?.notification_email||'',
+        player_name:     reg.Player1_Name||'Player',
+        player2_name:    reg.Player2_Name||'',
+        team_name:       reg.Team_Name,
+        dissolved_level: level,
+        tournament_name: activeTournament?.name||'',
+        reg_ref:         `#${String(reg.id).padStart(5,'0')}`,
+        organizer_message: message,
+        available_levels: availableLevels.join(', '),
+        transfer_link:   getTransferLink(reg.id, level),
+        cancel_link:     getCancelLink(reg.id),
+      });
+      sent++;
+    }catch(e){ failed++; console.warn('Dissolve notify failed for reg', reg.id, e); }
+  }
+
+  closeDissolveLevelModal();
+  await fetchRegistrations();
+  alert(`Level ${level} dissolved.\n${sent} email${sent!==1?'s':''} sent.${failed?`\n${failed} failed — check console.`:''}`);
+}
+
+function getTransferLink(regId, fromLevel){
+  const base = _globalSiteUrl
+    ? _globalSiteUrl.trim().replace(/\/$/, '') + '/'
+    : window.location.href.replace(/admin\.html.*$/, '');
+  return `${base}level-transfer.html?ref=${regId}&from=${encodeURIComponent(fromLevel)}`;
+}
+
+/* ════════════════════════════════════════════
+   REJECTION NOTES MODAL
+════════════════════════════════════════════ */
+let _resolveRejection = null;
+let _pendingRejectionReason = null;
+
+function promptRejectionNotes(){
+  return new Promise(resolve=>{
+    _resolveRejection = resolve;
+    document.querySelectorAll('input[name="rejReason"]').forEach(r=>r.checked=false);
+    document.getElementById('rejectionNotes').value = '';
+    document.getElementById('rejectionModal').style.display = 'flex';
+  });
+}
+
+function confirmRejection(){
+  const reasonEl = document.querySelector('input[name="rejReason"]:checked');
+  const notes    = document.getElementById('rejectionNotes').value.trim();
+  const reason   = reasonEl ? reasonEl.value : '';
+  if(!reason && !notes){
+    alert('Please select a reason or add notes before confirming rejection.');
+    return;
+  }
+  document.getElementById('rejectionModal').style.display = 'none';
+  if(_resolveRejection) _resolveRejection({reason: reason==='other'?'':reason, notes});
+  _resolveRejection = null;
+}
+
+function cancelRejection(){
+  document.getElementById('rejectionModal').style.display = 'none';
+  if(_resolveRejection) _resolveRejection(null);
+  _resolveRejection = null;
+}
+
+/* ════════════════════════════════════════════
+   DUPLICATE PLAYER DETECTOR (Rule 1 - Approval)
+════════════════════════════════════════════ */
+function checkDuplicatePlayer(rec){
+  if(!rec || !allRegs) return null;
+  const p1 = (rec.Player1_Name||'').trim().toLowerCase();
+  const p2 = (rec.Player2_Name||'').trim().toLowerCase();
+  const level = rec.Level;
+  const activeStatuses = ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'];
+
+  const conflicts = [];
+  allRegs.forEach(other=>{
+    if(other.id === rec.id) return;
+    if(other.Level !== level) return;
+    if(!activeStatuses.includes(other.Status)) return;
+    const op1 = (other.Player1_Name||'').trim().toLowerCase();
+    const op2 = (other.Player2_Name||'').trim().toLowerCase();
+    const matched = [];
+    if(p1 && (op1===p1||op2===p1)) matched.push(`"${rec.Player1_Name}"`);
+    if(p2 && (op1===p2||op2===p2)) matched.push(`"${rec.Player2_Name}"`);
+    if(matched.length){
+      conflicts.push(`${matched.join(', ')} already in ${other.Status} under Team "${other.Team_Name}" (${other.Level}) — REF ${String(other.id).padStart(5,'0')}`);
+    }
+  });
+  return conflicts.length ? conflicts.join('\n') : null;
+}
+
+/* ════════════════════════════════════════════
+   BRACKET MINIMUM THRESHOLD (Rule 3)
+════════════════════════════════════════════ */
+function checkBracketMinimums(){
+  if(!activeTournament || !pricingRows) return;
+  const MIN_TEAMS = 4;
+  pricingRows.filter(p=>p.enabled).forEach(p=>{
+    const count = allRegs.filter(r=>r.Level===p.level_key && ['Registered','Awaiting Payment','Payment Submitted'].includes(r.Status)).length;
+    if(count > 0 && count < MIN_TEAMS){
+      console.warn(`Level ${p.level_key} has only ${count} team(s) — below minimum of ${MIN_TEAMS}`);
+    }
+  });
 }
 
 function closeEmailSettings(){

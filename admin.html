@@ -71,7 +71,8 @@
   .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
 
   /* CONTENT */
-  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;}
+  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;min-height:400px;}
+  #mainDashboard{display:flex;flex-direction:column;min-height:calc(100vh - 200px);}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
   .page-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;text-transform:uppercase;}
@@ -4041,16 +4042,19 @@ async function renderBrackets(){
   const container = document.getElementById('bracketsContainer');
   console.log('🟢 container in renderBrackets:', container ? 'FOUND' : '❌ NOT FOUND');
   if(!bracketData.length){
-    container.innerHTML = `
-      <div style="text-align:center;padding:4rem 2rem;">
-        <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">🏸</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#555;margin-bottom:0.5rem;">No Brackets Yet</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
+    const html = `
+      <div style="text-align:center;padding:4rem 2rem;background:#111;border-radius:8px;">
+        <div style="font-size:3rem;margin-bottom:1rem;opacity:0.5;">🏸</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#ccc;margin-bottom:0.5rem;">No Brackets Yet</div>
+        <div style="font-size:13px;color:#999;margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
         <button onclick="openBracketSetup()"
           style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:8px;cursor:pointer;">
           + Setup Bracket
         </button>
       </div>`;
+    console.log('🟢 Setting innerHTML for empty brackets');
+    container.innerHTML = html;
+    console.log('🟢 innerHTML set, length:', container.innerHTML.length);
     return;
   }
 

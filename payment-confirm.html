@@ -160,6 +160,9 @@
         The organizer will review and confirm your registration shortly.
       </div>
       <div id="jerseySection"></div>
+      <p style="margin-top:1rem;font-size:11px;color:#444;text-align:center;">
+        Changed your mind? <a id="cancelLink" href="#" style="color:#666;text-decoration:underline;">Request cancellation</a>
+      </p>
     </div>
   </div>
 
@@ -456,6 +459,9 @@ async function submitPayment(){
     }catch(e){ console.warn('Admin notify failed:',e); }
 
     show('successState');
+    // Set cancel link
+    var cancelEl = document.getElementById('cancelLink');
+    if(cancelEl) cancelEl.href = 'cancel-request.html?ref='+regData.id;
     await checkJersey();
 
   }catch(e){

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request Cancellation</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--primary:#e8372a;--bg:#0a0a0a;--card:#141414;--border:#2a2a2a;--text:#f0f0f0;--muted:#666;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
+  .container{width:100%;max-width:480px;}
+  .logo{text-align:center;margin-bottom:1.5rem;}
+  .logo-title{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary);}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .card-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#1a0808,#141414);}
+  .card-title{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
+  .card-sub{font-size:12px;color:var(--muted);}
+  .card-body{padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
+  .info-box{background:#0f0f0f;border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:8px;padding:12px 14px;}
+  .info-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;}
+  .info-row:not(:last-child){border-bottom:1px solid #1e1e1e;}
+  .info-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:600;}
+  .info-val{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;text-align:right;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
+  .field textarea{background:#0f0f0f;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:0.9rem;padding:12px 14px;resize:vertical;min-height:90px;width:100%;}
+  .field textarea:focus{outline:none;border-color:var(--primary);}
+  .warning-box{padding:12px 14px;background:#1a1000;border:1px solid rgba(245,166,35,0.3);border-left:3px solid #f5a623;border-radius:8px;font-size:12px;color:#f5a623;line-height:1.6;}
+  .btn{width:100%;padding:13px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;font-size:1rem;cursor:pointer;border:none;transition:all 0.2s;}
+  .btn-cancel-req{background:#7c4a00;color:#fff;}
+  .btn-cancel-req:hover{background:#9a5e00;}
+  .btn-cancel-req:disabled{background:#2a2a2a;color:#555;cursor:not-allowed;}
+  .btn-back{background:#1a1a1a;color:#aaa;border:1px solid #333;margin-top:6px;}
+  .btn-back:hover{background:#222;}
+  .loading{text-align:center;padding:3rem;color:var(--muted);}
+  .error-page{text-align:center;padding:2.5rem 1.5rem;}
+  .error-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;color:var(--primary);margin-bottom:0.5rem;}
+  .error-msg{font-size:13px;color:var(--muted);line-height:1.7;}
+  .success-page{text-align:center;padding:2rem 1.5rem;}
+  .success-icon{width:64px;height:64px;background:#7c4a00;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 1rem;animation:pop 0.5s ease;}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  .success-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;margin-bottom:0.5rem;}
+  .success-msg{font-size:13px;color:var(--muted);line-height:1.7;max-width:320px;margin:0 auto;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <div class="logo-title">Cancellation Request</div>
+  </div>
+
+  <!-- Loading -->
+  <div class="card" id="loadingState">
+    <div class="loading">Loading your registration...</div>
+  </div>
+
+  <!-- Error -->
+  <div class="card" id="errorState" style="display:none;">
+    <div class="error-page">
+      <div style="font-size:2.5rem;margin-bottom:1rem;">❌</div>
+      <div class="error-title">Cannot Process</div>
+      <div class="error-msg" id="errorMsg">This link is invalid.</div>
+    </div>
+  </div>
+
+  <!-- Main Form -->
+  <div class="card" id="mainForm" style="display:none;">
+    <div class="card-header">
+      <div class="card-title">Request Cancellation</div>
+      <div class="card-sub">Your cancellation request will be reviewed by the organizer.</div>
+    </div>
+    <div class="card-body">
+      <div class="info-box" id="regInfoBox"></div>
+
+      <div class="warning-box">
+        <strong>Before you proceed:</strong><br>
+        • Cancellations are subject to organizer approval<br>
+        • Refunds (if any) are at the organizer's discretion<br>
+        • Your slot will only be released after approval
+      </div>
+
+      <div class="field">
+        <label>Reason for Cancellation *</label>
+        <textarea id="cancelReason" placeholder="Please explain why you need to cancel (e.g. scheduling conflict, injury, personal reasons)..."></textarea>
+      </div>
+
+      <div id="submitError" style="display:none;color:#ff6b6b;font-size:12px;padding:10px 14px;background:#1a0808;border:1px solid #3a1010;border-radius:8px;"></div>
+
+      <button class="btn btn-cancel-req" id="submitBtn" onclick="submitCancellation()">
+        Submit Cancellation Request
+      </button>
+      <button class="btn btn-back" onclick="history.back()">
+        Go Back
+      </button>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="card" id="successState" style="display:none;">
+    <div class="success-page">
+      <div class="success-icon">📋</div>
+      <div class="success-title">Request Submitted</div>
+      <div class="success-msg">
+        Your cancellation request has been sent to the organizer.<br><br>
+        You will receive an email once they review your request. Your registration remains active until approved.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
+const HDRS = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+let regData = null;
+
+function show(id){
+  ['loadingState','errorState','mainForm','successState'].forEach(function(s){
+    document.getElementById(s).style.display = s===id?'block':'none';
+  });
+}
+function showError(msg){ document.getElementById('errorMsg').textContent=msg; show('errorState'); }
+
+async function init(){
+  const params = new URLSearchParams(window.location.search);
+  const rawRef = params.get('ref');
+  if(!rawRef){ showError('No registration reference found in this link.'); return; }
+  try{
+    const res  = await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+rawRef+'&select=id,Status,Team_Name,Level,Email_Address,Player1_Name,Player2_Name,tournament_id',{headers:HDRS});
+    const data = await res.json();
+    if(!data||!data.length){ showError('Registration not found.'); return; }
+    regData = data[0];
+
+    // Allow cancellation for registered, awaiting payment, and payment submitted
+    const cancelableStatuses = ['Registered','Awaiting Payment','Payment Submitted'];
+    if(!cancelableStatuses.includes(regData.Status)){
+      if(regData.Status === 'Cancellation Requested')
+        showError('You already have a cancellation request pending. The organizer will review it soon.');
+      else if(regData.Status === 'Cancelled')
+        showError('This registration has already been cancelled.');
+      else
+        showError('Cancellation is only available for registered players. Current status: '+regData.Status);
+      return;
+    }
+
+    // Get tournament name
+    const tRes  = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name',{headers:HDRS});
+    const tData = await tRes.json();
+    const tName = (tData&&tData[0])?tData[0].name:'Tournament';
+
+    document.getElementById('regInfoBox').innerHTML =
+      '<div class="info-row"><span class="info-label">Tournament</span><span class="info-val">'+tName+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Team</span><span class="info-val">'+(regData.Team_Name||'—')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Level</span><span class="info-val">'+(regData.Level||'—')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Status</span><span class="info-val" style="color:#f5a623;">'+(regData.Status)+'</span></div>';
+
+    show('mainForm');
+  }catch(e){ showError('Failed to load: '+e.message); }
+}
+
+async function submitCancellation(){
+  var reason = document.getElementById('cancelReason').value.trim();
+  var errBox = document.getElementById('submitError');
+  if(!reason){ errBox.textContent='Please provide a reason for cancellation.'; errBox.style.display='block'; return; }
+  errBox.style.display='none';
+
+  var btn = document.getElementById('submitBtn');
+  btn.textContent='Submitting...'; btn.disabled=true;
+
+  try{
+    // Update status to Cancellation Requested, store reason in notes
+    var patchRes = await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+regData.id,{
+      method:'PATCH',
+      headers:Object.assign({},HDRS,{'Prefer':'return=minimal'}),
+      body:JSON.stringify({
+        Status:'Cancellation Requested',
+        notes: 'CANCELLATION REQUEST: '+reason,
+      }),
+    });
+    if(!patchRes.ok) throw new Error(await patchRes.text());
+
+    // Notify admin
+    try{
+      var tRes  = await fetch(SB_URL+'/rest/v1/tournaments?id=eq.'+regData.tournament_id+'&select=name,owner_id',{headers:HDRS});
+      var tData = await tRes.json();
+      var tourney = (tData&&tData[0])||{};
+      if(tourney.owner_id){
+        var uRes  = await fetch(SB_URL+'/rest/v1/users?id=eq.'+tourney.owner_id+'&select=notification_email,username',{headers:HDRS});
+        var uData = await uRes.json();
+        var admin = (uData&&uData[0])||{};
+        if(admin.notification_email){
+          await fetch(SB_URL+'/functions/v1/send-email',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+            body:JSON.stringify({
+              type:'cancellation_requested',
+              data:{
+                admin_email:     admin.notification_email,
+                admin_name:      admin.username||'Organizer',
+                player_name:     regData.Player1_Name||'Player',
+                player2_name:    regData.Player2_Name||'',
+                team_name:       regData.Team_Name,
+                level:           regData.Level,
+                tournament_name: tourney.name||'',
+                reg_ref:         '#'+String(regData.id).padStart(5,'0'),
+                reason:          reason,
+              },
+            }),
+          });
+        }
+      }
+    }catch(e){ console.warn('Admin notify failed:',e); }
+
+    show('successState');
+  }catch(e){
+    errBox.textContent = e.message;
+    errBox.style.display = 'block';
+    btn.textContent='Submit Cancellation Request'; btn.disabled=false;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

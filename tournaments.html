@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tournaments — Badminton</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
   :root{
     --primary:#e8372a;--accent:#f5a623;--bg:#0a0a0a;--card:#141414;
@@ -57,8 +58,8 @@
   .t-card-body{padding:1rem 1.25rem;flex:1;display:flex;flex-direction:column;gap:10px;}
   .t-detail{display:flex;gap:10px;align-items:flex-start;}
   .t-detail-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
-  .t-detail-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1px;}
-  .t-detail-value{font-size:13px;color:var(--text);}
+  .t-detail-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1px;font-weight:800;}
+  .t-detail-value{font-size:13px;color:var(--text);font-weight:400;}
   .t-card-footer{padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px;}
 
   /* STATUS PILLS */
@@ -83,8 +84,8 @@
   .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;text-transform:uppercase;margin-bottom:1.25rem;}
   .modal-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1e1e1e;align-items:flex-start;}
   .modal-row:last-of-type{border-bottom:none;}
-  .modal-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;min-width:110px;flex-shrink:0;padding-top:1px;}
-  .modal-val{font-size:13px;color:var(--text);line-height:1.5;}
+  .modal-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;min-width:110px;flex-shrink:0;padding-top:1px;font-weight:400;}
+  .modal-val{font-size:13px;color:var(--text);line-height:1.5;font-weight:700;}
   .modal-close-btn{margin-top:1.25rem;width:100%;}
 
   /* EMPTY */
@@ -278,7 +279,7 @@
       <div class="t-card">
         <div class="t-card-top">
           <div class="t-card-name">${t.name}</div>
-          <div class="t-card-org">🏸 ${t.owner_name||'—'}</div>
+          <div class="t-card-org">${t.owner_name||'—'}</div>
           <div class="status-pill ${statusKey}">
             <span class="status-dot"></span>${statusLabel}
           </div>
@@ -286,7 +287,7 @@
         <div class="t-card-body">
           ${regDate?`
           <div class="t-detail">
-            <div class="t-detail-icon">📝</div>
+            <div class="t-detail-icon"><i class="bi bi-calendar-range"></i></div>
             <div>
               <div class="t-detail-label">Registration</div>
               <div class="t-detail-value">${regDate}</div>
@@ -294,7 +295,7 @@
           </div>`:''}
           ${evtDate?`
           <div class="t-detail">
-            <div class="t-detail-icon">🏸</div>
+            <div class="t-detail-icon"><i class="bi bi-trophy"></i></div>
             <div>
               <div class="t-detail-label">Tournament Date</div>
               <div class="t-detail-value">${evtDate}</div>
@@ -302,19 +303,20 @@
           </div>`:''}
           ${t.location?`
           <div class="t-detail">
-            <div class="t-detail-icon">📍</div>
+            <div class="t-detail-icon"><i class="bi bi-geo-alt-fill"></i></div>
             <div>
               <div class="t-detail-label">Location</div>
-              <div class="t-detail-value">${t.location}</div>
+              <div class="t-detail-value"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location)}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;text-transform:uppercase;font-weight:600;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text)'">${t.location.toUpperCase()}</a></div>
             </div>
           </div>`:''}
+          ${t.free_jersey_count?`
           <div class="t-detail">
-            <div class="t-detail-icon">👥</div>
+            <div class="t-detail-icon"><i class="bi bi-shirt-fill"></i></div>
             <div>
-              <div class="t-detail-label">Teams</div>
-              <div class="t-detail-value">${counts.confirmed} confirmed · ${counts.total} total</div>
+              <div class="t-detail-label">Free Jersey</div>
+              <div class="t-detail-value">FIRST ${t.free_jersey_count} PLAYERS</div>
             </div>
-          </div>
+          </div>`:''}
         </div>
         <div class="t-card-footer">
           <a href="${canRegister?regLink:'#'}"
@@ -329,7 +331,7 @@
 
   function showDetail(t){
     const statusKey   = getTournamentStatus(t);
-    const statusLabel = statusKey==='open'?'🟢 Open Now':statusKey==='soon'?'🟡 Coming Soon':'🔴 Closed';
+    const statusLabel = statusKey==='open'?'Open Now':statusKey==='soon'?'Coming Soon':'Closed';
     const regDate = t.event_date_from && t.event_date_to
       ? `${fmt(t.event_date_from)} – ${fmt(t.event_date_to)}`
       : '—';
@@ -341,15 +343,15 @@
     const counts = regCounts[t.id] || {total:0,confirmed:0};
 
     document.getElementById('detailName').textContent = t.name;
+    const statusColor = statusKey==='open' ? '#22c55e' : statusKey==='soon' ? '#f5a623' : '#666';
     document.getElementById('detailBody').innerHTML = `
-      <div class="modal-row"><span class="modal-label">Organizer</span><span class="modal-val">🏸 ${t.owner_name||'—'}</span></div>
-      <div class="modal-row"><span class="modal-label">Status</span><span class="modal-val">${statusLabel}</span></div>
+      <div class="modal-row"><span class="modal-label">Organizer</span><span class="modal-val">${t.owner_name||'—'}</span></div>
+      <div class="modal-row"><span class="modal-label">Status</span><span class="modal-val" style="color:${statusColor};font-weight:700;">${statusLabel}</span></div>
       <div class="modal-row"><span class="modal-label">Registration</span><span class="modal-val">${regDate}</span></div>
       <div class="modal-row"><span class="modal-label">Tournament</span><span class="modal-val">${evtDate}</span></div>
       ${t.early_bird_to?`<div class="modal-row"><span class="modal-label">Early Bird</span><span class="modal-val">Until ${fmt(t.early_bird_to)}</span></div>`:''}
-      <div class="modal-row"><span class="modal-label">Location</span><span class="modal-val">${t.location||'—'}</span></div>
-      <div class="modal-row"><span class="modal-label">Teams</span><span class="modal-val">${counts.confirmed} confirmed · ${counts.total} total registrations</span></div>
-      ${t.free_jersey_count?`<div class="modal-row"><span class="modal-label">Free Jersey</span><span class="modal-val">First ${t.free_jersey_count} players</span></div>`:''}
+      <div class="modal-row"><span class="modal-label">Location</span><span class="modal-val"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t.location||'')}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:underline;text-decoration-color:#333;">${(t.location||'—').toUpperCase()}</a></span></div>
+      ${t.free_jersey_count?`<div class="modal-row"><span class="modal-label">Free Jersey</span><span class="modal-val" style="text-transform:uppercase;font-weight:700;">First ${t.free_jersey_count} Players</span></div>`:''}
       ${t.description?`<div class="modal-row"><span class="modal-label">Notes</span><span class="modal-val">${t.description}</span></div>`:''}
     `;
     const regBtn = document.getElementById('detailRegisterBtn');

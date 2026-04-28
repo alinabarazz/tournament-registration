@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Badminton Tournament</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -280,6 +281,8 @@
   .t-status-pill.Draft{background:#1a1a1a;border:1px solid #333;color:#555;}
   .t-status-pill.Completed{background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;}
   .t-status-pill.Cancelled{background:rgba(232,55,42,0.1);border:1px solid rgba(232,55,42,0.3);color:var(--primary);}
+  .t-status-pill.Cancellation-Requested{background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.4);color:#f5a623;}
+  .s-cancel-req{background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.35);color:#f5a623;}
 
   .modal::-webkit-scrollbar{width:6px;}
   .modal::-webkit-scrollbar-track{background:#111;border-radius:4px;}
@@ -350,9 +353,9 @@
     <div class="topbar-left">
       <a href="index.html">← Home</a>
       <span class="topbar-sep">|</span>
-      <a href="tournaments.html">Tournaments</a>
+      <a href="tournaments.html">Admin</a>
     </div>
-    <div class="topbar-brand">🏸 Admin Panel</div>
+    <div class="topbar-brand">Admin Panel</div>
     <div class="topbar-right">
       <span class="user-badge" id="homeBadge">—</span>
       <button class="logout-btn" onclick="logout()">Logout</button>
@@ -374,14 +377,22 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <a href="#" onclick="showHomeScreen();return false;">← Tournaments</a>
+    <a href="#" onclick="showHomeScreen();return false;">← Admin</a>
     <span class="topbar-sep">|</span>
     <a href="index.html">Home</a>
   </div>
-  <div class="topbar-brand">🏸 Admin Panel</div>
+  <div class="topbar-brand">Admin Panel</div>
   <div class="topbar-right">
     <span class="user-badge" id="userBadge">—</span>
-    <button onclick="openEmailSettings()" title="Email Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Barlow',sans-serif;">⚙️ Email</button>
+    <button onclick="openEmailSettings()" title="Email Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Barlow',sans-serif;">Email</button>
+    <!-- Notification Bell -->
+    <div style="position:relative;display:inline-block;">
+      <button id="notifBell" onclick="openNotifPanel()" title="Notifications"
+        style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:16px;padding:6px 11px;border-radius:6px;cursor:pointer;line-height:1;display:flex;align-items:center;">
+        <i class="bi bi-bell-fill"></i>
+      </button>
+      <span id="notifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e8372a;color:#fff;font-size:9px;font-weight:700;border-radius:50%;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;pointer-events:none;"></span>
+    </div>
     <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 </div>
@@ -397,7 +408,7 @@
   <span class="tournament-status-badge ts-draft" id="tournamentStatusBadge" style="display:none;"></span>
   <span class="tournament-owner-tag" id="tournamentOwnerTag" style="display:none;"></span>
   <button class="btn-new-tournament" onclick="openTournamentModal()">＋ New Tournament</button>
-  <button class="btn-new-tournament" id="btnShareLink" onclick="openShareModal()" style="background:#1a3a2a;border:1px solid rgba(34,197,94,0.4);color:#22c55e;display:none;">🔗 Share Link & QR</button>
+  <button class="btn-new-tournament" id="btnShareLink" onclick="openShareModal()" style="background:#1a3a2a;border:1px solid rgba(34,197,94,0.4);color:#22c55e;display:none;">Share Link & QR</button>
 </div>
 
 <!-- TAB NAVIGATION -->
@@ -406,7 +417,7 @@
   <button class="tab-btn" onclick="showTab('pricing',event)">Pricing & Slots</button>
   <button class="tab-btn" onclick="showTab('expenses',event)">Expenses</button>
   <button class="tab-btn" onclick="showTab('sponsors',event)">Sponsors</button>
-  <button class="tab-btn" onclick="showTab('sales',event)">📊 Sales</button>
+  <button class="tab-btn" onclick="showTab('sales',event)">Sales</button>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -418,7 +429,7 @@
   <div class="page-sub" id="regSub">Select a tournament above to view registrations.</div>
 
   <div id="regNoTournament" class="no-tournament">
-    <span class="icon">🏆</span>
+    
     <p>No tournament selected. Create one or pick one above.</p>
   </div>
 
@@ -491,7 +502,7 @@
   <div class="page-sub">Set registration fees and slot limits per level. Saved directly to the database.</div>
 
   <div id="pricingNoTournament" class="no-tournament">
-    <span class="icon">🏆</span>
+    
     <p>Create or select a tournament first.</p>
     <p style="font-size:12px;color:#444;margin-top:-1rem;">The <strong style="color:#666;">Add Level</strong> button will appear here once a tournament is selected.</p>
     <button class="btn-new-tournament" onclick="openTournamentModal()" style="margin-top:0.5rem;">＋ Create Tournament</button>
@@ -504,7 +515,7 @@
     </div>
     <div class="pricing-grid" id="pricingGrid"></div>
     <div class="pricing-save-bar">
-      <span>💾 Changes are saved directly to your Supabase database.</span>
+      <span>Changes are saved directly to your Supabase database.</span>
       <button class="btn-save-all" onclick="savePricing()">Save All Changes</button>
       <span id="pricingSavedMsg" style="color:var(--success);font-size:13px;display:none;">✓ Saved to DB!</span>
     </div>
@@ -521,7 +532,7 @@
   <div class="page-sub">Track tournament expenses and budget overview.</div>
 
   <div id="expNoTournament" class="no-tournament">
-    <span class="icon">🧾</span>
+    
     <p>Create or select a tournament first.</p>
     <p style="font-size:12px;color:#444;margin-top:-1rem;">The <strong style="color:#666;">Add Expense</strong> button will appear once a tournament is selected.</p>
     <button class="btn-new-tournament" onclick="openTournamentModal()" style="margin-top:0.5rem;">＋ Create Tournament</button>
@@ -581,7 +592,7 @@
   <div class="page-sub">Financial overview for this tournament.</div>
 
   <div id="salesNoTournament" class="no-tournament">
-    <span class="icon">📊</span>
+    
     <p>Create or select a tournament first.</p>
     <button class="btn-new-tournament" onclick="openTournamentModal()" style="margin-top:0.5rem;">＋ Create Tournament</button>
   </div>
@@ -682,28 +693,37 @@
 <div class="modal-overlay" id="emailSettingsModal" onclick="if(event.target===this)closeEmailSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
-      <div class="modal-title">⚙️ Email Settings</div>
+      <div class="modal-title">Email Settings</div>
       <button class="modal-close" onclick="closeEmailSettings()">✕</button>
     </div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
-      Add your email so you receive notifications when a player submits their payment proof.
+      Set your notification email. You'll be CC'd on every email sent to players for your tournaments.
     </div>
     <div class="modal-field">
       <label>Your Notification Email</label>
       <input class="modal-input" type="email" id="notifEmail" placeholder="yourname@gmail.com">
-      <div style="font-size:11px;color:#555;margin-top:4px;">You'll receive an email with screenshot when a player pays.</div>
+      <div style="font-size:11px;color:#555;margin-top:4px;">You'll be CC'd on all approval, rejection, and confirmation emails sent to your players.</div>
     </div>
-    <div class="modal-field">
-      <label>Website Base URL <span style="color:var(--muted);font-weight:400;">(for payment links in emails)</span></label>
-      <input class="modal-input" type="text" id="siteBaseUrl" placeholder="https://yoursite.com/">
-      <div style="font-size:11px;color:#555;margin-top:4px;">Where your HTML files are hosted. Payment links in emails will use this URL.</div>
+    <div class="modal-field" id="siteUrlField" style="display:none;">
+      <label>Website Base URL <span style="color:var(--muted);font-weight:400;">(superadmin only)</span></label>
+      <input class="modal-input" type="text" id="siteBaseUrl" placeholder="https://alinabarazz.github.io/tournament/">
+      <div style="font-size:11px;color:#555;margin-top:4px;">Set once — all admins share this URL for payment links in emails.</div>
     </div>
     <div id="emailSettingsMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:0.5rem;"></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeEmailSettings()">Cancel</button>
-      <button class="btn-modal-submit" onclick="saveEmailSettings()">💾 Save</button>
+      <button class="btn-modal-submit" onclick="saveEmailSettings()">Save</button>
     </div>
   </div>
+</div>
+
+<!-- ══ NOTIFICATION PANEL ══ -->
+<div id="notifPanel" style="display:none;position:fixed;top:52px;right:12px;width:320px;max-height:420px;background:#141414;border:1px solid #2a2a2a;border-radius:12px;z-index:1500;box-shadow:0 8px 32px rgba(0,0,0,0.6);overflow:hidden;flex-direction:column;">
+  <div style="padding:12px 16px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.95rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">Notifications</span>
+    <button onclick="markAllRead()" style="background:none;border:none;color:#555;font-size:11px;cursor:pointer;text-decoration:underline;">Mark all read</button>
+  </div>
+  <div id="notifList" style="overflow-y:auto;max-height:360px;"></div>
 </div>
 
 <!-- ══ SCREENSHOT LIGHTBOX ══ -->
@@ -726,7 +746,7 @@
 <div class="modal-overlay" id="shareModal" onclick="if(event.target===this)closeShareModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
   <div class="modal" style="max-width:460px;width:100%;background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:2rem;">
     <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">🔗 Share Registration Link</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">Share Registration Link</div>
       <button onclick="closeShareModal()" style="background:none;border:none;color:#666;font-size:1.2rem;cursor:pointer;line-height:1;">✕</button>
     </div>
 
@@ -783,15 +803,15 @@
       <div class="modal-field">
         <label>Registration Starts *</label>
         <div style="position:relative;">
-          <input class="modal-input" type="text" id="tDateFrom" placeholder="📅 Pick a date" readonly style="cursor:pointer;padding-right:36px;">
-          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:14px;">📅</span>
+          <input class="modal-input" type="text" id="tDateFrom" placeholder="Pick a date" readonly style="cursor:pointer;padding-right:36px;">
+          
         </div>
       </div>
       <div class="modal-field">
         <label>Registration Ends *</label>
         <div style="position:relative;">
-          <input class="modal-input" type="text" id="tDateTo" placeholder="📅 Pick a date" readonly style="cursor:pointer;padding-right:36px;">
-          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:14px;">📅</span>
+          <input class="modal-input" type="text" id="tDateTo" placeholder="Pick a date" readonly style="cursor:pointer;padding-right:36px;">
+          
         </div>
       </div>
     </div>
@@ -822,8 +842,8 @@
     <div class="modal-field">
       <label>Early Bird Promo Ends</label>
       <div style="position:relative;">
-        <input class="modal-input" type="text" id="tEarlyBirdTo" placeholder="📅 Pick a date (optional)" readonly style="cursor:pointer;padding-right:36px;">
-        <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:14px;">📅</span>
+        <input class="modal-input" type="text" id="tEarlyBirdTo" placeholder="Pick a date (optional)" readonly style="cursor:pointer;padding-right:36px;">
+        
       </div>
       <div style="font-size:11px;color:#555;margin-top:4px;">Early bird pricing ends on this date. Leave blank if not applicable.</div>
     </div>
@@ -1057,7 +1077,7 @@
 <div id="confirmDeleteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3000;align-items:center;justify-content:center;padding:1rem;">
   <div style="background:#141414;border:1px solid #2a2a2a;border-radius:14px;max-width:420px;width:100%;overflow:hidden;">
     <div style="background:#1a0808;border-bottom:1px solid #3a1010;padding:16px 20px;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:1.3rem;">🗑</span>
+      
       <span id="cdmTitle" style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#ff6b6b;">Confirm Delete</span>
     </div>
     <div style="padding:20px;">
@@ -1140,7 +1160,7 @@
     <div id="smError" style="display:none;color:#ff6b6b;font-size:12px;padding:8px 12px;background:#1a0808;border:1px solid #3a1010;border-radius:6px;margin-top:0.5rem;"></div>
     <div class="modal-actions">
       <button class="btn-modal-cancel" onclick="closeSponsorModal()">Cancel</button>
-      <button class="btn-modal-submit" id="smSaveBtn" onclick="submitSponsorModal()">💾 Save Sponsor</button>
+      <button class="btn-modal-submit" id="smSaveBtn" onclick="submitSponsorModal()">Save Sponsor</button>
     </div>
   </div>
 </div>
@@ -1200,39 +1220,42 @@ let editingExpId     = null;
 /* ════════════════════════════════════════════
    CONSTANTS
 ════════════════════════════════════════════ */
-const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Rejected','Cancelled'];
+const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Rejected','Cancelled','Cancellation Requested'];
 const STATUS_CLASS = {
-  'Pending Review':      's-pending',
-  'Awaiting Payment':    's-payment',
-  'Payment Submitted':   's-submitted',
-  'Payment Not Received':'s-notpaid',
-  'Registered':          's-registered',
-  'Rejected':            's-rejected',
-  'Cancelled':           's-cancelled',
+  'Pending Review':         's-pending',
+  'Awaiting Payment':       's-payment',
+  'Payment Submitted':      's-submitted',
+  'Payment Not Received':   's-notpaid',
+  'Registered':             's-registered',
+  'Rejected':               's-rejected',
+  'Cancelled':              's-cancelled',
+  'Cancellation Requested': 's-cancel-req',
 };
 
-const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered']);
+const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Cancellation Requested']);
 
 // What each status can transition TO — internal status values
 const STATUS_TRANSITIONS = {
-  'Pending Review':      ['Pending Review','Awaiting Payment','Rejected'],
-  'Awaiting Payment':    ['Awaiting Payment','Payment Not Received','Rejected'],
-  'Payment Submitted':   ['Payment Submitted','Registered','Payment Not Received','Rejected'],
-  'Payment Not Received':['Payment Not Received','Registered','Rejected'],
-  'Registered':          ['Registered'],
-  'Rejected':            ['Rejected','Pending Review'],
-  'Cancelled':           ['Cancelled','Pending Review'],
+  'Pending Review':          ['Pending Review','Awaiting Payment','Rejected'],
+  'Awaiting Payment':        ['Awaiting Payment','Payment Not Received','Rejected'],
+  'Payment Submitted':       ['Payment Submitted','Registered','Payment Not Received','Rejected'],
+  'Payment Not Received':    ['Payment Not Received','Registered','Rejected'],
+  'Registered':              ['Registered','Cancellation Requested'],
+  'Rejected':                ['Rejected','Pending Review'],
+  'Cancelled':               ['Cancelled','Pending Review'],
+  'Cancellation Requested':  ['Cancellation Requested','Cancelled','Registered'],
 };
 
 // Human-readable labels shown in the dropdown (different from internal status values)
 const STATUS_LABELS = {
-  'Pending Review':      'Pending Review',
-  'Awaiting Payment':    'Approve',
-  'Rejected':            'Reject',
-  'Payment Not Received':'Payment Not Received',
-  'Payment Submitted':   'Payment Submitted',
-  'Registered':          'Registered',
-  'Cancelled':           'Cancelled',
+  'Pending Review':          'Pending Review',
+  'Awaiting Payment':        'Approve',
+  'Rejected':                'Reject',
+  'Payment Not Received':    'Payment Not Received',
+  'Payment Submitted':       'Payment Submitted',
+  'Registered':              'Registered',
+  'Cancelled':               'Cancelled',
+  'Cancellation Requested':  'Request Cancellation',
 };
 const AGE_LEVELS   = ['MIXED 16 AND BELOW','WOMEN 16 AND BELOW','EXECUTIVE (40 AND ABOVE)'];
 const DEFAULT_LEVELS = [
@@ -1308,14 +1331,26 @@ function initApp(){
   document.getElementById('homeBadge').textContent = badge.textContent;
   document.getElementById('homeBadge').className   = badge.className;
   document.getElementById('homeUsername').textContent = currentUser.username;
+  loadGlobalSiteUrl();
+  startNotifPolling(); // start notification polling
   loadTournaments().then(()=>{
+    // Restore from URL hash (e.g. #t=7 or #t=7&tab=sponsors)
+    const hash   = window.location.hash;
+    const tMatch = hash.match(/#t=(\d+)/);
+    const tabMatch= hash.match(/tab=(\w+)/);
+    if(tMatch){
+      openTournamentDashboard(parseInt(tMatch[1]));
+      if(tabMatch) setTimeout(()=>showTab(tabMatch[1]), 300);
+      return;
+    }
+    // Also check _reloadAfterSave
     const saved = localStorage.getItem('_reloadAfterSave');
     if(saved){
       localStorage.removeItem('_reloadAfterSave');
       try{
         const {returnTo, tournamentId, tab} = JSON.parse(saved);
         if(returnTo === 'home' || !tournamentId){
-          // Stay on home screen — do nothing, already there
+          // stay on home
         } else if(tournamentId){
           openTournamentDashboard(tournamentId);
           if(tab) setTimeout(()=>showTab(tab), 200);
@@ -1329,6 +1364,7 @@ function showHomeScreen(){
   document.getElementById('homeScreen').style.display    = 'block';
   document.getElementById('mainDashboard').style.display = 'none';
   activeTournament = null;
+  try{ window.history.replaceState(null,'','#'); }catch(e){}
 }
 
 function renderHomeCards(){
@@ -1352,7 +1388,7 @@ function renderHomeCards(){
       <div class="t-card-header">
         <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
           <div class="t-card-name">${t.name}</div>
-          ${tLine ? `<div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">🏸 ${tLine}</div>` : ''}
+          ${tLine ? `<div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${tLine}</div>` : ''}
         </div>
         <span class="t-status-pill ${statusCls}">${statusCls}</span>
       </div>
@@ -1372,9 +1408,9 @@ function renderHomeCards(){
         ${t.description ? `<div class="t-card-desc">"${t.description}"</div>` : ''}
       </div>
       <div class="t-card-footer">
-        <span class="t-card-admin">🏸 ${t.owner_name || currentUser.username}</span>
+        <span class="t-card-admin">${t.owner_name || currentUser.username}</span>
         <div style="display:flex;gap:8px;">
-          <button class="t-card-open-btn" style="background:#1a1a1a;border:1px solid #333;color:#aaa;" onclick="event.stopPropagation();editTournament(${t.id})">✏️ Edit</button>
+          <button class="t-card-open-btn" style="background:#1a1a1a;border:1px solid #333;color:#aaa;" onclick="event.stopPropagation();editTournament(${t.id})">Edit</button>
           <button class="t-card-open-btn" onclick="event.stopPropagation();openTournamentDashboard(${t.id})">Open →</button>
         </div>
       </div>
@@ -1394,6 +1430,7 @@ function openTournamentDashboard(id){
   document.getElementById('homeScreen').style.display    = 'none';
   document.getElementById('mainDashboard').style.display = 'block';
   document.getElementById('tournamentSelect').value = id;
+  try{ window.history.replaceState(null,'',`#t=${id}`); }catch(e){}
   onTournamentChange();
 }
 
@@ -1718,6 +1755,7 @@ function updateStatusDot(val){
     'Draft':     { color:'#666',    bg:'#1a1a1a',               border:'#333',                 text:'#888',    label:'Draft'     },
     'Completed': { color:'#f5a623', bg:'rgba(245,166,35,0.12)', border:'rgba(245,166,35,0.3)', text:'#f5a623', label:'Done'      },
     'Cancelled': { color:'#e8372a', bg:'rgba(232,55,42,0.12)',  border:'rgba(232,55,42,0.3)',  text:'#e8372a', label:'Cancelled' },
+    'Cancellation Requested': { color:'#f5a623', bg:'rgba(245,166,35,0.12)', border:'rgba(245,166,35,0.35)', text:'#f5a623', label:'Cancel Req.' },
   };
   const s = map[val] || map['Draft'];
   circle.style.background  = s.color;
@@ -1944,6 +1982,15 @@ function showTab(name, event){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if(event) event.currentTarget.classList.add('active');
+  else { // activate the right button when called programmatically
+    document.querySelectorAll('.tab-btn').forEach(b=>{
+      if(b.getAttribute('onclick')?.includes("'"+name+"'")) b.classList.add('active');
+    });
+  }
+  // Persist tab in URL hash
+  if(activeTournament){
+    try{ window.history.replaceState(null,'',`#t=${activeTournament.id}&tab=${name}`); }catch(e){}
+  }
   if(!activeTournament){ showNoTournamentState(); return; }
   if(name==='registrations') fetchRegistrations();
   else if(name==='pricing')  fetchPricing();
@@ -1983,12 +2030,13 @@ function updateStats(data){
 function renderTable(data){
   document.getElementById('tableCount').textContent=`${data.length} record${data.length!==1?'s':''}`;
   if(!data.length){
-    document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon">📋</span><p>No registrations yet.</p></div></td></tr>`;
+    document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon"></span><p>No registrations yet.</p></div></td></tr>`;
     return;
   }
   document.getElementById('tableBody').innerHTML = data.map(r=>{
     const isAge  = AGE_LEVELS.includes(r.Level);
     const date   = r.created_at ? new Date(r.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    const time   = r.created_at ? new Date(r.created_at).toLocaleTimeString('en-PH',{hour:'numeric',minute:'2-digit',hour12:true}) : '';
     const ref    = `#${String(r.id).padStart(5,'0')}`;
     const status = r.Status||'Pending Review';
     const sClass = STATUS_CLASS[status]||'s-pending';
@@ -2005,7 +2053,7 @@ function renderTable(data){
       <tr id="row-${r.id}">
         <td><button class="expand-btn" onclick="toggleDetail(${r.id})">▸</button></td>
         <td class="ref-cell">${ref}</td>
-        <td style="color:var(--muted);font-size:12px;white-space:nowrap;">${date}</td>
+        <td style="color:var(--muted);font-size:12px;white-space:nowrap;">${date}<br><span style="font-size:10px;color:#555;">${time}</span></td>
         <td><span class="level-badge ${isAge?'age':''}">${r.Level||'—'}</span></td>
         <td style="font-weight:600">${r.Team_Name||'—'}</td>
         <td>${r.Player1_Name||'—'}</td>
@@ -2051,6 +2099,7 @@ function renderTable(data){
             ${r.payment_channel?`<div class="detail-item"><span class="detail-label">Payment</span><span class="detail-value">${r.payment_channel}${r.payment_reference?' · Ref: '+r.payment_reference:''}</span></div>`:''}
             ${r.payment_deadline?`<div class="detail-item"><span class="detail-label">Pay Deadline</span><span class="detail-value">${new Date(r.payment_deadline).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})}</span></div>`:''}
             ${r.payment_reference?`<div class="detail-item"><span class="detail-label">Payment Ref #</span><span class="detail-value">${r.payment_reference}</span></div>`:''}
+            ${r.payment_notes?`<div class="detail-item"><span class="detail-label">Payment Notes</span><span class="detail-value" style="color:#aaa;">${r.payment_notes}</span></div>`:''}
             <div class="detail-item">
               <span class="detail-label">Payment Form</span>
               <span class="detail-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -2175,8 +2224,9 @@ async function updateStatus(id, sel){
 
     // ── When marking payment received: prompt for payment channel ──
     if(newStatus === 'Registered'){
-      const playerRef = rec ? (rec.payment_reference || '') : '';
-      const channel = await promptPaymentChannel(playerRef);
+      const playerRef     = rec ? (rec.payment_reference || '') : '';
+      const playerChannel = rec ? (rec.payment_channel   || '') : '';
+      const channel = await promptPaymentChannel(playerRef, playerChannel);
       if(channel === null){ sel.value = oldStatus; sel.classList.remove('saving'); return; }
       extraFields.payment_channel     = channel.channel;
       extraFields.payment_reference   = channel.reference || null;
@@ -2219,6 +2269,7 @@ async function updateStatus(id, sel){
         payment_deadline:deadlineFmt,
         payment_link:    getPaymentLink(rec.id),
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
       });
     }
 
@@ -2231,11 +2282,11 @@ async function updateStatus(id, sel){
         level:           rec.Level,
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
       });
     }
 
     if(rec && newStatus === 'Registered'){
-      // Check if jersey eligible
       const regsBefore = allRegs.filter(r=>
         r.id < rec.id &&
         ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)
@@ -2259,8 +2310,37 @@ async function updateStatus(id, sel){
         jersey_price:      activeTournament?.jersey_price||0,
         jersey_image_url:  activeTournament?.jersey_image_url||'',
         jersey_link:       getPaymentLink(rec.id)+'&jersey=1',
+        cancel_link:       getCancelLink(rec.id),
+        admin_email:       currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
       });
     }
+
+    if(rec && newStatus === 'Cancelled' && oldStatus === 'Cancellation Requested'){
+      sendEmail('cancellation_approved',{
+        player_email:    rec.Email_Address,
+        player_name:     rec.Player1_Name||'Player',
+        player2_name:    rec.Player2_Name||'',
+        team_name:       rec.Team_Name,
+        level:           rec.Level,
+        tournament_name: activeTournament?.name||'',
+        reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+      });
+    }
+
+    if(rec && newStatus === 'Registered' && oldStatus === 'Cancellation Requested'){
+      sendEmail('cancellation_denied',{
+        player_email:    rec.Email_Address,
+        player_name:     rec.Player1_Name||'Player',
+        player2_name:    rec.Player2_Name||'',
+        team_name:       rec.Team_Name,
+        level:           rec.Level,
+        tournament_name: activeTournament?.name||'',
+        reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+        admin_email:     currentUser?.notification_email || localStorage.getItem('notifEmail') || '',
+      });
+    }
+
   }catch(err){
     alert('Failed: '+err.message);
     sel.value = oldStatus;
@@ -2351,68 +2431,65 @@ function renderPricing(){
           </label>
         </div>
       </div>
-      <div class="pricing-fields">
-        <div class="pricing-field">
-          <label>Registration Fee</label>
-          <div class="pricing-field-row">
-            <span class="currency-label">₱</span>
+      <!-- Compact grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <!-- Fee -->
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:4px;font-weight:800;">Fee (₱/player)</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="color:var(--muted);font-size:12px;font-weight:700;">₱</span>
             <input class="pricing-input" type="number" min="0" step="50"
-              value="${p.price||0}" placeholder="${p.enabled?'Enter amount':'N/A'}"
-              ${!p.enabled?'disabled':''}
-              id="pinput-price-${safeKey}"
-              data-key="${p.level_key}"
-              oninput="updatePricingLocal(this.dataset.key,'price',this.value)">
+              value="${p.price||0}" ${!p.enabled?'disabled':''}
+              id="pinput-price-${safeKey}" data-key="${p.level_key}"
+              oninput="updatePricingLocal(this.dataset.key,'price',this.value)"
+              style="font-size:14px;padding:6px 8px;font-weight:700;">
           </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;font-weight:600;">${p.price>0?`Team: ₱${((p.price||0)*(p.player_count||2)).toLocaleString()}`:'—'}</div>
         </div>
-        <div class="slots-field">
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Total Slots</label>
+        <!-- Slots -->
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:4px;font-weight:800;">Slots</label>
           <input class="slots-input" type="number" min="1" max="500"
             value="${slots}" ${!p.enabled?'disabled':''}
-            id="pinput-slots-${safeKey}"
-            data-key="${p.level_key}"
-            oninput="updatePricingLocal(this.dataset.key,'total_slots',this.value)">
-          <div class="slots-bar" style="margin-top:8px;"><div class="slots-fill ${fillCls}" style="width:${pct}%"></div></div>
-          <div class="slots-meta">${filled} / ${slots} slots filled${pct>=100?' — <span style="color:var(--danger);font-weight:600;">FULL</span>':''}</div>
+            id="pinput-slots-${safeKey}" data-key="${p.level_key}"
+            oninput="updatePricingLocal(this.dataset.key,'total_slots',this.value)"
+            style="font-size:14px;padding:6px 8px;width:100%;font-weight:700;">
+          <div class="slots-bar" style="margin-top:4px;"><div class="slots-fill ${fillCls}" style="width:${pct}%"></div></div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;font-weight:600;">${filled}/${slots}${pct>=100?' <span style="color:var(--danger);">FULL</span>':''}</div>
         </div>
-        <div class="slots-field" style="max-width:120px;">
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">Players / Team</label>
+      </div>
+      <!-- Players/Team + Prizes in one row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;">
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:4px;font-weight:800;">Players/Team</label>
           <select class="slots-input" id="pinput-pc-${safeKey}" ${!p.enabled?'disabled':''}
             data-key="${p.level_key}"
             onchange="updatePricingLocal(this.dataset.key,'player_count',this.value)"
-            style="appearance:none;cursor:pointer;">
+            style="appearance:none;cursor:pointer;font-size:12px;padding:6px 6px;width:100%;font-weight:700;">
             <option value="1" ${(p.player_count||2)===1?'selected':''}>1 — Singles</option>
             <option value="2" ${(p.player_count||2)===2?'selected':''}>2 — Doubles</option>
           </select>
-          <div style="font-size:10px;color:var(--muted);margin-top:4px;">
-            ${p.price>0?`Team fee: ₱${((p.price||0)*(p.player_count||2)).toLocaleString()}`:'Set price to calculate'}
-          </div>
         </div>
-        <div class="slots-field">
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">🥇 Champion Prize</label>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span style="color:var(--muted);font-size:13px;">₱</span>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:4px;font-weight:800;">Champion</label>
+          <div style="display:flex;align-items:center;gap:3px;">
+            <span style="color:var(--muted);font-size:11px;font-weight:700;">₱</span>
             <input class="slots-input" type="number" min="0" step="100"
-              id="pinput-champ-${safeKey}"
-              value="${p.champion_prize||0}"
-              placeholder="0"
-              ${!p.enabled?'disabled':''}
-              data-key="${p.level_key}"
+              id="pinput-champ-${safeKey}" value="${p.champion_prize||0}"
+              ${!p.enabled?'disabled':''} data-key="${p.level_key}"
               oninput="updatePricingLocal(this.dataset.key,'champion_prize',this.value)"
-              style="font-size:13px;">
+              style="font-size:13px;padding:6px 6px;flex:1;font-weight:700;">
           </div>
         </div>
-        <div class="slots-field">
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;">🥈 1st Runner Up Prize</label>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span style="color:var(--muted);font-size:13px;">₱</span>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:4px;font-weight:800;">Runner-up</label>
+          <div style="display:flex;align-items:center;gap:3px;">
+            <span style="color:var(--muted);font-size:11px;font-weight:700;">₱</span>
             <input class="slots-input" type="number" min="0" step="100"
-              id="pinput-runner-${safeKey}"
-              value="${p.runner_up_prize||0}"
-              placeholder="0"
-              ${!p.enabled?'disabled':''}
-              data-key="${p.level_key}"
+              id="pinput-runner-${safeKey}" value="${p.runner_up_prize||0}"
+              ${!p.enabled?'disabled':''} data-key="${p.level_key}"
               oninput="updatePricingLocal(this.dataset.key,'runner_up_prize',this.value)"
-              style="font-size:13px;">
+              style="font-size:13px;padding:6px 6px;flex:1;font-weight:700;">
           </div>
         </div>
       </div>
@@ -2632,7 +2709,7 @@ async function fetchExpenses(){
 function renderExpenses(){
   const tbody = document.getElementById('expTableBody');
   if(!expensesData.length){
-    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><span class="icon">🧾</span><p>No expenses yet.</p></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><span class="icon"></span><p>No expenses yet.</p></div></td></tr>`;
   } else {
     tbody.innerHTML = expensesData.map((e,i)=>{
       const catC    = CAT_CLASS[e.category]||'other';
@@ -2648,8 +2725,8 @@ function renderExpenses(){
         <td><span class="exp-status ${stCls}">${e.status}</span></td>
         <td style="color:var(--muted);font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.notes||'—'}</td>
         <td>
-          <button class="exp-del-btn" onclick="editExpense(${e.id})" title="Edit">✏️</button>
-          <button class="exp-del-btn" onclick="deleteExpense(${e.id})" title="Delete">🗑</button>
+          <button class="exp-del-btn" onclick="editExpense(${e.id})" title="Edit" style="color:#60a5fa;font-size:11px;font-weight:700;padding:3px 8px;">Edit</button>
+          <button class="exp-del-btn" onclick="deleteExpense(${e.id})" title="Delete" style="color:var(--primary);font-size:11px;font-weight:700;padding:3px 8px;">Del</button>
         </td>
       </tr>`;
     }).join('');
@@ -2814,42 +2891,51 @@ function getSortedSponsors(){ return [...sponsorsData].sort((a,b)=>(TIER_ORDER[a
 function renderSponsors(){
   const grid = document.getElementById('sponsorsGrid');
   const sorted = getSortedSponsors();
+  const tierColor = {Platinum:'#e5c84a',Gold:'#f5a623',Silver:'#aaa',Bronze:'#cd7f32'};
   const cards = sorted.map(s=>{
     const logoHtml = s.logo_url
       ? `<img src="${s.logo_url}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-      : `<div class="sponsor-logo-placeholder"><span class="plus">+</span><span>ADD LOGO</span></div>`;
+      : `<div class="sponsor-logo-placeholder"><span class="plus">+</span><span>LOGO</span></div>`;
     return `
-    <div class="sponsor-card" id="scard-${s.id}">
-      <div class="sponsor-logo-wrap" title="Logo URL (no upload needed)">
-        ${logoHtml}
+    <div class="sponsor-card" id="scard-${s.id}" style="padding:1rem;gap:0.6rem;">
+      <!-- Logo + Name row -->
+      <div style="display:flex;align-items:center;gap:10px;width:100%;">
+        <div class="sponsor-logo-wrap" style="width:48px;height:48px;flex-shrink:0;border:2px solid ${tierColor[s.tier]||'#333'};">
+          ${logoHtml}
+        </div>
+        <input class="sponsor-input" type="text" value="${s.name}" placeholder="Sponsor name"
+          style="flex:1;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.95rem;text-transform:uppercase;letter-spacing:0.05em;text-align:left;padding:8px 10px;"
+          id="sname-${s.id}">
+        <select class="sponsor-select" id="stier-${s.id}" style="width:90px;padding:8px 6px;font-size:11px;">
+          ${['Platinum','Gold','Silver','Bronze'].map(t=>`<option value="${t}" ${s.tier===t?'selected':''}>${t}</option>`).join('')}
+        </select>
       </div>
-      <input class="sponsor-input" type="text" value="${s.name}" placeholder="Sponsor name"
-        style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:0.05em;"
-        id="sname-${s.id}">
-      <div class="sponsor-fields">
-        <div class="sponsor-field">
-          <label>Tier</label>
-          <select class="sponsor-select" id="stier-${s.id}">
-            ${['Platinum','Gold','Silver','Bronze'].map(t=>`<option value="${t}" ${s.tier===t?'selected':''}>${t}</option>`).join('')}
-          </select>
+      <!-- Contributions - 2 column grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:#555;font-weight:700;text-transform:uppercase;width:52px;flex-shrink:0;">Money</span>
+          <input class="sponsor-contrib-input" type="text" id="smoney-${s.id}" value="${s.money||''}" placeholder="e.g. ₱10,000" style="flex:1;padding:6px 8px;font-size:12px;">
         </div>
-        <div class="sponsor-field">
-          <label>Logo URL</label>
-          <input class="sponsor-input" type="text" id="slogo-${s.id}" value="${s.logo_url||''}" placeholder="https://...">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:#555;font-weight:700;text-transform:uppercase;width:52px;flex-shrink:0;">Shuttles</span>
+          <input class="sponsor-contrib-input" type="text" id="sshuttles-${s.id}" value="${s.shuttles||''}" placeholder="e.g. 20" style="flex:1;padding:6px 8px;font-size:12px;">
         </div>
-        <div class="sponsor-field">
-          <label>Contributions</label>
-          <div class="sponsor-contrib-row"><span class="sponsor-contrib-tag">Money</span><input class="sponsor-contrib-input" type="text" id="smoney-${s.id}" value="${s.money||''}" placeholder="e.g. ₱10,000"></div>
-          <div class="sponsor-contrib-row"><span class="sponsor-contrib-tag">Shuttles</span><input class="sponsor-contrib-input" type="text" id="sshuttles-${s.id}" value="${s.shuttles||''}" placeholder="e.g. 20 tubes"></div>
-          <div class="sponsor-contrib-row"><span class="sponsor-contrib-tag">Foods</span><input class="sponsor-contrib-input" type="text" id="sfoods-${s.id}" value="${s.foods||''}" placeholder="e.g. Catering"></div>
-          <div class="sponsor-contrib-row"><span class="sponsor-contrib-tag">Others</span><input class="sponsor-contrib-input" type="text" id="sothers-${s.id}" value="${s.others||''}" placeholder="e.g. Tarpaulin"></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:#555;font-weight:700;text-transform:uppercase;width:52px;flex-shrink:0;">Foods</span>
+          <input class="sponsor-contrib-input" type="text" id="sfoods-${s.id}" value="${s.foods||''}" placeholder="e.g. Catering" style="flex:1;padding:6px 8px;font-size:12px;">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:10px;color:#555;font-weight:700;text-transform:uppercase;width:52px;flex-shrink:0;">Others</span>
+          <input class="sponsor-contrib-input" type="text" id="sothers-${s.id}" value="${s.others||''}" placeholder="e.g. Tarpaulin" style="flex:1;padding:6px 8px;font-size:12px;">
         </div>
       </div>
-      <button class="btn-save-sponsor" id="ssavebtn-${s.id}" onclick="saveSponsor(${s.id})">💾 Save</button>
-      <button class="remove-sponsor-btn" onclick="removeSponsor(${s.id})">✕ Remove Sponsor</button>
+      <!-- Actions row -->
+      <div style="display:flex;gap:8px;width:100%;margin-top:2px;">
+        <button class="btn-save-sponsor" id="ssavebtn-${s.id}" onclick="saveSponsor(${s.id})" style="flex:1;padding:8px;font-size:12px;">Save</button>
+        <button class="remove-sponsor-btn" onclick="removeSponsor(${s.id})" style="padding:8px 12px;font-size:11px;white-space:nowrap;">✕ Remove</button>
+      </div>
     </div>`;
   }).join('');
-
   const addBtn = `<button class="add-sponsor-btn" onclick="addSponsor()"><span class="add-sponsor-plus">+</span><span>Add Sponsor</span></button>`;
   grid.innerHTML = cards + addBtn;
 }
@@ -2943,7 +3029,7 @@ async function submitSponsorModal(){
   }catch(e){
     errEl.textContent = 'Save failed: ' + e.message;
     errEl.style.display='block';
-    btn.textContent='💾 Save Sponsor'; btn.disabled=false;
+    btn.textContent='Save Sponsor'; btn.disabled=false;
   }
 }
 
@@ -2972,11 +3058,11 @@ async function saveSponsor(id){
     btn.textContent = '✓ Saved!';
     btn.style.background = '#22c55e';
     await fetchSponsors();
-    setTimeout(() => { btn.textContent = '💾 Save'; btn.style.background = ''; btn.disabled = false; }, 1500);
+    setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; btn.disabled = false; }, 1500);
   } catch(e) {
     btn.textContent = '❌ Failed';
     btn.style.background = 'var(--danger, #e8372a)';
-    setTimeout(() => { btn.textContent = '💾 Save'; btn.style.background = ''; btn.disabled = false; }, 2000);
+    setTimeout(() => { btn.textContent = 'Save'; btn.style.background = ''; btn.disabled = false; }, 2000);
     console.error('Sponsor save failed:', e.message);
   }
 }
@@ -2987,22 +3073,19 @@ async function saveSponsor(id){
 let _resolvePaymentChannel = null;
 let _pcPlayerRef = '';
 
-function promptPaymentChannel(playerRef){
+function promptPaymentChannel(playerRef, playerChannel){
   return new Promise(resolve=>{
     _resolvePaymentChannel = resolve;
     _pcPlayerRef = playerRef || '';
-    document.getElementById('pcChannel').value   = '';
-    document.getElementById('pcReference').value = playerRef || ''; // pre-fill with player's ref
+    document.getElementById('pcChannel').value   = playerChannel || '';
+    document.getElementById('pcReference').value = playerRef || '';
     document.getElementById('pcNotes').value     = '';
     document.getElementById('pcError').style.display      = 'none';
     document.getElementById('pcRefMismatch').style.display= 'none';
     document.getElementById('pcConfirmBtn').textContent   = 'Confirm Payment';
     document.getElementById('pcConfirmBtn').disabled      = false;
-
-    // Show player's submitted REF#
     const playerRefEl = document.getElementById('pcPlayerRef');
     if(playerRefEl) playerRefEl.textContent = playerRef || '(none submitted)';
-
     document.getElementById('paymentChannelModal').style.display = 'flex';
     setTimeout(()=>document.getElementById('pcChannel').focus(), 80);
   });
@@ -3431,41 +3514,208 @@ function handleTournamentSave(status){
   }
 }
 
+/* ════════════════════════════════════════════
+   NOTIFICATION SYSTEM
+════════════════════════════════════════════ */
+let _notifItems = [];
+let _notifSeen  = new Set(JSON.parse(localStorage.getItem('_notifSeen')||'[]'));
+let _notifOpen  = false;
+
+async function fetchNotifications(){
+  if(!currentUser) return;
+  try{
+    // Get registrations for this admin's tournaments that need attention
+    const ownerFilter = currentUser.role==='admin' ? `&tournaments.owner_id=eq.${currentUser.id}` : '';
+    // Fetch recent pending + payment submitted registrations
+    const res = await fetch(
+      `${SB_URL}/rest/v1/registrations?select=id,Status,Team_Name,Level,created_at,tournament_id,tournaments!inner(name,owner_id)`
+      + (currentUser.role==='admin' ? `&tournaments.owner_id=eq.${currentUser.id}` : '')
+      + `&Status=in.(Pending Review,Payment Submitted)`
+      + `&order=created_at.desc&limit=20`,
+      {headers:HDRS}
+    );
+    if(!res.ok) return;
+    const data = await res.json();
+    _notifItems = (data||[]).map(r=>({
+      id:    'reg-'+r.id,
+      refId: r.id,
+      text:  r.Status==='Pending Review'
+        ? `New registration — ${r.Team_Name} (${r.Level})`
+        : `Payment submitted — ${r.Team_Name} (${r.Level})`,
+      sub:   r.tournaments?.name||'',
+      time:  r.created_at,
+      type:  r.Status==='Pending Review' ? 'new' : 'payment',
+      tournamentId: r.tournament_id,
+    }));
+    updateNotifBadge();
+    if(_notifOpen) renderNotifList();
+  }catch(e){}
+}
+
+function updateNotifBadge(){
+  const unread = _notifItems.filter(n=>!_notifSeen.has(n.id)).length;
+  const badge  = document.getElementById('notifBadge');
+  if(!badge) return;
+  if(unread > 0){
+    badge.style.display = 'block';
+    badge.textContent   = unread > 99 ? '99+' : String(unread);
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderNotifList(){
+  const el = document.getElementById('notifList');
+  if(!el) return;
+  if(!_notifItems.length){
+    el.innerHTML = '<div style="padding:24px;text-align:center;color:#555;font-size:13px;"><i class="bi bi-bell-slash" style="font-size:1.5rem;display:block;margin-bottom:8px;"></i>No new notifications</div>';
+    return;
+  }
+  el.innerHTML = _notifItems.map(n=>{
+    const isNew  = !_notifSeen.has(n.id);
+    const when   = n.time ? new Date(n.time).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) : '';
+    const isPayment = n.type==='payment';
+    const icon   = isPayment ? 'bi-credit-card-fill' : 'bi-person-plus-fill';
+    const color  = isPayment ? '#f5a623' : '#22c55e';
+    return `<div onclick="onNotifClick(${n.refId},${n.tournamentId},'${n.id}')"
+      style="padding:11px 16px;border-bottom:1px solid #1e1e1e;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:${isNew?'#181810':'transparent'};transition:background 0.15s;"
+      onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='${isNew?'#181810':'transparent'}'">
+      <div style="width:30px;height:30px;border-radius:8px;background:${isNew?color+'22':'#1a1a1a'};border:1px solid ${isNew?color+'44':'#2a2a2a'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+        <i class="bi ${icon}" style="color:${isNew?color:'#444'};font-size:13px;"></i>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:${isNew?'700':'500'};color:${isNew?'#f0f0f0':'#777'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.text}</div>
+        <div style="font-size:10px;color:#555;margin-top:2px;">${n.sub} · ${when}</div>
+      </div>
+      ${isNew?`<div style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;margin-top:5px;"></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function onNotifClick(regId, tournamentId, notifId){
+  // Mark as read
+  _notifSeen.add(notifId);
+  localStorage.setItem('_notifSeen', JSON.stringify([..._notifSeen]));
+  updateNotifBadge();
+  closeNotifPanel();
+
+  if(!tournamentId) return;
+
+  // Navigate to registrations tab of that tournament
+  openTournamentDashboard(tournamentId);
+
+  // After data loads, scroll to and highlight the specific registration
+  setTimeout(()=>{
+    showTab('registrations');
+    // Wait for fetchRegistrations to complete then scroll to row
+    setTimeout(()=>{
+      const row = document.getElementById('row-'+regId);
+      if(row){
+        row.scrollIntoView({behavior:'smooth', block:'center'});
+        row.style.transition = 'background 0.3s';
+        row.style.background = 'rgba(245,166,35,0.15)';
+        setTimeout(()=>{ row.style.background = ''; }, 2500);
+      }
+    }, 800);
+  }, 300);
+}
+
+function openNotifPanel(){
+  _notifOpen = !_notifOpen;
+  const panel = document.getElementById('notifPanel');
+  panel.style.display = _notifOpen ? 'flex' : 'none';
+  if(_notifOpen){
+    renderNotifList();
+    // Click outside to close
+    setTimeout(()=>document.addEventListener('click', outsideNotifClose, {once:true}), 10);
+  }
+}
+
+function closeNotifPanel(){
+  _notifOpen = false;
+  const panel = document.getElementById('notifPanel');
+  if(panel) panel.style.display = 'none';
+}
+
+function outsideNotifClose(e){
+  const panel = document.getElementById('notifPanel');
+  const bell  = document.getElementById('notifBell');
+  if(panel && !panel.contains(e.target) && !bell.contains(e.target)){
+    closeNotifPanel();
+  }
+}
+
+function markAllRead(){
+  _notifItems.forEach(n=>_notifSeen.add(n.id));
+  localStorage.setItem('_notifSeen', JSON.stringify([..._notifSeen]));
+  updateNotifBadge();
+  renderNotifList();
+}
+
+// Poll every 30 seconds
+function startNotifPolling(){
+  fetchNotifications();
+  setInterval(fetchNotifications, 30000);
+}
+
+function closeEmailSettings(){
+  document.getElementById('emailSettingsModal').style.display='none';
+}
+
 async function openEmailSettings(){
   try{
     const res  = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}&select=notification_email`,{headers:HDRS});
     const data = await res.json();
     document.getElementById('notifEmail').value = (data&&data.length) ? (data[0].notification_email||'') : '';
   }catch(e){ document.getElementById('notifEmail').value=''; }
-  document.getElementById('siteBaseUrl').value = localStorage.getItem('siteBaseUrl')||'';
+
+  // Only superadmin sees the URL field
+  const urlField = document.getElementById('siteUrlField');
+  if(currentUser.role === 'superadmin'){
+    urlField.style.display = 'block';
+    try{
+      const res2 = await fetch(`${SB_URL}/rest/v1/users?role=eq.superadmin&select=site_base_url&limit=1`,{headers:HDRS});
+      const d2   = await res2.json();
+      document.getElementById('siteBaseUrl').value = (d2&&d2.length&&d2[0].site_base_url) ? d2[0].site_base_url : (localStorage.getItem('siteBaseUrl')||'');
+    }catch(e){ document.getElementById('siteBaseUrl').value = localStorage.getItem('siteBaseUrl')||''; }
+  } else {
+    urlField.style.display = 'none';
+  }
+
   document.getElementById('emailSettingsMsg').style.display='none';
   document.getElementById('emailSettingsModal').style.display='flex';
 }
 
 async function saveEmailSettings(){
-  const email   = document.getElementById('notifEmail').value.trim();
-  const siteUrl = document.getElementById('siteBaseUrl').value.trim();
-  const msgEl   = document.getElementById('emailSettingsMsg');
+  const email  = document.getElementById('notifEmail').value.trim();
+  const msgEl  = document.getElementById('emailSettingsMsg');
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     msgEl.textContent='Please enter a valid email address.';
     msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;';
     return;
   }
-  // Save site URL to localStorage (no DB needed)
-  if(siteUrl) localStorage.setItem('siteBaseUrl', siteUrl);
-  else localStorage.removeItem('siteBaseUrl');
+
+  const patch = {notification_email: email||null};
+
+  // Superadmin also saves global site URL to DB
+  if(currentUser.role === 'superadmin'){
+    const siteUrl = document.getElementById('siteBaseUrl')?.value.trim()||'';
+    if(siteUrl) localStorage.setItem('siteBaseUrl', siteUrl);
+    patch.site_base_url = siteUrl||null;
+  }
 
   const res = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}`,{
     method:'PATCH',
     headers:{...HDRS,'Prefer':'return=minimal'},
-    body:JSON.stringify({notification_email: email||null}),
+    body:JSON.stringify(patch),
   });
   if(res.ok){
+    if(email) currentUser.notification_email = email;
     msgEl.textContent='✓ Saved!';
     msgEl.style.cssText='display:block;background:#0d1a0d;color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:8px 12px;border-radius:6px;';
     setTimeout(closeEmailSettings, 1500);
   } else {
-    msgEl.textContent='Save failed.';
+    msgEl.textContent='Save failed. Please try again.';
     msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;';
   }
 }
@@ -3495,11 +3745,30 @@ async function sendEmail(type, data){
 }
 
 // Get base URL for payment confirm link
+// Loaded once on init from DB (superadmin's site_base_url)
+let _globalSiteUrl = localStorage.getItem('siteBaseUrl') || '';
+
+async function loadGlobalSiteUrl(){
+  try{
+    const res  = await fetch(`${SB_URL}/rest/v1/users?role=eq.superadmin&select=site_base_url&limit=1`,{headers:HDRS});
+    const data = await res.json();
+    if(data&&data.length&&data[0].site_base_url){
+      _globalSiteUrl = data[0].site_base_url;
+      localStorage.setItem('siteBaseUrl', _globalSiteUrl);
+    }
+  }catch(e){}
+}
+
+function getCancelLink(regId){
+  const base = _globalSiteUrl
+    ? _globalSiteUrl.trim().replace(/\/$/, '') + '/'
+    : window.location.href.replace(/admin\.html.*$/, '');
+  return `${base}cancel-request.html?ref=${regId}`;
+}
+
 function getPaymentLink(regId){
-  // Use saved site URL, fallback to current location
-  const saved = localStorage.getItem('siteBaseUrl');
-  const base  = saved && saved.trim()
-    ? saved.trim().replace(/\/$/, '') + '/'
+  const base = _globalSiteUrl
+    ? _globalSiteUrl.trim().replace(/\/$/, '') + '/'
     : window.location.href.replace(/admin\.html.*$/, '');
   return `${base}payment-confirm.html?ref=${regId}`;
 }

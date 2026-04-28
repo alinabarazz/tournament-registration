@@ -71,7 +71,7 @@
   .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
 
   /* CONTENT */
-  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;min-height:400px;}
+  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;min-height:400px;flex:1;display:flex;flex-direction:column;}
   #mainDashboard{display:flex;flex-direction:column;min-height:calc(100vh - 200px);}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
@@ -702,11 +702,11 @@
       <button onclick="openBracketSetup()" style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:10px 20px;border-radius:8px;cursor:pointer;">+ Setup Bracket</button>
     </div>
   </div>
-  <div id="bracketsContainer">
+  <div id="bracketsContainer" style="flex:1;display:flex;align-items:center;justify-content:center;">
     <div style="text-align:center;padding:4rem 2rem;">
-      <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">🏸</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#555;margin-bottom:0.5rem;">No Brackets Yet</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
+      <div style="font-size:3rem;margin-bottom:1rem;opacity:0.5;">🏸</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#ccc;margin-bottom:0.5rem;">No Brackets Yet</div>
+      <div style="font-size:13px;color:#999;margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
       <button onclick="openBracketSetup()" style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:8px;cursor:pointer;">+ Setup Bracket</button>
     </div>
   </div>

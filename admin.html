@@ -71,7 +71,7 @@
   .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
 
   /* CONTENT */
-  .content{max-width:1200px;margin:0 auto;padding:2rem 1rem;}
+  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
   .page-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;text-transform:uppercase;}
@@ -113,16 +113,18 @@
   tbody td{padding:12px 16px;font-size:13px;vertical-align:middle;}
   .level-badge{display:inline-block;font-size:10px;font-weight:800;padding:3px 9px;background:#1e2a1e;border:1px solid rgba(34,197,94,0.3);border-radius:4px;color:#22c55e;text-transform:uppercase;white-space:nowrap;letter-spacing:0.04em;}
   .level-badge.age{border-color:rgba(232,55,42,0.4);color:var(--primary);background:rgba(232,55,42,0.08);}
-  .status-select{background:#111;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:12px;padding:5px 10px;cursor:pointer;appearance:none;min-width:160px;transition:border-color 0.2s;}
+  .status-select{background:#111;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;padding:6px 10px;cursor:pointer;appearance:none;min-width:170px;width:170px;transition:border-color 0.2s;}
   .status-select:focus{outline:none;border-color:var(--primary);}
   .status-select.saving{opacity:0.5;pointer-events:none;}
-  .status-select.s-pending  {border-color:rgba(156,163,175,0.4);color:#9ca3af;}
-  .status-select.s-payment  {border-color:rgba(251,191,36,0.4);color:#fbbf24;}
-  .status-select.s-submitted{border-color:rgba(96,165,250,0.4);color:#60a5fa;}
-  .status-select.s-notpaid  {border-color:rgba(239,68,68,0.4);color:#ef4444;}
-  .status-select.s-registered{border-color:rgba(34,197,94,0.4);color:#22c55e;}
-  .status-select.s-rejected {border-color:rgba(107,114,128,0.4);color:#6b7280;}
-  .status-select.s-cancelled{border-color:rgba(107,114,128,0.4);color:#6b7280;}
+  .status-select.s-pending    {border-color:rgba(156,163,175,0.4);color:#9ca3af;}
+  .status-select.s-payment    {border-color:rgba(251,191,36,0.4);color:#fbbf24;}
+  .status-select.s-submitted  {border-color:rgba(96,165,250,0.4);color:#60a5fa;}
+  .status-select.s-notpaid    {border-color:rgba(239,68,68,0.4);color:#ef4444;}
+  .status-select.s-registered {border-color:rgba(34,197,94,0.4);color:#22c55e;}
+  .status-select.s-rejected   {border-color:rgba(107,114,128,0.4);color:#6b7280;}
+  .status-select.s-cancelled  {border-color:rgba(107,114,128,0.4);color:#6b7280;}
+  .status-select.s-cancel-req {border-color:rgba(245,166,35,0.4);color:#f5a623;}
+  .status-select.s-transfer-req{border-color:rgba(96,165,250,0.4);color:#60a5fa;}
   .status-select.s-cancelled{border-color:rgba(107,114,128,0.3);color:#4b5563;}
   .save-indicator{font-size:11px;color:var(--success);margin-left:6px;display:none;}
   .save-indicator.show{display:inline;}
@@ -688,6 +690,7 @@
 
 <!-- ══ TAB 6 · BRACKETS ══ -->
 <div class="tab-panel" id="tab-brackets">
+<div class="content">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;">
     <div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;">Brackets</div>
@@ -699,11 +702,16 @@
     </div>
   </div>
   <div id="bracketsContainer">
-    <div style="text-align:center;padding:3rem;color:var(--muted);font-size:13px;">No brackets set up yet. Click "Setup Bracket" to create one.</div>
+    <div style="text-align:center;padding:4rem 2rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">🏸</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#555;margin-bottom:0.5rem;">No Brackets Yet</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
+      <button onclick="openBracketSetup()" style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:8px;cursor:pointer;">+ Setup Bracket</button>
+    </div>
   </div>
 </div>
-
 </div>
+
 </div><!-- /mainDashboard -->
 
 </div><!-- /app -->
@@ -1038,6 +1046,12 @@
       <label>Jersey Price <span style="color:var(--muted);font-weight:400;">(for non-free players, ₱)</span></label>
       <input class="modal-input" type="number" id="tJerseyPrice" placeholder="0" min="0">
       <div style="font-size:11px;color:#555;margin-top:4px;">Players outside the free count can purchase at this price.</div>
+    </div>
+
+    <div class="modal-field">
+      <label>Minimum Pairs to Run a Level <span style="color:var(--muted);font-weight:400;">(default for all levels)</span></label>
+      <input class="modal-input" type="number" id="tMinPairs" placeholder="12" min="1" max="64">
+      <div style="font-size:11px;color:#555;margin-top:4px;">If a level has fewer registered pairs than this, it will be flagged as "At Risk". Can be overridden per level in Pricing &amp; Slots. JDBC standard: 12 pairs.</div>
     </div>
 
     <div class="modal-field">
@@ -1429,14 +1443,27 @@ const STATUS_TRANSITIONS = {
 
 const STATUS_LABELS = {
   'Pending Review':          'Pending Review',
-  'Awaiting Payment':        'Approve',
-  'Rejected':                'Reject',
-  'Payment Not Received':    'Payment Not Received',
-  'Payment Submitted':       'Payment Submitted',
+  'Awaiting Payment':        'Awaiting Payment',
+  'Rejected':                'Rejected',
+  'Payment Not Received':    'Not Received',
+  'Payment Submitted':       'Pay Submitted',
   'Registered':              'Registered',
   'Cancelled':               'Cancelled',
-  'Cancellation Requested':  'Request Cancellation',
-  'Transfer Requested':      'Transfer Requested',
+  'Cancellation Requested':  'Cancel Req.',
+  'Transfer Requested':      'Transfer Req.',
+};
+
+// Action labels used in dropdown options (what admin sees when choosing)
+const STATUS_ACTION_LABELS = {
+  'Pending Review':          'Keep Pending',
+  'Awaiting Payment':        '✓ Approve',
+  'Rejected':                '✗ Reject',
+  'Payment Not Received':    'Not Received',
+  'Payment Submitted':       'Pay Submitted',
+  'Registered':              '✓ Registered',
+  'Cancelled':               'Cancel',
+  'Cancellation Requested':  'Request Cancel',
+  'Transfer Requested':      'Request Transfer',
 };
 const AGE_LEVELS   = ['MIXED 16 AND BELOW','WOMEN 16 AND BELOW','EXECUTIVE (40 AND ABOVE)'];
 const DEFAULT_LEVELS = [
@@ -1639,6 +1666,7 @@ function editTournament(id){
   setVal('tName',           t.name||'');
   setVal('tFreeJerseyCount',t.free_jersey_count||'');
   setVal('tJerseyPrice',    t.jersey_price||'');
+  setVal('tMinPairs',       t.min_pairs_to_run||'');
   setVal('tLocation',       t.location||'');
   setVal('tDesc',           t.description||'');
   setVal('tStatus',         t.status||'Draft');
@@ -1737,6 +1765,8 @@ async function updateTournament(id, forceStatus){
     if(jersey>0)  payload.free_jersey_count      = jersey;
     const jPrice = parseInt(document.getElementById('tJerseyPrice')?.value||'0');
     if(jPrice>0)  payload.jersey_price           = jPrice;
+    const minPairs = parseInt(document.getElementById('tMinPairs')?.value||'0');
+    if(minPairs>0) payload.min_pairs_to_run      = minPairs;
 
     // Carry over existing media URLs
     const existingJersey = document.getElementById('tJerseyImageUrl')?.value||'';
@@ -1821,7 +1851,7 @@ async function updateTournament(id, forceStatus){
 async function loadTournaments(){
   // Use only the base columns that are guaranteed to exist
   // New columns (jersey_price, jersey_image_url, payment_qr_*) added via SQL migration
-  const baseSelect = 'id,name,owner_id,status,budget,event_date_from,event_date_to,early_bird_to,tournament_date_from,tournament_date_to,tournament_duration,free_jersey_count,location,description,owner_name';
+  const baseSelect = 'id,name,owner_id,status,budget,event_date_from,event_date_to,early_bird_to,tournament_date_from,tournament_date_to,tournament_duration,free_jersey_count,location,description,owner_name,min_pairs_to_run';
   const extraSelect = ',jersey_price,jersey_image_url,payment_qr_gcash,payment_qr_maya,payment_qr_other';
   let url = `${SB_URL}/rest/v1/tournaments?select=${baseSelect}${extraSelect}&order=created_at.desc`;
   if(currentUser.role === 'admin') url += `&owner_id=eq.${currentUser.id}`;
@@ -1857,6 +1887,7 @@ async function loadTournaments(){
       payment_qr_other:     t.payment_qr_other,
       location:             t.location,
       description:          t.description,
+      min_pairs_to_run:     t.min_pairs_to_run,
     }));
     buildTournamentDropdown();
     renderHomeCards();
@@ -2003,6 +2034,7 @@ function openTournamentModal(){
   setVal('tName',           '');
   setVal('tFreeJerseyCount','');
   setVal('tJerseyPrice',    '');
+  setVal('tMinPairs',       '');
   setVal('tJerseyImageUrl', '');
   setVal('jerseyFileInput', '');
   setHTML('jerseyPreview',  '👕');
@@ -2188,7 +2220,10 @@ function showTab(name, event){
   else if(name==='expenses') fetchExpenses();
   else if(name==='sponsors') fetchSponsors();
   else if(name==='sales')    fetchSales();
-  else if(name==='brackets') fetchBrackets();
+  else if(name==='brackets') {
+    console.log('🔵 Brackets tab clicked | activeTournament:', activeTournament?.id, activeTournament?.name);
+    fetchBrackets();
+  }
 }
 
 /* ════════════════════════════════════════════
@@ -2233,13 +2268,13 @@ function renderTable(data){
     const status = r.Status||'Pending Review';
     const sClass = STATUS_CLASS[status]||'s-pending';
     const allowed = STATUS_TRANSITIONS[status] || [status];
-    const opts   = allowed.map(s=>`<option value="${s}"${status===s?' selected':''}>${STATUS_LABELS[s]||s}</option>`).join('');
-    // Payment deadline badge
+    const opts   = allowed.map(s=>`<option value="${s}"${status===s?' selected':''}>${STATUS_ACTION_LABELS[s]||s}</option>`).join('');
+    // Payment deadline badge - compact, no emoji
     let deadlineBadge = '';
     if(status === 'Awaiting Payment' && r.payment_deadline){
       const daysLeft = Math.ceil((new Date(r.payment_deadline) - new Date()) / 86400000);
-      const color = daysLeft<=1?'#e8372a':daysLeft<=3?'#f5a623':'#22c55e';
-      deadlineBadge = `<div style="font-size:10px;color:${color};margin-top:3px;">⏰ ${daysLeft<=0?'EXPIRED':`${daysLeft}d left`}</div>`;
+      const color = daysLeft<=1?'#e8372a':daysLeft<=3?'#f5a623':'#666';
+      deadlineBadge = `<div style="font-size:9px;color:${color};margin-top:2px;font-weight:600;">${daysLeft<=0?'OVERDUE':`${daysLeft}d left`}</div>`;
     }
     return `
       <tr id="row-${r.id}">
@@ -2294,12 +2329,17 @@ function renderTable(data){
             ${r.payment_notes?`<div class="detail-item"><span class="detail-label">Payment Notes</span><span class="detail-value" style="color:#aaa;">${r.payment_notes}</span></div>`:''}
             <div class="detail-item">
               <span class="detail-label">Payment Form</span>
-              <span class="detail-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span style="color:var(--muted);font-size:11px;">payment-confirm.html?ref=${r.id}</span>
+              <span class="detail-value" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <span style="color:var(--muted);font-size:11px;">…/payment-confirm.html?ref=${r.id}</span>
                 <button onclick="copyPaymentLink(${r.id}, this)"
                   style="background:#1a1a1a;border:1px solid #333;color:#aaa;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;">
                   Copy Link
                 </button>
+                ${['Awaiting Payment','Payment Not Received'].includes(r.Status) ? `
+                <button onclick="resendApprovalEmail(${r.id}, this)"
+                  style="background:#1a2a1a;border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;">
+                  Resend Email
+                </button>` : ''}
               </span>
             </div>
           </div>
@@ -2340,14 +2380,45 @@ async function saveNote(regId, value){
 }
 
 function copyPaymentLink(regId, btn){
-  const base = window.location.href.replace(/admin\.html.*$/, '');
-  const url  = `${base}payment-confirm.html?ref=${regId}`;
+  const url = getPaymentLink(regId);
   navigator.clipboard.writeText(url).then(()=>{
-    const orig = btn.textContent;
-    btn.textContent = '✓ Copied!';
-    btn.style.color = '#22c55e';
-    setTimeout(()=>{ btn.textContent=orig; btn.style.color='#aaa'; }, 2000);
+    btn.textContent='Copied!'; btn.style.color='#22c55e';
+    setTimeout(()=>{ btn.textContent='Copy Link'; btn.style.color='#aaa'; },2000);
   });
+}
+
+async function resendApprovalEmail(regId, btn){
+  const rec = allRegs.find(r=>r.id===regId);
+  if(!rec){ alert('Registration not found.'); return; }
+  const orig = btn.textContent;
+  btn.textContent='Sending...'; btn.disabled=true;
+  try{
+    const deadline = rec.payment_deadline
+      ? new Date(rec.payment_deadline).toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'})
+      : new Date(Date.now()+7*24*60*60*1000).toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+    const tDate = activeTournament?.tournament_date_from
+      ? new Date(activeTournament.tournament_date_from+'T00:00:00').toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'})
+      : 'TBD';
+    sendEmail('approval',{
+      player_email:     rec.Email_Address,
+      player_name:      rec.Player1_Name||'Player',
+      player2_name:     rec.Player2_Name||'',
+      team_name:        rec.Team_Name,
+      level:            rec.Level,
+      tournament_name:  activeTournament?.name||'',
+      tournament_date:  tDate,
+      location:         activeTournament?.location||'',
+      payment_deadline: deadline,
+      payment_link:     getPaymentLink(rec.id),
+      reg_ref:          `#${String(rec.id).padStart(5,'0')}`,
+      admin_email:      currentUser?.notification_email||'',
+    });
+    btn.textContent='Sent!'; btn.style.color='#22c55e';
+    setTimeout(()=>{ btn.textContent=orig; btn.style.color='#22c55e'; btn.disabled=false; },3000);
+  }catch(e){
+    btn.textContent='Failed'; btn.style.color='#e8372a';
+    setTimeout(()=>{ btn.textContent=orig; btn.style.color='#22c55e'; btn.disabled=false; },2000);
+  }
 }
 
 function toggleDetail(id){
@@ -2585,7 +2656,7 @@ function rebuildStatusDropdown(sel, currentStatus){
   allowed.forEach(s=>{
     const opt = document.createElement('option');
     opt.value = s;
-    opt.textContent = STATUS_LABELS[s] || s;
+    opt.textContent = STATUS_ACTION_LABELS[s] || STATUS_LABELS[s] || s;
     if(s === currentStatus) opt.selected = true;
     sel.appendChild(opt);
   });
@@ -2651,6 +2722,7 @@ function renderPricing(){
         <div class="pricing-level-name" style="display:flex;align-items:center;gap:6px;">
           ${p.label||p.level_key}
           ${p.is_custom?`<span style="font-size:10px;color:var(--muted);background:#222;border:1px solid #333;padding:1px 6px;border-radius:3px;">Custom</span>`:''}
+          ${(()=>{ const minP = p.min_pairs || activeTournament?.min_pairs_to_run || 12; const registered = allRegs.filter(r=>r.Level===p.level_key&&['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length; return registered > 0 && registered < minP ? `<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;background:rgba(232,55,42,0.15);border:1px solid rgba(232,55,42,0.35);color:#ff6b6b;" title="${registered}/${minP} pairs registered">⚠ AT RISK</span>` : ''; })()}
         </div>
         <div class="pricing-toggle">
           ${p.is_custom?`<button onclick="removeCustomPricingRow(this.dataset.key)" data-key="${p.level_key}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>`:''}
@@ -2712,7 +2784,16 @@ function renderPricing(){
           </div>
         </div>
         <div>
-          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:4px;font-weight:800;">Runner-up</label>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:4px;font-weight:800;">Min Pairs</label>
+          <input class="slots-input" type="number" min="1" max="64"
+            id="pinput-minpairs-${safeKey}"
+            value="${p.min_pairs||''}"
+            placeholder="${activeTournament?.min_pairs_to_run||12}"
+            ${!p.enabled?'disabled':''} data-key="${p.level_key}"
+            oninput="updatePricingLocal(this.dataset.key,'min_pairs',this.value)"
+            style="font-size:12px;padding:6px 6px;flex:1;font-weight:700;"
+            title="Override tournament default. Leave blank to use tournament minimum.">
+        </div>
           <div style="display:flex;align-items:center;gap:3px;">
             <span style="color:var(--muted);font-size:11px;font-weight:700;">₱</span>
             <input class="slots-input" type="number" min="0" step="100"
@@ -3766,6 +3847,8 @@ async function fetchNotifications(){
     );
     if(!res.ok) return;
     const data = await res.json();
+
+    // Build notifications from registrations
     _notifItems = (data||[]).map(r=>({
       id:    'reg-'+r.id,
       refId: r.id,
@@ -3777,6 +3860,25 @@ async function fetchNotifications(){
       type:  r.Status==='Pending Review' ? 'new' : 'payment',
       tournamentId: r.tournament_id,
     }));
+
+    // At-risk levels (below minimum pairs) — only when inside a tournament dashboard
+    if(pricingRows && pricingRows.length && activeTournament){
+      pricingRows.filter(p=>p.enabled).forEach(p=>{
+        const minP  = p.min_pairs || activeTournament.min_pairs_to_run || 12;
+        const count = allRegs.filter(r=>r.Level===p.level_key&&['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length;
+        if(count > 0 && count < minP){
+          _notifItems.push({
+            id:          'atrisk-'+p.level_key,
+            refId:       null,
+            text:        `At Risk: ${p.label||p.level_key} — ${count}/${minP} pairs`,
+            sub:         activeTournament.name||'',
+            time:        null,
+            type:        'atrisk',
+            tournamentId: activeTournament.id,
+          });
+        }
+      });
+    }
     updateNotifBadge();
     if(_notifOpen) renderNotifList();
   }catch(e){}
@@ -3805,8 +3907,9 @@ function renderNotifList(){
     const isNew  = !_notifSeen.has(n.id);
     const when   = n.time ? new Date(n.time).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) : '';
     const isPayment = n.type==='payment';
-    const icon   = isPayment ? 'bi-credit-card-fill' : 'bi-person-plus-fill';
-    const color  = isPayment ? '#f5a623' : '#22c55e';
+    const isAtRisk  = n.type==='atrisk';
+    const icon   = isAtRisk ? 'bi-exclamation-triangle-fill' : isPayment ? 'bi-credit-card-fill' : 'bi-person-plus-fill';
+    const color  = isAtRisk ? '#f5a623' : isPayment ? '#f5a623' : '#22c55e';
     return `<div onclick="onNotifClick(${n.refId},${n.tournamentId},'${n.id}')"
       style="padding:11px 16px;border-bottom:1px solid #1e1e1e;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:${isNew?'#181810':'transparent'};transition:background 0.15s;"
       onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='${isNew?'#181810':'transparent'}'">
@@ -3898,19 +4001,55 @@ let _pendingConflicts    = [];  // conflicts awaiting resolution
 
 // ── Load brackets for active tournament ──
 async function fetchBrackets(){
-  if(!activeTournament) return;
+  console.log('🟢 fetchBrackets | activeTournament:', activeTournament?.id, activeTournament?.name);
+  if(!activeTournament){
+    console.warn('❌ no activeTournament — aborting');
+    return;
+  }
+  const container = document.getElementById('bracketsContainer');
+  console.log('🟢 bracketsContainer:', container ? 'FOUND' : '❌ NOT FOUND IN DOM');
+  if(!container){ console.error('❌ bracketsContainer missing!'); return; }
+  container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:12px;">Loading...</div>';
   try{
-    const res  = await fetch(`${SB_URL}/rest/v1/brackets?tournament_id=eq.${activeTournament.id}&select=id,level_key,format,num_groups,slots_per_group,status,created_at&order=created_at.desc`,{headers:HDRS});
-    bracketData = res.ok ? (await res.json()) : [];
+    const url = `${SB_URL}/rest/v1/brackets?tournament_id=eq.${activeTournament.id}&select=id,level_key,format,num_groups,slots_per_group,status,created_at&order=created_at.desc`;
+    console.log('🟢 fetching:', url);
+    const res = await fetch(url, {headers:HDRS});
+    const text = await res.text();
+    console.log('🟢 Brackets response:', res.status, text.substring(0,200));
+    if(!res.ok){
+      if(text.includes('relation') || text.includes('does not exist')){
+        container.innerHTML = '<div style="text-align:center;padding:3rem;color:#f5a623;font-size:13px;"><strong>Run the brackets SQL in Supabase first.</strong><br><br>Go to Supabase → SQL Editor and run the CREATE TABLE statements.</div>';
+      } else if(res.status===401||res.status===403||text.includes('permission')){
+        container.innerHTML = '<div style="text-align:center;padding:3rem;color:#f5a623;font-size:13px;"><strong>RLS permission error.</strong><br><br>Run this in Supabase SQL Editor:<br><code style="font-size:11px;color:#aaa;">CREATE POLICY "open" ON brackets FOR ALL USING (true) WITH CHECK (true);<br>CREATE POLICY "open" ON bracket_groups FOR ALL USING (true) WITH CHECK (true);<br>CREATE POLICY "open" ON bracket_slots FOR ALL USING (true) WITH CHECK (true);</code></div>';
+      } else {
+        container.innerHTML = `<div style="text-align:center;padding:3rem;color:#e8372a;font-size:12px;">Error: ${text}</div>`;
+      }
+      return;
+    }
+    bracketData = JSON.parse(text);
     renderBrackets();
-  }catch(e){ console.warn('fetchBrackets failed:', e); }
+  }catch(e){
+    console.error('fetchBrackets failed:', e);
+    if(container) container.innerHTML = `<div style="text-align:center;padding:3rem;color:#e8372a;font-size:12px;">Failed: ${e.message}</div>`;
+  }
 }
 
 // ── Render brackets list ──
 async function renderBrackets(){
+  console.log('🟢 renderBrackets | bracketData.length:', bracketData.length);
   const container = document.getElementById('bracketsContainer');
+  console.log('🟢 container in renderBrackets:', container ? 'FOUND' : '❌ NOT FOUND');
   if(!bracketData.length){
-    container.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted);font-size:13px;">No brackets set up yet. Click "Setup Bracket" to create one.</div>';
+    container.innerHTML = `
+      <div style="text-align:center;padding:4rem 2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">🏸</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#555;margin-bottom:0.5rem;">No Brackets Yet</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
+        <button onclick="openBracketSetup()"
+          style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:8px;cursor:pointer;">
+          + Setup Bracket
+        </button>
+      </div>`;
     return;
   }
 
@@ -4030,14 +4169,15 @@ function onBracketParamsChange(){
     msgs.push(`<strong style="color:#22c55e;">Perfect fit!</strong> ${teamCount} teams fill exactly ${totalSlots} slots`);
   }
 
-  // Minimum viable check
-  if(slotsPerGroup < 4){
-    msgs.push(`<strong style="color:#ff6b6b;">Warning: ${slotsPerGroup} slots per bracket is below the minimum of 4.</strong> A bracket with fewer than 4 teams is not a real tournament. Consider merging levels or waiting for more registrations.`);
+  // Minimum viable check — use tournament setting or default 4
+  const bracketMin = activeTournament?.min_pairs_to_run || 4;
+  if(slotsPerGroup < bracketMin){
+    msgs.push(`<strong style="color:#ff6b6b;">Warning: ${slotsPerGroup} slots per bracket is below the tournament minimum of ${bracketMin} pairs.</strong> A bracket with fewer than ${bracketMin} teams is not viable. Consider merging levels or waiting for more registrations.`);
     if(type !== 'error') type = 'warn';
   }
 
-  if(teamCount < 4){
-    msgs.push(`<strong style="color:#ff6b6b;">Only ${teamCount} team${teamCount!==1?'s':''} registered.</strong> Minimum 4 teams needed for a meaningful tournament. Consider keeping this level open longer or merging with another level.`);
+  if(teamCount < bracketMin){
+    msgs.push(`<strong style="color:#ff6b6b;">Only ${teamCount} pair${teamCount!==1?'s':''} registered.</strong> Tournament minimum is ${bracketMin} pairs. Consider keeping this level open longer or using the Dissolve Level option.`);
     if(type !== 'error') type = 'warn';
   }
 
@@ -4392,10 +4532,10 @@ async function confirmDissolveLevel(){
   alert(`Level ${level} dissolved.\n${sent} email${sent!==1?'s':''} sent.${failed?`\n${failed} failed — check console.`:''}`);
 }
 
+const SITE_BASE_URL = 'https://alinabarazz.github.io/tournament/';
+
 function getTransferLink(regId, fromLevel){
-  const base = _globalSiteUrl
-    ? _globalSiteUrl.trim().replace(/\/$/, '') + '/'
-    : window.location.href.replace(/admin\.html.*$/, '');
+  const base = (_globalSiteUrl || SITE_BASE_URL).trim().replace(/\/$/, '') + '/';
   return `${base}level-transfer.html?ref=${regId}&from=${encodeURIComponent(fromLevel)}`;
 }
 
@@ -4562,7 +4702,7 @@ async function sendEmail(type, data){
 
 // Get base URL for payment confirm link
 // Loaded once on init from DB (superadmin's site_base_url)
-let _globalSiteUrl = localStorage.getItem('siteBaseUrl') || '';
+let _globalSiteUrl = localStorage.getItem('siteBaseUrl') || 'https://alinabarazz.github.io/tournament/';
 
 async function loadGlobalSiteUrl(){
   try{
@@ -4576,16 +4716,12 @@ async function loadGlobalSiteUrl(){
 }
 
 function getCancelLink(regId){
-  const base = _globalSiteUrl
-    ? _globalSiteUrl.trim().replace(/\/$/, '') + '/'
-    : window.location.href.replace(/admin\.html.*$/, '');
+  const base = (_globalSiteUrl || SITE_BASE_URL).trim().replace(/\/$/, '') + '/';
   return `${base}cancel-request.html?ref=${regId}`;
 }
 
 function getPaymentLink(regId){
-  const base = _globalSiteUrl
-    ? _globalSiteUrl.trim().replace(/\/$/, '') + '/'
-    : window.location.href.replace(/admin\.html.*$/, '');
+  const base = (_globalSiteUrl || SITE_BASE_URL).trim().replace(/\/$/, '') + '/';
   return `${base}payment-confirm.html?ref=${regId}`;
 }
 

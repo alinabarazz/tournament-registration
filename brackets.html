@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brackets — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0a0a;--card:#141414;--card2:#1a1a1a;--border:#2a2a2a;
+  --text:#f0f0f0;--muted:#666;--primary:#e8372a;--success:#22c55e;
+  --warn:#f5a623;--info:#60a5fa;
+}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:52px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:8px;}
+.topbar-back{color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:4px;}
+.topbar-back:hover{color:var(--text);}
+.topbar-brand{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--primary);}
+.topbar-sub{font-size:11px;color:var(--muted);margin-left:6px;}
+
+/* LAYOUT */
+.page{max-width:1400px;margin:0 auto;padding:1.5rem;}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;}
+.page-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* TOURNAMENT SELECTOR */
+.t-select-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.t-select-bar label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);}
+.t-select-bar select{background:#0f0f0f;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:6px 10px;cursor:pointer;min-width:200px;}
+.t-select-bar select:focus{outline:none;border-color:var(--primary);}
+
+/* LEVEL GRID */
+.level-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.level-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color 0.2s;}
+.level-card:hover{border-color:#3a3a3a;}
+.level-card.atrisk{border-color:rgba(232,55,42,0.4);}
+.level-card.published{border-color:rgba(34,197,94,0.4);}
+.card-head{background:var(--card2);border-bottom:1px solid var(--border);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;}
+.card-head-name{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;}
+.badges{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.05em;}
+.badge-teams{background:rgba(96,165,250,0.15);color:var(--info);border:1px solid rgba(96,165,250,0.3);}
+.badge-atrisk{background:rgba(232,55,42,0.15);color:var(--primary);border:1px solid rgba(232,55,42,0.3);}
+.badge-draft{background:rgba(245,166,35,0.15);color:var(--warn);border:1px solid rgba(245,166,35,0.3);}
+.badge-published{background:rgba(34,197,94,0.15);color:var(--success);border:1px solid rgba(34,197,94,0.3);}
+.card-body{padding:13px 14px;display:flex;flex-direction:column;gap:11px;}
+.field-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:4px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.field-input{background:#0f0f0f;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;padding:7px 10px;width:100%;transition:border-color 0.15s;}
+.field-input:focus{outline:none;border-color:var(--primary);}
+.format-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.format-btn{flex:1;padding:7px 6px;font-size:11px;font-weight:700;background:transparent;border:none;cursor:pointer;color:var(--muted);font-family:'Barlow',sans-serif;text-transform:uppercase;letter-spacing:0.04em;transition:background 0.15s,color 0.15s;}
+.format-btn.active{background:var(--primary);color:#fff;}
+.validation{font-size:11px;padding:7px 10px;border-radius:6px;font-weight:600;line-height:1.4;}
+.validation.ok{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);color:var(--success);}
+.validation.warn{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);color:var(--warn);}
+.validation.err{background:rgba(232,55,42,0.08);border:1px solid rgba(232,55,42,0.25);color:var(--primary);}
+.card-divider{border:none;border-top:1px solid var(--border);}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn{padding:8px;font-size:11px;font-weight:800;border-radius:7px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.15s;border:none;}
+.btn:active{transform:scale(0.97);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{background:var(--card2);color:var(--text);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{opacity:0.88;}
+.btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-delete{width:100%;background:transparent;border:1px solid rgba(232,55,42,0.25);color:var(--primary);margin-top:-3px;}
+.btn-delete:hover{background:rgba(232,55,42,0.08);}
+
+/* FOOTER BAR */
+.footer-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+.footer-status{font-size:12px;font-weight:600;}
+.footer-status.ok{color:var(--success);}
+.footer-status.err{color:var(--primary);}
+.btn-gen-all{background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:10px 22px;border-radius:8px;cursor:pointer;}
+.btn-gen-all:hover{opacity:0.88;}
+.btn-dissolve{background:transparent;border:1px solid rgba(232,55,42,0.3);color:var(--primary);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;padding:9px 16px;border-radius:8px;cursor:pointer;}
+.btn-dissolve:hover{background:rgba(232,55,42,0.08);}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:5rem 2rem;color:var(--muted);}
+.empty i{font-size:3rem;opacity:0.2;display:block;margin-bottom:1rem;}
+.empty p{font-size:13px;}
+
+/* LOADING */
+.loading{text-align:center;padding:4rem;color:var(--muted);font-size:13px;}
+
+/* DISSOLVE MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;max-width:480px;width:100%;overflow:hidden;}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;border-left:4px solid var(--primary);}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:2px 6px;}
+.modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;}
+.modal-field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);display:block;margin-bottom:5px;}
+.modal-field select,.modal-field textarea{width:100%;background:#0f0f0f;border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:9px 12px;}
+.modal-field textarea{resize:none;height:80px;}
+.modal-actions{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.btn-cancel{background:var(--card2);border:1px solid var(--border);color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;font-size:12px;padding:9px 18px;border-radius:7px;cursor:pointer;}
+.btn-confirm{background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;font-size:12px;padding:9px 18px;border-radius:7px;cursor:pointer;}
+.warn-box{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-left:3px solid var(--warn);border-radius:0 7px 7px 0;padding:10px 13px;font-size:12px;color:var(--warn);line-height:1.6;}
+
+
+/* GENERATED BRACKET BOARD */
+.level-card.bracket-full{grid-column:1/-1;}
+.bracket-card-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.bracket-board{background:#101a1b;border:1px solid #1f3032;border-radius:12px;padding:34px 28px 30px;overflow-x:auto;min-height:420px;}
+.bracket-board-header{text-align:center;margin-bottom:34px;}
+.bracket-board-title{font-family:'Barlow Condensed',sans-serif;font-size:2.1rem;font-weight:900;text-transform:uppercase;letter-spacing:0.04em;color:#f7f7f7;}
+.bracket-board-subtitle{font-size:14px;font-weight:700;color:#9aa4ad;margin-top:4px;}
+.bracket-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:34px;align-items:start;min-width:min-content;}
+.bracket-group{min-width:230px;}
+.bracket-group-title{font-size:14px;font-weight:800;color:#818a92;margin-bottom:16px;padding-bottom:15px;border-bottom:2px solid rgba(255,255,255,0.12);}
+.bracket-slot{height:42px;background:#245363;border:1px solid rgba(96,165,250,0.08);border-radius:4px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 12px;color:#f2f6f7;box-shadow:0 1px 0 rgba(255,255,255,0.03) inset;}
+.bracket-slot-main{display:flex;align-items:center;gap:10px;min-width:0;}
+.bracket-player-icon{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.55);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:rgba(255,255,255,0.65);font-size:11px;}
+.bracket-team-name{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bracket-drag-dots{color:rgba(255,255,255,0.35);font-size:18px;line-height:1;letter-spacing:-1px;}
+.bracket-bye{opacity:0.45;background:#18292f;color:#8c989d;border-style:dashed;}
+.bracket-print-note{font-size:11px;color:#6f7a82;margin-top:18px;text-align:center;}
+.print-only{display:none;}
+@media print{
+  body{background:#fff;color:#111;}
+  .topbar,.t-select-bar,.page-header,.footer-bar,.no-print,.btn,.btn-dissolve{display:none!important;}
+  .page{max-width:none;padding:0;}
+  .print-only{display:block;}
+  .bracket-board{background:#fff;border:none;padding:0;overflow:visible;color:#111;}
+  .bracket-board-title,.bracket-board-subtitle,.bracket-group-title{color:#111;}
+  .bracket-group-title{border-bottom:2px solid #bbb;}
+  .bracket-slot{background:#f2f2f2;color:#111;border:1px solid #999;box-shadow:none;}
+  .bracket-player-icon{border-color:#555;color:#555;}
+  .bracket-drag-dots,.bracket-print-note{display:none;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="admin.html" class="topbar-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="topbar-brand">Brackets</div>
+    <span class="topbar-sub" id="topbarTournament"></span>
+  </div>
+  <div style="font-size:11px;color:var(--muted);" id="topbarUser"></div>
+</div>
+
+<!-- MAIN -->
+<div class="page">
+
+  <!-- TOURNAMENT SELECTOR -->
+  <div class="t-select-bar">
+    <label>Tournament</label>
+    <select id="tournamentSelect" onchange="onTournamentChange()">
+      <option value="">— Select tournament —</option>
+    </select>
+    <span id="tSelectInfo" style="font-size:12px;color:var(--muted);"></span>
+  </div>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Bracket Setup</div>
+      <div class="page-sub">Configure brackets per level. Teams are auto-seeded when you Generate.</div>
+    </div>
+    <button class="btn-dissolve" onclick="openDissolveModal()"><i class="bi bi-exclamation-triangle"></i> Dissolve Level</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="mainContent">
+    <div class="empty">
+      <i class="bi bi-grid-3x3-gap"></i>
+      <p>Select a tournament above to view brackets.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-bar" id="footerBar" style="display:none;">
+    <span class="footer-status" id="footerStatus"></span>
+    <button class="btn-gen-all" onclick="generateAll()">
+      <i class="bi bi-lightning-fill"></i> Generate All Brackets
+    </button>
+  </div>
+</div>
+
+<!-- DISSOLVE MODAL -->
+<div class="modal-overlay" id="dissolveModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Dissolve Level</div>
+      <button class="modal-close" onclick="closeDissolveModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="warn-box">
+        <strong>All registered teams will be notified</strong> by email and asked to either transfer to another level or cancel.
+      </div>
+      <div class="modal-field">
+        <label>Level to Dissolve *</label>
+        <select id="dissolveLevel" onchange="onDissolveLevelChange()">
+          <option value="">— Select level —</option>
+        </select>
+        <div id="dissolveLevelInfo" style="font-size:11px;color:var(--muted);margin-top:4px;"></div>
+      </div>
+      <div class="modal-field">
+        <label>Message to Players</label>
+        <textarea id="dissolveMessage" placeholder="e.g. Due to insufficient registrations, this level has been dissolved...">Due to insufficient registrations, this level has been dissolved. We sincerely apologize for the inconvenience.</textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDissolveModal()">Cancel</button>
+      <button class="btn-confirm" onclick="confirmDissolve()">Send Dissolution Emails</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
+const HDRS  = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+const SITE  = 'https://alinabarazz.github.io/tournament/';
+
+let tournaments  = [];
+let activeTId    = null;
+let activeTName  = '';
+let pricingRows  = [];
+let allRegs      = [];
+let bracketData  = [];
+let levels       = []; // local state per level card
+let currentUser  = null;
+let viewLevelFromUrl = null;
+
+const ELIGIBLE_BRACKET_STATUS = 'Registered';
+const MIN_BRACKET_TEAMS = 4;
+
+function isRegisteredTeam(reg){
+  return String(reg?.Status || '').trim() === ELIGIBLE_BRACKET_STATUS;
+}
+
+function registeredTeamsForLevel(levelKey){
+  return allRegs.filter(r => r.Level === levelKey && isRegisteredTeam(r));
+}
+
+function getBracketEligibility(l){
+  const totalSlots = Number(l.brackets || 0) * Number(l.slots || 0);
+  const noTeams = l.teams === 0;
+  const tooFew = l.teams > 0 && l.teams < MIN_BRACKET_TEAMS;
+  const invalidSlots = Number(l.slots || 0) < 4;
+  const notEnoughSlots = totalSlots < l.teams;
+  return {
+    canGenerate: !noTeams && !tooFew && !invalidSlots && !notEnoughSlots,
+    noTeams,
+    tooFew,
+    invalidSlots,
+    notEnoughSlots,
+    totalSlots,
+  };
+}
+
+function staleGeneratedReason(l){
+  const e = getBracketEligibility(l);
+  if(!l.bracketId || l.status !== 'published') return '';
+  if(e.noTeams) return 'No Registered teams remain. Delete this bracket or wait for eligible registrations.';
+  if(e.tooFew) return `Only ${l.teams} Registered ${l.teams===1?'team':'teams'} remain — minimum ${MIN_BRACKET_TEAMS} needed. Cancelled/non-Registered teams are excluded.`;
+  if(e.invalidSlots) return `Slots / Bracket must be at least 4. Current value is ${l.slots}.`;
+  if(e.notEnoughSlots) return `Current setup has ${e.totalSlots} slots but ${l.teams} Registered teams. Increase brackets or slots, then regenerate.`;
+  return '';
+}
+
+
+// ── INIT ──
+(async function init(){
+  const saved = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  if(!saved){ window.location.href='admin.html'; return; }
+  currentUser = JSON.parse(saved);
+  sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+  localStorage.setItem('adminUser', JSON.stringify(currentUser));
+  document.getElementById('topbarUser').textContent = currentUser.username + ' · ' + currentUser.role;
+
+  // Restore tournament from URL param
+  const params  = new URLSearchParams(window.location.search);
+  const tFromUrl= params.get('t');
+  viewLevelFromUrl = params.get('view');
+
+  // Load tournaments
+  let url = `${SB_URL}/rest/v1/tournaments?select=id,name,owner_id,owner_name,status,min_pairs_to_run,event_date_to&order=created_at.desc`;
+  if(currentUser.role==='admin') url+=`&owner_id=eq.${currentUser.id}`;
+  const res  = await fetch(url,{headers:HDRS});
+  tournaments = res.ok ? await res.json() : [];
+
+  const sel = document.getElementById('tournamentSelect');
+  tournaments.forEach(t=>{
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  });
+
+  if(tFromUrl){
+    sel.value = tFromUrl;
+    await onTournamentChange();
+  }
+})();
+
+async function onTournamentChange(){
+  activeTId = parseInt(document.getElementById('tournamentSelect').value)||null;
+  if(!activeTId){ document.getElementById('mainContent').innerHTML='<div class="empty"><i class="bi bi-grid-3x3-gap"></i><p>Select a tournament above.</p></div>'; document.getElementById('footerBar').style.display='none'; return; }
+
+  const t = tournaments.find(x=>x.id===activeTId)||{};
+  activeTName = t.name||'';
+  document.getElementById('topbarTournament').textContent = activeTName;
+  document.getElementById('tSelectInfo').textContent = `Min pairs: ${t.min_pairs_to_run||12}`;
+  document.getElementById('mainContent').innerHTML = '<div class="loading"><i class="bi bi-arrow-clockwise" style="display:block;font-size:2rem;margin-bottom:0.5rem;animation:spin 1s linear infinite;"></i>Loading levels...</div>';
+  document.getElementById('footerBar').style.display = 'flex';
+
+  // Load pricing, registrations, brackets in parallel
+  const [pRes, rRes, bRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/pricing?tournament_id=eq.${activeTId}&enabled=eq.true&select=level_key,label,min_pairs`,{headers:HDRS}),
+    fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTId}&select=id,Level,Status,Team_Name,Player1_Name,Player2_Name,Email_Address`,{headers:HDRS}),
+    fetch(`${SB_URL}/rest/v1/brackets?tournament_id=eq.${activeTId}&select=id,level_key,format,num_groups,slots_per_group,status`,{headers:HDRS}),
+  ]);
+  pricingRows = pRes.ok ? await pRes.json() : [];
+  allRegs     = rRes.ok ? await rRes.json() : [];
+  bracketData = bRes.ok ? await bRes.json() : [];
+
+  // Build level state
+  const t2 = tournaments.find(x=>x.id===activeTId)||{};
+  const now = new Date();
+  // At Risk only triggers if within 2 weeks of registration close date
+  const regCloseDate = t2.event_date_to ? new Date(t2.event_date_to) : null;
+  const twoWeeksFromNow = new Date(now.getTime() + 14*24*60*60*1000);
+  const withinTwoWeeks = regCloseDate ? regCloseDate <= twoWeeksFromNow : false;
+  levels = pricingRows.map(p=>{
+    const ex    = bracketData.find(b=>b.level_key===p.level_key);
+    const teams = registeredTeamsForLevel(p.level_key).length;
+    const minP  = p.min_pairs || t2.min_pairs_to_run || 12;
+    return {
+      level_key:  p.level_key,
+      label:      p.label || p.level_key,
+      teams,
+      minPairs:   minP,
+      atRisk:     withinTwoWeeks && teams > 0 && teams < minP,
+      brackets:   ex?.num_groups     || Math.max(1,Math.ceil(teams/4)||2),
+      slots:      ex?.slots_per_group|| 4,
+      format:     ex?.format         || 'round_robin',
+      status:     ex?.status         || null,
+      bracketId:  ex?.id             || null,
+    };
+  });
+
+  renderLevels();
+  if(viewLevelFromUrl){
+    await renderPrintableView(viewLevelFromUrl);
+    return;
+  }
+}
+
+function renderLevels(){
+  const wrap = document.getElementById('mainContent');
+  if(!levels.length){
+    wrap.innerHTML='<div class="empty"><i class="bi bi-grid-3x3-gap"></i><p>No levels found. Add levels in Pricing & Slots first.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = '<div class="level-grid">'+levels.map(renderCard).join('')+'</div>';
+}
+
+function renderCard(l){
+  const eligibility = getBracketEligibility(l);
+  const diff = eligibility.totalSlots - l.teams;
+  const validFit = !eligibility.notEnoughSlots;
+  const validMin = !eligibility.invalidSlots;
+  const staleReason = staleGeneratedReason(l);
+  const isGenerated = l.status === 'published' && !!l.bracketId;
+  const isUsablePublished = isGenerated && !staleReason;
+
+  let valClass = 'ok', valMsg = '';
+  const noTeams = eligibility.noTeams;
+  const tooFew = eligibility.tooFew;
+
+  if(noTeams){
+    valClass='err'; valMsg='No Registered teams yet — cannot generate';
+  } else if(tooFew){
+    valClass='err'; valMsg=`Only ${l.teams} Registered ${l.teams===1?'team':'teams'} — minimum ${MIN_BRACKET_TEAMS} needed to run a bracket`;
+  } else if(eligibility.invalidSlots){
+    valClass='err'; valMsg=`Min 4 slots/bracket required (currently ${l.slots})`;
+  } else if(eligibility.notEnoughSlots){
+    valClass='err'; valMsg=`Need ${Math.abs(diff)} more slots — increase brackets or slots per bracket`;
+  }
+  if(valClass==='ok' && l.atRisk) valClass='warn';
+
+  const formatLabel = l.format==='round_robin' ? 'Round Robin' : 'Single Elim';
+  const cardClass = ['level-card', l.atRisk?'atrisk':'', isUsablePublished?'published':''].filter(Boolean).join(' ');
+
+  return `<div class="${cardClass}" id="lcard-${l.level_key}">
+    <div class="card-head">
+      <span class="card-head-name">${escapeHtml(l.label)}</span>
+      <div class="badges">
+        <span class="badge badge-teams">${l.teams} ${l.teams===1?'Registered team':'Registered teams'}</span>
+        ${isUsablePublished?'<span class="badge badge-published">Published</span>':''}
+        ${isGenerated && staleReason?'<span class="badge badge-atrisk">Needs Fix</span>':''}
+        ${l.status==='draft'?'<span class="badge badge-draft">Draft</span>':''}
+        ${l.atRisk?'<span class="badge badge-atrisk">At Risk</span>':''}
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field-row">
+        <div>
+          <span class="field-label">Brackets</span>
+          <input class="field-input" type="number" min="1" max="16" value="${l.brackets}"
+            onchange="levelUpdate('${l.level_key}','brackets',+this.value)">
+        </div>
+        <div>
+          <span class="field-label">Slots / Bracket</span>
+          <input class="field-input" type="number" min="2" max="16" value="${l.slots}"
+            onchange="levelUpdate('${l.level_key}','slots',+this.value)">
+        </div>
+      </div>
+      <div>
+        <span class="field-label">Format</span>
+        <div class="format-toggle">
+          <button class="format-btn ${l.format==='round_robin'?'active':''}"
+            onclick="levelUpdate('${l.level_key}','format','round_robin')">Round Robin</button>
+          <button class="format-btn ${l.format==='single_elim'?'active':''}"
+            onclick="levelUpdate('${l.level_key}','format','single_elim')">Single Elim</button>
+        </div>
+      </div>
+      ${valClass==='ok'?'':`<div class="validation ${valClass}"><i class="bi bi-exclamation-triangle-fill"></i> ${valMsg}</div>`}
+      ${staleReason?`<div class="validation err"><i class="bi bi-shield-exclamation"></i> Bracket blocked: ${escapeHtml(staleReason)}</div>`:''}
+      ${isUsablePublished?`<div class="validation ok"><i class="bi bi-check-circle-fill"></i> Generated · ${formatLabel} · ${l.brackets} bracket${l.brackets!==1?'s':''} × ${l.slots} slot${l.slots!==1?'s':''}</div>`:''}
+      <hr class="card-divider">
+      ${isUsablePublished?`
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="openBracketPage('${l.level_key}')"><i class="bi bi-box-arrow-up-right"></i> Open</button>
+          <button class="btn btn-primary" onclick="exportBracketExcel('${l.level_key}', ${l.bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-outline" id="shuffle-${l.level_key}" onclick="shuffleLevel('${l.level_key}')"><i class="bi bi-shuffle"></i> Shuffle</button>
+          <button class="btn btn-delete" style="margin-top:0;" onclick="deleteLevel('${l.level_key}')"><i class="bi bi-trash3"></i> Delete</button>
+        </div>`:`
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="saveLevel('${l.level_key}','draft')" ${noTeams?'disabled style="opacity:0.35;cursor:not-allowed;"':''}>Save Draft</button>
+          <button class="btn btn-primary" id="gbtn-${l.level_key}"
+            onclick="saveLevel('${l.level_key}','published')"
+            ${!eligibility.canGenerate?'disabled style="opacity:0.35;cursor:not-allowed;"':''}>Generate</button>
+        </div>
+        ${l.bracketId?`<button class="btn btn-delete" onclick="deleteLevel('${l.level_key}')"><i class="bi bi-trash3"></i> Delete Blocked Bracket</button>`:''}`}
+    </div>
+  </div>`;
+}
+
+function levelUpdate(key, field, val){
+  const l = levels.find(x=>x.level_key===key);
+  if(!l) return;
+  l[field] = val;
+  if(field==='brackets' && l.teams > 0) l.slots = Math.max(2, Math.ceil(l.teams/val));
+  // Re-render just this card
+  const card = document.getElementById('lcard-'+key);
+  if(card) card.outerHTML = renderCard(l);
+}
+
+async function saveLevel(key, status){
+  const l = levels.find(x=>x.level_key===key);
+  if(!l) return;
+  l.teams = registeredTeamsForLevel(l.level_key).length;
+  const eligibility = getBracketEligibility(l);
+  if(status === 'published' && !eligibility.canGenerate){
+    const reason = staleGeneratedReason({...l, status:'published', bracketId:l.bracketId || -1}) || 'Only Registered teams can be generated, and at least 4 Registered teams are required.';
+    setStatus('Cannot generate: '+reason, true);
+    renderLevels();
+    return;
+  }
+  const btn = document.getElementById('gbtn-'+key);
+  if(btn){ btn.textContent='Saving...'; btn.disabled=true; }
+  try{
+    if(l.bracketId){
+      await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
+      l.bracketId = null;
+    }
+    const bRes = await fetch(`${SB_URL}/rest/v1/brackets`,{
+      method:'POST', headers:{...HDRS,'Prefer':'return=representation'},
+      body:JSON.stringify({tournament_id:activeTId, level_key:l.level_key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status}),
+    });
+    if(!bRes.ok) throw new Error(await bRes.text());
+    const [bracket] = await bRes.json();
+    l.bracketId = bracket.id;
+    l.status    = status;
+
+    if(status==='published'){
+      await seedBracket(l, bracket.id);
+      setStatus('Generated — '+l.label, false);
+      bracketData = bracketData.filter(b=>b.level_key!==key);
+      bracketData.push({id:bracket.id, level_key:key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status});
+      renderLevels();
+    } else {
+      setStatus('Draft saved — '+l.label, false);
+      bracketData = bracketData.filter(b=>b.level_key!==key);
+      bracketData.push({id:bracket.id, level_key:key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status});
+      renderLevels();
+    }
+  }catch(e){
+    setStatus('Error: '+e.message, true);
+    renderLevels();
+  }
+}
+
+async function showBracketView(levelKey, bracketId){
+  const l = levels.find(x=>x.level_key===levelKey);
+  if(!l) return;
+  const groups = await loadBracketGroups(bracketId);
+  const formatLabel = l.format==='round_robin' ? 'Round Robin' : 'Single Elim';
+  const card = document.getElementById('lcard-'+levelKey);
+  if(!card) return;
+  card.outerHTML = `<div class="level-card published bracket-full" id="lcard-${levelKey}">
+    <div class="card-head">
+      <span class="card-head-name">${escapeHtml(l.label)}</span>
+      <div class="badges">
+        <span class="badge badge-teams">${l.teams} ${l.teams===1?'team':'teams'}</span>
+        <span class="badge badge-published"><i class="bi bi-check-circle-fill"></i> Published</span>
+        <span style="font-size:10px;color:var(--muted);">${formatLabel}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="bracket-card-actions no-print">
+        <button class="btn btn-outline" onclick="openBracketPage('${levelKey}')"><i class="bi bi-box-arrow-up-right"></i> Open Printable Page</button>
+        <button class="btn btn-outline" onclick="copyBracketLink('${levelKey}')"><i class="bi bi-link-45deg"></i> Copy Link</button>
+        <button class="btn btn-primary" onclick="exportBracketExcel('${levelKey}', ${bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+      </div>
+      ${renderBracketBoard(l, groups)}
+      <hr class="card-divider no-print">
+      <div class="btn-row no-print">
+        <button class="btn btn-outline" onclick="regenerateLevel('${levelKey}')"><i class="bi bi-arrow-clockwise"></i> Regenerate</button>
+        <button class="btn btn-delete" style="margin-top:0;" onclick="deleteLevel('${levelKey}')"><i class="bi bi-trash3"></i> Delete</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+
+function safeFileName(value){
+  return String(value || 'bracket').replace(/[^a-z0-9-_]+/gi,'_').replace(/^_+|_+$/g,'').slice(0,80) || 'bracket';
+}
+
+async function loadBracketGroups(bracketId){
+  const gRes = await fetch(`${SB_URL}/rest/v1/bracket_groups?bracket_id=eq.${bracketId}&select=id,group_number,name,bracket_slots(slot_number,is_bye,registration_id,registrations(Team_Name,Player1_Name,Player2_Name))&order=group_number.asc`,{headers:HDRS});
+  const groups = gRes.ok ? await gRes.json() : [];
+  return groups.map(g=>({
+    ...g,
+    bracket_slots:(g.bracket_slots||[]).sort((a,b)=>a.slot_number-b.slot_number)
+  })).sort((a,b)=>a.group_number-b.group_number);
+}
+
+function renderBracketBoard(level, groups){
+  const formatLabel = level.format==='round_robin' ? 'Round Robin' : 'Single Elim';
+  const groupsHtml = groups.map(g=>{
+    const savedSlots = g.bracket_slots || [];
+    const slots = [];
+    for(let i=1;i<=level.slots;i++){
+      slots.push(savedSlots.find(s=>s.slot_number===i) || {slot_number:i,is_bye:true,registrations:null});
+    }
+    return `<div class="bracket-group">
+      <div class="bracket-group-title">${escapeHtml(g.name || ('Group '+g.group_number))}</div>
+      ${slots.map(s=>{
+        const reg = s.registrations;
+        const teamName = reg?.Team_Name || (s.is_bye ? 'BYE' : 'Open Slot');
+        return `<div class="bracket-slot ${(!reg || s.is_bye)?'bracket-bye':''}">
+          <div class="bracket-slot-main">
+            <span class="bracket-player-icon"><i class="bi bi-person"></i></span>
+            <span class="bracket-team-name" title="${escapeHtml(teamName)}">${escapeHtml(teamName)}</span>
+          </div>
+          <span class="bracket-drag-dots">⋮⋮</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+  return `<div class="bracket-board">
+    <div class="bracket-board-header">
+      <div class="bracket-board-title">${escapeHtml(activeTName || level.label)}</div>
+      <div class="bracket-board-subtitle">${escapeHtml(formatLabel)}</div>
+    </div>
+    <div class="bracket-groups">${groupsHtml}</div>
+    <div class="bracket-print-note">${escapeHtml(level.label)} · ${level.brackets} bracket${level.brackets!==1?'s':''} × ${level.slots} slot${level.slots!==1?'s':''}</div>
+  </div>`;
+}
+
+function getBracketUrl(levelKey){
+  const url = new URL(window.location.href);
+  url.searchParams.set('t', activeTId);
+  url.searchParams.set('view', levelKey);
+  return url.toString();
+}
+
+function openBracketPage(levelKey){
+  window.open(getBracketUrl(levelKey), '_blank', 'noopener');
+}
+
+async function copyBracketLink(levelKey){
+  const link = getBracketUrl(levelKey);
+  try{
+    await navigator.clipboard.writeText(link);
+    setStatus('Bracket link copied.', false);
+  }catch(_){
+    prompt('Copy this bracket link:', link);
+  }
+}
+
+async function renderPrintableView(levelKey){
+  const level = levels.find(x=>x.level_key===levelKey);
+  if(!level){
+    document.getElementById('mainContent').innerHTML = '<div class="empty"><i class="bi bi-exclamation-triangle"></i><p>Bracket level not found.</p></div>';
+    document.getElementById('footerBar').style.display='none';
+    return;
+  }
+  const staleReason = staleGeneratedReason(level);
+  if(!level.bracketId || level.status!=='published' || staleReason){
+    const msg = staleReason ? `This bracket is blocked because eligibility changed: ${escapeHtml(staleReason)}` : `${escapeHtml(level.label)} has not been generated yet.`;
+    document.getElementById('mainContent').innerHTML = `<div class="empty"><i class="bi bi-grid-3x3-gap"></i><p>${msg}</p></div>`;
+    document.getElementById('footerBar').style.display='none';
+    return;
+  }
+  const groups = await loadBracketGroups(level.bracketId);
+  document.querySelector('.page-title').textContent = level.label;
+  document.querySelector('.page-sub').textContent = 'Printable bracket page. Admin can print this page or export it to Excel.';
+  document.getElementById('footerBar').style.display='none';
+  document.getElementById('mainContent').innerHTML = `<div class="level-card published bracket-full">
+    <div class="card-head no-print">
+      <span class="card-head-name">${escapeHtml(level.label)}</span>
+      <div class="bracket-card-actions">
+        <button class="btn btn-outline" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        <button class="btn btn-primary" onclick="exportBracketExcel('${levelKey}', ${level.bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+      </div>
+    </div>
+    <div class="card-body">${renderBracketBoard(level, groups)}</div>
+  </div>`;
+}
+
+async function exportBracketExcel(levelKey, bracketId){
+  const level = levels.find(x=>x.level_key===levelKey);
+  if(!level){ alert('Level not found.'); return; }
+  const staleReason = staleGeneratedReason(level);
+  if(staleReason){ alert('Cannot export this bracket because eligibility changed: '+staleReason); return; }
+  const groups = await loadBracketGroups(bracketId);
+  const rows = [];
+  groups.forEach(g=>{
+    const savedSlots = g.bracket_slots || [];
+    for(let i=1;i<=level.slots;i++){
+      const slot = savedSlots.find(s=>s.slot_number===i) || {slot_number:i,is_bye:true,registrations:null};
+      const reg = slot.registrations || {};
+      rows.push({
+        Tournament: activeTName,
+        Level: level.label,
+        Format: level.format==='round_robin' ? 'Round Robin' : 'Single Elim',
+        Group: g.name || ('Group '+g.group_number),
+        Slot: i,
+        Team: reg.Team_Name || (slot.is_bye ? 'BYE' : ''),
+        Player_1: reg.Player1_Name || '',
+        Player_2: reg.Player2_Name || ''
+      });
+    }
+  });
+
+  if(window.XLSX){
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:28},{wch:22},{wch:16},{wch:14},{wch:8},{wch:30},{wch:24},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Bracket');
+    XLSX.writeFile(wb, `${safeFileName(activeTName)}_${safeFileName(level.label)}_bracket.xlsx`);
+  }else{
+    const headers = Object.keys(rows[0] || {Tournament:'',Level:'',Format:'',Group:'',Slot:'',Team:'',Player_1:'',Player_2:''});
+    const csv = [headers.join(','), ...rows.map(r=>headers.map(h=>'"'+String(r[h]??'').replace(/"/g,'""')+'"').join(','))].join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${safeFileName(activeTName)}_${safeFileName(level.label)}_bracket.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+}
+
+async function regenerateLevel(key){
+  return shuffleLevel(key);
+}
+
+async function shuffleLevel(key){
+  const l = levels.find(x=>x.level_key===key);
+  if(!l || !l.bracketId) return;
+  l.teams = registeredTeamsForLevel(l.level_key).length;
+  const eligibility = getBracketEligibility(l);
+  if(!eligibility.canGenerate){
+    setStatus('Cannot shuffle: '+(staleGeneratedReason(l) || 'at least 4 Registered teams are required.'), true);
+    renderLevels();
+    return;
+  }
+  const confirmed = confirm(`Shuffle teams for ${l.label}? This will replace the current group assignments immediately.`);
+  if(!confirmed) return;
+  const btn = document.getElementById('shuffle-'+key);
+  if(btn){ btn.textContent='Shuffling...'; btn.disabled=true; }
+  try{
+    await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
+    l.bracketId = null;
+    l.status = null;
+    await saveLevel(key, 'published');
+    setStatus('Shuffled — '+l.label, false);
+  }catch(e){
+    setStatus('Shuffle failed: '+e.message, true);
+    renderLevels();
+  }
+}
+
+async function seedBracket(l, bracketId){
+  const regs = registeredTeamsForLevel(l.level_key);
+  if(regs.length < MIN_BRACKET_TEAMS){
+    throw new Error(`Only ${regs.length} Registered ${regs.length===1?'team':'teams'} found for ${l.label}. Minimum ${MIN_BRACKET_TEAMS} required.`);
+  }
+  const shuffled = [...regs].sort(()=>Math.random()-0.5);
+  const groupNames = 'ABCDEFGHIJKLMNOP'.split('');
+  const groupAssignments = Array.from({length:l.brackets},()=>[]);
+
+  // Rule 1: no same player in same group
+  shuffled.forEach(reg=>{
+    const p1 = (reg.Player1_Name||'').toLowerCase();
+    const p2 = (reg.Player2_Name||'').toLowerCase();
+    let placed = false;
+    for(let g=0;g<l.brackets;g++){
+      const gPlayers = groupAssignments[g].flatMap(r=>[r.Player1_Name,r.Player2_Name].filter(Boolean).map(n=>n.toLowerCase()));
+      if(!gPlayers.includes(p1) && !(p2&&gPlayers.includes(p2)) && groupAssignments[g].length < l.slots){
+        groupAssignments[g].push(reg); placed=true; break;
+      }
+    }
+    if(!placed){
+      const least = groupAssignments.reduce((m,g,i)=>g.length<groupAssignments[m].length?i:m,0);
+      groupAssignments[least].push(reg);
+    }
+  });
+
+  for(let g=0;g<l.brackets;g++){
+    const gRes = await fetch(`${SB_URL}/rest/v1/bracket_groups`,{
+      method:'POST', headers:{...HDRS,'Prefer':'return=representation'},
+      body:JSON.stringify({bracket_id:bracketId, group_number:g+1, name:'Group '+groupNames[g]}),
+    });
+    if(!gRes.ok) continue;
+    const [group] = await gRes.json();
+    const slots = [];
+    groupAssignments[g].forEach((reg,i)=>slots.push({group_id:group.id, slot_number:i+1, registration_id:reg.id, is_bye:false}));
+    // No BYE slots — only save real team assignments
+    if(slots.length) await fetch(`${SB_URL}/rest/v1/bracket_slots`,{method:'POST',headers:{...HDRS,'Prefer':'return=minimal'},body:JSON.stringify(slots)});
+  }
+}
+
+async function deleteLevel(key){
+  const l = levels.find(x=>x.level_key===key);
+  if(!l||!l.bracketId) return;
+  if(!confirm(`Delete bracket for ${l.label}? This cannot be undone.`)) return;
+  await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
+  l.bracketId=null; l.status=null;
+  bracketData = bracketData.filter(b=>b.level_key!==key);
+  setStatus('Bracket deleted — '+l.label, false);
+  renderLevels();
+}
+
+async function generateAll(){
+  levels.forEach(l=>{ l.teams = registeredTeamsForLevel(l.level_key).length; });
+  const valid = levels.filter(l=>getBracketEligibility(l).canGenerate);
+  if(!valid.length){ setStatus('No valid levels to generate.',true); return; }
+  for(const l of valid) await saveLevel(l.level_key,'published');
+  setStatus(`Generated ${valid.length} bracket${valid.length!==1?'s':''}.`, false);
+}
+
+function setStatus(msg, isErr){
+  const el = document.getElementById('footerStatus');
+  el.textContent = msg;
+  el.className = 'footer-status '+(isErr?'err':'ok');
+  setTimeout(()=>{ el.textContent=''; }, 3000);
+}
+
+// DISSOLVE MODAL
+function openDissolveModal(){
+  const sel = document.getElementById('dissolveLevel');
+  sel.innerHTML = '<option value="">— Select level —</option>';
+  levels.forEach(l=>{ sel.innerHTML+=`<option value="${l.level_key}">${l.label} (${l.teams} teams)</option>`; });
+  document.getElementById('dissolveLevelInfo').textContent = '';
+  document.getElementById('dissolveModal').classList.add('open');
+}
+function closeDissolveModal(){ document.getElementById('dissolveModal').classList.remove('open'); }
+function onDissolveLevelChange(){
+  const key = document.getElementById('dissolveLevel').value;
+  const l   = levels.find(x=>x.level_key===key);
+  document.getElementById('dissolveLevelInfo').textContent = l ? `${l.teams} team${l.teams!==1?'s':''} will be notified.` : '';
+}
+async function confirmDissolve(){
+  const key     = document.getElementById('dissolveLevel').value;
+  const message = document.getElementById('dissolveMessage').value.trim();
+  const l       = levels.find(x=>x.level_key===key);
+  if(!l||!message){ alert('Please select a level and add a message.'); return; }
+  const btn = document.querySelector('#dissolveModal .btn-confirm');
+  btn.textContent='Sending...'; btn.disabled=true;
+  const ACTIVE = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'];
+  const affected = allRegs.filter(r=>r.Level===key && ACTIVE.includes(r.Status));
+  const availLevels = levels.filter(x=>x.level_key!==key).map(x=>x.label).join(', ');
+  for(const reg of affected){
+    await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${reg.id}`,{
+      method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+      body:JSON.stringify({Status:'Cancelled',notes:`LEVEL DISSOLVED: ${key}`}),
+    });
+    await fetch(`${SB_URL}/functions/v1/send-email`,{
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+      body:JSON.stringify({type:'level_dissolved',data:{
+        player_email:reg.Email_Address, admin_email:currentUser?.notification_email||'',
+        player_name:reg.Player1_Name||'Player', player2_name:reg.Player2_Name||'',
+        team_name:reg.Team_Name, dissolved_level:key, tournament_name:activeTName,
+        reg_ref:'#'+String(reg.id).padStart(5,'0'), organizer_message:message,
+        available_levels:availLevels,
+        transfer_link:SITE+'level-transfer.html?ref='+reg.id+'&from='+encodeURIComponent(key),
+        cancel_link:SITE+'cancel-request.html?ref='+reg.id,
+      }}),
+    });
+  }
+  closeDissolveModal();
+  btn.textContent='Send Dissolution Emails'; btn.disabled=false;
+  setStatus(`${l.label} dissolved — ${affected.length} team${affected.length!==1?'s':''} notified.`, false);
+  await onTournamentChange();
+}
+</script>
+
+<style>
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</body>
+</html>

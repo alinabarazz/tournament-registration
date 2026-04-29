@@ -1758,6 +1758,7 @@ function editTournament(id){
   console.log('🟢 editTournament | _editingTournamentId set to:', _editingTournamentId);
 
   // ── Open modal ──
+  document.removeEventListener('click', outsideNotifClose);
   document.getElementById('tournamentModal').classList.add('open');
   setTimeout(()=>{ document.getElementById('tName')?.focus(); }, 80);
 }
@@ -2118,6 +2119,7 @@ function openTournamentModal(){
   updateStatusDot('Draft');
   _editingTournamentId = null;
   console.log('🟡 openTournamentModal | _editingTournamentId reset to null');
+  document.removeEventListener('click', outsideNotifClose);
   document.getElementById('tournamentModal').classList.add('open');
   setTimeout(()=>{ const n=document.getElementById('tName'); if(n) n.focus(); }, 80);
 }
@@ -2253,6 +2255,9 @@ async function seedDefaultPricing(tournamentId){
    TAB SWITCHING
 ════════════════════════════════════════════ */
 function showTab(name, event){
+  // Always clear the notif listener when switching tabs
+  document.removeEventListener('click', outsideNotifClose);
+  closeNotifPanel();
   document.querySelectorAll('.tab-panel').forEach(p=>{
     p.classList.remove('active');
     p.style.display = 'none';
@@ -3094,6 +3099,7 @@ function addCustomCategory(){
   document.getElementById('catSlots').value='20';
   document.getElementById('catPrice').value='';
   document.getElementById('catError').style.display='none';
+  document.removeEventListener('click', outsideNotifClose);
   document.getElementById('categoryModal').classList.add('open');
   setTimeout(()=>document.getElementById('catName').focus(),80);
 }
@@ -3213,6 +3219,7 @@ function openExpenseModal(id){
     document.getElementById('mStatus').value = 'Pending';
     document.getElementById('mNotes').value  = '';
   }
+  document.removeEventListener('click', outsideNotifClose);
   document.getElementById('expenseModal').classList.add('open');
   document.getElementById('mDesc').focus();
 }
@@ -3401,6 +3408,7 @@ function addSponsor(){
   document.getElementById('sponsorLogoPreview').innerHTML = '+ LOGO';
   document.getElementById('sponsorLogoPreview').style.background = '#0f0f0f';
   _smLogoFile = null;
+  document.removeEventListener('click', outsideNotifClose);
   document.getElementById('sponsorModal').classList.add('open');
   setTimeout(()=>document.getElementById('smName').focus(), 80);
 }
@@ -4098,6 +4106,9 @@ function switchNotifTab(tab){
 }
 
 function openNotifPanel(){
+  // Always remove any stale listener first
+  document.removeEventListener('click', outsideNotifClose);
+
   let panel = document.getElementById('notifPanel');
   if(!panel){ console.error('notifPanel NOT FOUND'); return; }
   if(panel.parentElement !== document.body) document.body.appendChild(panel);
@@ -4117,11 +4128,8 @@ function openNotifPanel(){
   panel.style.overflow      = 'hidden';
   if(_notifOpen){
     renderNotifList();
-    // Remove any existing listener first, then add new one after 200ms
-    document.removeEventListener('click', outsideNotifClose);
-    setTimeout(()=>document.addEventListener('click', outsideNotifClose), 200);
-  } else {
-    document.removeEventListener('click', outsideNotifClose);
+    // Add outside-click listener after 300ms so this click doesn't immediately close it
+    setTimeout(()=>document.addEventListener('click', outsideNotifClose), 300);
   }
 }
 
@@ -4874,6 +4882,8 @@ async function checkPaymentDeadlines(){
   try{
     if(!activeTournament || !allRegs || !allRegs.length) return;
     const now = new Date();
+    const overdueMoved  = [];
+    const autoCancelled = [];
 
     for(const rec of allRegs){
       if(!rec.approved_at) continue;
@@ -4912,6 +4922,7 @@ async function checkPaymentDeadlines(){
             body:JSON.stringify({Status:'Overdue'}),
           });
           rec.Status = 'Overdue';
+          overdueMoved.push(rec.id);
           console.log(`Day 7: #${rec.id} → Overdue`);
           // Email admin
           sendEmail('overdue_admin',{
@@ -4939,6 +4950,7 @@ async function checkPaymentDeadlines(){
             body:JSON.stringify({Status:'Cancelled', notes:'Auto-cancelled: payment not received after 8 days', cancelled_at: now.toISOString()}),
           });
           rec.Status = 'Cancelled';
+          autoCancelled.push(rec.id);
           console.log(`Day 8: #${rec.id} → Auto-Cancelled`);
           // Email player
           sendEmail('cancellation_approved',{
@@ -4955,9 +4967,12 @@ async function checkPaymentDeadlines(){
       }
     }
 
-    // Refresh if anything changed
-    const changed = allRegs.some(r=>r.Status==='Overdue'||r.Status==='Cancelled');
-    if(changed){ fetchRegistrations(); updateStats(allRegs); }
+    // Refresh only if we actually changed something in this run
+    const anythingChanged = overdueMoved.length > 0 || autoCancelled.length > 0;
+    if(anythingChanged){ 
+      console.log(`checkPaymentDeadlines: ${overdueMoved.length} moved to Overdue, ${autoCancelled.length} auto-cancelled`);
+      await fetchRegistrations(); 
+    }
 
   }catch(e){ console.warn('checkPaymentDeadlines error:', e); }
 }

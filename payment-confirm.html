@@ -257,11 +257,11 @@ async function init(){
     const data = await res.json();
     if(!data||!data.length){ showError('Registration not found. Please check your link or contact the organizer.'); return; }
     regData = data[0];
-    if(regData.Status !== 'Awaiting Payment'){
+    if(!['Awaiting Payment','Payment Not Received'].includes(regData.Status)){
       if(regData.payment_screenshot) showError('Payment proof already submitted. The organizer is reviewing it.');
-      else if(regData.Status==='Registered') showError('Your registration is already confirmed. Nothing else needed.');
+      else if(regData.Status==='Registered') showError('Your registration is already confirmed. Nothing else needed!');
       else if(regData.Status==='Rejected'||regData.Status==='Cancelled') showError('Your registration has been '+regData.Status.toLowerCase()+'. Please contact the organizer.');
-      else showError('Your registration status is "'+regData.Status+'". No action needed at this time.');
+      else showError('Your registration status is "'+regData.Status+'". Please contact the organizer for assistance.');
       return;
     }
     document.getElementById('regRef').value = '#'+String(regData.id).padStart(5,'0');

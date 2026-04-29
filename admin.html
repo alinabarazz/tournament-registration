@@ -71,10 +71,9 @@
   .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
 
   /* CONTENT */
-  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;min-height:400px;flex:1;display:flex;flex-direction:column;}
-  #mainDashboard{display:flex;flex-direction:column;min-height:calc(100vh - 200px);}
+  .content{max-width:100%;margin:0 auto;padding:1.5rem 1.5rem;}
   .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
+  .tab-panel.active{display:block !important;}
   .page-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;text-transform:uppercase;}
   .page-sub{color:var(--muted);font-size:0.9rem;margin-top:0.25rem;margin-bottom:2rem;}
 
@@ -85,7 +84,8 @@
 
   /* STATS */
   .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;}
-  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;cursor:pointer;transition:border-color 0.15s,background 0.15s;user-select:none;}
+  .stat-card:hover{background:#1a1a1a;border-color:#3a3a3a;}
   .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
   .stat-num{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;}
   .stat-num.red{color:var(--primary);}
@@ -422,7 +422,7 @@
   <button class="tab-btn" onclick="showTab('expenses',event)">Expenses</button>
   <button class="tab-btn" onclick="showTab('sponsors',event)">Sponsors</button>
   <button class="tab-btn" onclick="showTab('sales',event)">Sales</button>
-  <button class="tab-btn" onclick="showTab('brackets',event)">Brackets</button>
+  <button class="tab-btn" onclick="goToBrackets()" id="bracketTabBtn">Brackets <i class="bi bi-box-arrow-up-right" style="font-size:10px;"></i></button>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -439,12 +439,13 @@
   </div>
 
   <div id="regContent" style="display:none;">
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-num red" id="statTotal">—</div></div>
-      <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-num amber" id="statPending">—</div></div>
-      <div class="stat-card"><div class="stat-label">Awaiting Payment</div><div class="stat-num amber" id="statPayment">—</div></div>
-      <div class="stat-card"><div class="stat-label">Registered</div><div class="stat-num green" id="statRegistered">—</div></div>
-      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-num gray" id="statRejected">—</div></div>
+    <div class="stats-row" style="cursor:pointer;">
+      <div class="stat-card" onclick="filterByStatus('')" id="sc-total" title="Show all"><div class="stat-label">Total</div><div class="stat-num red" id="statTotal">—</div></div>
+      <div class="stat-card" onclick="filterByStatus('Pending Review')" id="sc-pending" title="Filter Pending"><div class="stat-label">Pending Review</div><div class="stat-num amber" id="statPending">—</div></div>
+      <div class="stat-card" onclick="filterByStatus('Awaiting Payment')" id="sc-payment" title="Filter Awaiting Payment"><div class="stat-label">Awaiting Payment</div><div class="stat-num amber" id="statPayment">—</div></div>
+      <div class="stat-card" onclick="filterByStatus('Registered')" id="sc-registered" title="Filter Registered"><div class="stat-label">Registered</div><div class="stat-num green" id="statRegistered">—</div></div>
+      <div class="stat-card" onclick="filterByStatus('Rejected')" id="sc-rejected" title="Filter Rejected"><div class="stat-label">Rejected</div><div class="stat-num gray" id="statRejected">—</div></div>
+      <div class="stat-card" onclick="filterByStatus('Cancelled')" id="sc-cancelled" title="Filter Cancelled"><div class="stat-label">Cancelled</div><div class="stat-num gray" id="statCancelled">—</div></div>
     </div>
 
     <div class="filters">
@@ -463,15 +464,8 @@
         <option value="WOMEN'S HIGH">Women's High</option>
         <option value="EXECUTIVE (40 AND ABOVE)">Executive 40+</option>
       </select>
-      <select class="filter-select" id="statusFilter" onchange="filterTable()">
+      <select class="filter-select" id="statusFilter" onchange="filterTable()" style="display:none;">
         <option value="">All Statuses</option>
-        <option value="Pending Review">Pending Review</option>
-        <option value="Awaiting Payment">Approved (Awaiting Payment)</option>
-        <option value="Payment Submitted">Payment Submitted</option>
-        <option value="Payment Not Received">Payment Not Received</option>
-        <option value="Registered">Registered</option>
-        <option value="Rejected">Rejected</option>
-        <option value="Cancelled">Cancelled</option>
       </select>
     </div>
 
@@ -687,28 +681,56 @@
     </div>
 
   </div>
-</div>
 
 <!-- ══ TAB 6 · BRACKETS ══ -->
-<div class="tab-panel" id="tab-brackets">
-<div class="content">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;">
+<div id="tab-brackets" style="display:none;padding:1.5rem;">
+<div>
+<style>
+  .bd-wrap{padding:0.5rem 0;font-family:'Barlow',sans-serif;}
+  .bd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;}
+  .bd-title{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#f0f0f0;margin:0;}
+  .bd-sub{font-size:12px;color:#666;margin-top:2px;}
+  .bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:1rem;}
+  .bd-card{background:#141414;border:1px solid #2a2a2a;border-radius:10px;overflow:hidden;}
+  .bd-card-head{background:#1a1a1a;border-bottom:1px solid #2a2a2a;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;}
+  .bd-card-head span{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;color:#f0f0f0;}
+  .bd-badge{font-size:10px;background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;border:1px solid rgba(96,165,250,0.3);font-weight:700;}
+  .bd-badge.published{background:rgba(34,197,94,0.15);color:#22c55e;border-color:rgba(34,197,94,0.3);}
+  .bd-badge.atrisk{background:rgba(232,55,42,0.15);color:#e8372a;border-color:rgba(232,55,42,0.3);}
+  .bd-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+  .bd-label{font-size:10px;color:#555;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;}
+  .bd-input-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .bd-field{display:flex;flex-direction:column;gap:4px;}
+  .bd-field input{width:100%;box-sizing:border-box;font-size:13px;font-weight:700;padding:6px 8px;height:32px;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:6px;color:#f0f0f0;transition:border-color 0.15s;}
+  .bd-field input:focus{outline:none;border-color:#e8372a;}
+  .bd-toggle{display:flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;}
+  .bd-toggle button{flex:1;padding:6px 4px;font-size:11px;font-weight:600;background:transparent;border:none;border-radius:0;cursor:pointer;color:#555;transition:background 0.15s,color 0.15s;font-family:'Barlow',sans-serif;}
+  .bd-toggle button.active{background:#e8372a;color:#fff;}
+  .bd-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;}
+  .bd-btn{padding:8px 0;font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;transition:opacity 0.15s;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.06em;}
+  .bd-btn:active{transform:scale(0.97);}
+  .bd-btn-outline{background:transparent;border:1px solid #2a2a2a;color:#888;}
+  .bd-btn-outline:hover{background:#1a1a1a;color:#ccc;}
+  .bd-btn-primary{background:#e8372a;border:none;color:#fff;}
+  .bd-btn-primary:hover{opacity:0.85;}
+  .bd-btn-danger{background:rgba(232,55,42,0.1);border:1px solid rgba(232,55,42,0.3);color:#e8372a;}
+  .bd-divider{border:none;border-top:1px solid #1e1e1e;margin:2px 0;}
+  .bd-footer{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:0.5rem;}
+  .bd-status{font-size:12px;color:#22c55e;flex:1;}
+  .bd-validation{font-size:11px;padding:6px 10px;border-radius:6px;margin-top:2px;}
+</style>
+<div class="bd-wrap">
+  <div class="bd-header">
     <div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;text-transform:uppercase;">Brackets</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Set up and manage tournament brackets per level.</div>
+      <div class="bd-title">Brackets</div>
+      <div class="bd-sub">Configure brackets per level. Generate to assign teams.</div>
     </div>
-    <div style="display:flex;gap:8px;">
-      <button onclick="openDissolveLevelModal()" style="background:#1a1a1a;border:1px solid #e8372a44;color:#e8372a;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:10px 16px;border-radius:8px;cursor:pointer;">Dissolve Level</button>
-      <button onclick="openBracketSetup()" style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:10px 20px;border-radius:8px;cursor:pointer;">+ Setup Bracket</button>
-    </div>
+    <button onclick="openDissolveLevelModal()" style="background:transparent;border:1px solid rgba(232,55,42,0.3);color:#e8372a;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;padding:8px 14px;border-radius:7px;cursor:pointer;">Dissolve Level</button>
   </div>
-  <div id="bracketsContainer" style="flex:1;display:flex;align-items:center;justify-content:center;">
-    <div style="text-align:center;padding:4rem 2rem;">
-      <div style="font-size:3rem;margin-bottom:1rem;opacity:0.5;">🏸</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#ccc;margin-bottom:0.5rem;">No Brackets Yet</div>
-      <div style="font-size:13px;color:#999;margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
-      <button onclick="openBracketSetup()" style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:8px;cursor:pointer;">+ Setup Bracket</button>
-    </div>
+  <div class="bd-grid" id="levelGrid"></div>
+  <div class="bd-footer">
+    <span class="bd-status" id="bdStatus"></span>
+    <button class="bd-btn bd-btn-primary" style="padding:8px 20px;font-size:12px;" onclick="bdGenerateAll()">Generate All Brackets</button>
   </div>
 </div>
 </div>
@@ -1446,7 +1468,7 @@ const STATUS_LABELS = {
   'Pending Review':          'Pending Review',
   'Awaiting Payment':        'Awaiting Payment',
   'Rejected':                'Rejected',
-  'Payment Not Received':    'Not Received',
+  'Payment Not Received':    'Not Yet Received',
   'Payment Submitted':       'Pay Submitted',
   'Registered':              'Registered',
   'Cancelled':               'Cancelled',
@@ -1459,7 +1481,7 @@ const STATUS_ACTION_LABELS = {
   'Pending Review':          'Keep Pending',
   'Awaiting Payment':        '✓ Approve',
   'Rejected':                '✗ Reject',
-  'Payment Not Received':    'Not Received',
+  'Payment Not Received':    'Not Yet Received',
   'Payment Submitted':       'Pay Submitted',
   'Registered':              '✓ Registered',
   'Cancelled':               'Cancel',
@@ -1519,6 +1541,7 @@ async function doLogin(){
     // Cache site URL
     if(user_record.site_base_url) localStorage.setItem('siteBaseUrl', user_record.site_base_url);
     sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+    localStorage.setItem('adminUser', JSON.stringify(currentUser));
     initApp();
   }catch(e){
     errEl.textContent='Login failed: '+e.message;
@@ -1528,6 +1551,7 @@ async function doLogin(){
 
 function logout(){
   sessionStorage.removeItem('adminUser');
+  localStorage.removeItem('adminUser');
   currentUser=null; activeTournament=null;
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appScreen').style.display='none';
@@ -2202,26 +2226,35 @@ async function seedDefaultPricing(tournamentId){
    TAB SWITCHING
 ════════════════════════════════════════════ */
 function showTab(name, event){
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>{
+    p.classList.remove('active');
+    p.style.display = 'none';
+  });
+  // Also hide brackets tab (not a .tab-panel)
+  const bt = document.getElementById('tab-brackets');
+  if(bt) bt.style.display='none';
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
+
+  const panel = document.getElementById('tab-'+name);
+  if(panel){
+    panel.classList.add('active');
+    panel.style.display = 'block'; // force show — overrides any inline style
+  }
+
   if(event) event.currentTarget.classList.add('active');
-  else { // activate the right button when called programmatically
+  else {
     document.querySelectorAll('.tab-btn').forEach(b=>{
       if(b.getAttribute('onclick')?.includes("'"+name+"'")) b.classList.add('active');
     });
   }
-  // Persist tab in URL hash
-  if(activeTournament){
-    try{ window.history.replaceState(null,'',`#t=${activeTournament.id}&tab=${name}`); }catch(e){}
-  }
+  try{ if(activeTournament) window.history.replaceState(null,'',`#t=${activeTournament.id}&tab=${name}`); }catch(e){}
   if(!activeTournament){ showNoTournamentState(); return; }
   if(name==='registrations') fetchRegistrations();
   else if(name==='pricing')  fetchPricing();
   else if(name==='expenses') fetchExpenses();
   else if(name==='sponsors') fetchSponsors();
   else if(name==='sales')    fetchSales();
-  else if(name==='brackets') {
+  else if(name==='brackets'){
     console.log('🔵 Brackets tab clicked | activeTournament:', activeTournament?.id, activeTournament?.name);
     fetchBrackets();
   }
@@ -2242,6 +2275,7 @@ async function fetchRegistrations(){
     allRegs = await res.json();
     renderTable(allRegs);
     updateStats(allRegs);
+    checkPaymentDeadlines();
   }catch(err){
     document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon">⚠️</span><p>Failed: ${err.message}</p></div></td></tr>`;
   }
@@ -2252,7 +2286,8 @@ function updateStats(data){
   document.getElementById('statPending').textContent    = data.filter(r=>r.Status==='Pending Review').length;
   document.getElementById('statPayment').textContent    = data.filter(r=>r.Status==='Awaiting Payment'||r.Status==='Payment Not Received').length;
   document.getElementById('statRegistered').textContent = data.filter(r=>r.Status==='Registered').length;
-  document.getElementById('statRejected').textContent   = data.filter(r=>r.Status==='Rejected'||r.Status==='Cancelled').length;
+  document.getElementById('statRejected').textContent   = data.filter(r=>r.Status==='Rejected').length;
+  document.getElementById('statCancelled').textContent  = data.filter(r=>r.Status==='Cancelled'||r.Status==='Cancellation Requested').length;
 }
 
 function renderTable(data){
@@ -2661,6 +2696,23 @@ function rebuildStatusDropdown(sel, currentStatus){
     if(s === currentStatus) opt.selected = true;
     sel.appendChild(opt);
   });
+}
+
+function filterByStatus(status){
+  // Update hidden select
+  document.getElementById('statusFilter').value = status;
+  // Highlight active stat card
+  ['total','pending','payment','registered','rejected','cancelled'].forEach(k=>{
+    const card = document.getElementById('sc-'+k);
+    if(card) card.style.borderColor = '';
+  });
+  const map = {'':'sc-total','Pending Review':'sc-pending','Awaiting Payment':'sc-payment','Registered':'sc-registered','Rejected':'sc-rejected','Cancelled':'sc-cancelled'};
+  const activeCard = map[status];
+  if(activeCard){
+    const el = document.getElementById(activeCard);
+    if(el) el.style.borderColor = '#e8372a';
+  }
+  filterTable();
 }
 
 function filterTable(){
@@ -4001,115 +4053,196 @@ let _conflictResolutions = {};  // { playerName: 'same'|'different' }
 let _pendingConflicts    = [];  // conflicts awaiting resolution
 
 // ── Load brackets for active tournament ──
+/* ════════════════════════════════════════════
+   BRACKETS DASHBOARD
+════════════════════════════════════════════ */
+let bdLevels = []; // local state for bracket dashboard
+
 async function fetchBrackets(){
-  console.log('🟢 fetchBrackets | activeTournament:', activeTournament?.id, activeTournament?.name);
-  if(!activeTournament){
-    console.warn('❌ no activeTournament — aborting');
-    return;
-  }
-  const container = document.getElementById('bracketsContainer');
-  console.log('🟢 bracketsContainer:', container ? 'FOUND' : '❌ NOT FOUND IN DOM');
-  if(!container){ console.error('❌ bracketsContainer missing!'); return; }
-  container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:12px;">Loading...</div>';
-  try{
-    const url = `${SB_URL}/rest/v1/brackets?tournament_id=eq.${activeTournament.id}&select=id,level_key,format,num_groups,slots_per_group,status,created_at&order=created_at.desc`;
-    console.log('🟢 Fetching brackets from:', url);
-    const res = await fetch(url, {headers:HDRS});
-    const text = await res.text();
-    console.log('🟢 Response status:', res.status);
-    console.log('🟢 Response body:', text);
-    if(!res.ok){
-      if(text.includes('relation') || text.includes('does not exist')){
-        container.innerHTML = '<div style="text-align:center;padding:3rem;color:#f5a623;font-size:13px;"><strong>Run the brackets SQL in Supabase first.</strong><br><br>Go to Supabase → SQL Editor and run the CREATE TABLE statements.</div>';
-      } else if(res.status===401||res.status===403||text.includes('permission')){
-        container.innerHTML = '<div style="text-align:center;padding:3rem;color:#f5a623;font-size:13px;"><strong>RLS permission error.</strong><br><br>Run this in Supabase SQL Editor:<br><code style="font-size:11px;color:#aaa;">CREATE POLICY "open" ON brackets FOR ALL USING (true) WITH CHECK (true);<br>CREATE POLICY "open" ON bracket_groups FOR ALL USING (true) WITH CHECK (true);<br>CREATE POLICY "open" ON bracket_slots FOR ALL USING (true) WITH CHECK (true);</code></div>';
-      } else {
-        container.innerHTML = `<div style="text-align:center;padding:3rem;color:#e8372a;font-size:12px;">Error: ${text}</div>`;
-      }
-      return;
-    }
-    bracketData = JSON.parse(text);
-    renderBrackets();
-  }catch(e){
-    console.error('fetchBrackets failed:', e);
-    if(container) container.innerHTML = `<div style="text-align:center;padding:3rem;color:#e8372a;font-size:12px;">Failed: ${e.message}</div>`;
-  }
+  if(!activeTournament) return;
+  const grid = document.getElementById('levelGrid');
+  if(!grid) return;
+
+  // Build local state from pricingRows + existing brackets
+  bdLevels = (pricingRows||[]).filter(p=>p.enabled).map(p=>{
+    const existing = bracketData.find(b=>b.level_key===p.level_key);
+    const teams    = allRegs.filter(r=>r.Level===p.level_key && ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length;
+    const minP     = p.min_pairs || activeTournament?.min_pairs_to_run || 12;
+    return {
+      level_key:   p.level_key,
+      label:       p.label || p.level_key,
+      teams,
+      minPairs:    minP,
+      atRisk:      teams > 0 && teams < minP,
+      brackets:    existing?.num_groups    || Math.max(1, Math.ceil(teams/4)),
+      slots:       existing?.slots_per_group|| 4,
+      format:      existing?.format        || 'round_robin',
+      status:      existing?.status        || null,
+      bracketId:   existing?.id            || null,
+    };
+  });
+
+  bdRender();
 }
 
-// ── Render brackets list ──
-async function renderBrackets(){
-  console.log('🟢 renderBrackets | bracketData.length:', bracketData.length);
-  const container = document.getElementById('bracketsContainer');
-  console.log('🟢 container in renderBrackets:', container ? 'FOUND' : '❌ NOT FOUND');
-  if(!bracketData.length){
-    const html = `
-      <div style="text-align:center;padding:4rem 2rem;background:#111;border-radius:8px;">
-        <div style="font-size:3rem;margin-bottom:1rem;opacity:0.5;">🏸</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#ccc;margin-bottom:0.5rem;">No Brackets Yet</div>
-        <div style="font-size:13px;color:#999;margin-bottom:1.5rem;">Generate brackets for a level to get started.</div>
-        <button onclick="openBracketSetup()"
-          style="background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:8px;cursor:pointer;">
-          + Setup Bracket
-        </button>
-      </div>`;
-    console.log('🟢 Setting innerHTML for empty brackets');
-    container.innerHTML = html;
-    console.log('🟢 innerHTML set, length:', container.innerHTML.length);
+function bdRender(){
+  const grid = document.getElementById('levelGrid');
+  if(!grid) return;
+
+  if(!bdLevels.length){
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#555;font-size:13px;">No levels configured. Add levels in Pricing & Slots first.</div>';
     return;
   }
 
-  // Load bracket groups + slots for each bracket
-  let html = '<div style="display:flex;flex-direction:column;gap:1.5rem;">';
-  for(const b of bracketData){
-    const statusColor = b.status==='published'?'#22c55e':'#f5a623';
-    const statusLabel = b.status==='published'?'Published':'Draft';
-    const formatLabel = b.format==='round_robin'?'Round Robin':'Single Elimination';
+  grid.innerHTML = bdLevels.map((l,i)=>{
+    const totalSlots = l.brackets * l.slots;
+    const diff       = totalSlots - l.teams;
+    const valid      = diff >= 0;
+    const valColor   = diff===0?'#22c55e':diff>0?'#f5a623':'#e8372a';
+    const valMsg     = diff===0?`Perfect — ${l.teams} teams, ${totalSlots} slots`
+                     : diff>0 ? `${diff} BYE slot${diff!==1?'s':''} will be added`
+                     : `Need ${Math.abs(diff)} more slots (increase brackets or slots/bracket)`;
 
-    // Fetch groups with slots
-    const gRes = await fetch(`${SB_URL}/rest/v1/bracket_groups?bracket_id=eq.${b.id}&select=id,group_number,name,bracket_slots(id,slot_number,is_bye,registration_id,registrations(Team_Name,Player1_Name,Player2_Name))&order=group_number.asc`,{headers:HDRS});
-    const groups = gRes.ok ? (await gRes.json()) : [];
+    const statusBadge = l.status==='published'
+      ? '<span class="bd-badge published">Published</span>'
+      : l.atRisk
+      ? '<span class="bd-badge atrisk">At Risk</span>'
+      : l.bracketId
+      ? '<span class="bd-badge">Draft</span>'
+      : '';
 
-    html += `
-    <div class="card">
-      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;">${b.level_key}</div>
-          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:${statusColor}22;border:1px solid ${statusColor}44;color:${statusColor};">${statusLabel}</span>
-          <span style="font-size:10px;color:var(--muted);">${formatLabel} · ${b.num_groups} brackets · ${b.slots_per_group} slots each</span>
-        </div>
-        <div style="display:flex;gap:6px;">
-          ${b.status==='draft'?`<button onclick="publishBracket(${b.id})" style="background:#22c55e22;border:1px solid #22c55e44;color:#22c55e;font-size:11px;font-weight:700;padding:5px 12px;border-radius:5px;cursor:pointer;">Publish</button>`:''}
-          <button onclick="deleteBracket(${b.id})" style="background:#e8372a22;border:1px solid #e8372a44;color:var(--primary);font-size:11px;font-weight:700;padding:5px 10px;border-radius:5px;cursor:pointer;">Delete</button>
+    return `<div class="bd-card" id="bdcard-${l.level_key}">
+      <div class="bd-card-head">
+        <span>${l.label}</span>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <span class="bd-badge">${l.teams} teams</span>
+          ${statusBadge}
         </div>
       </div>
-      <div style="padding:1rem 1.25rem;">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
-          ${groups.map(g=>{
-            const slots = (g.bracket_slots||[]).sort((a,b)=>a.slot_number-b.slot_number);
-            return `<div style="background:#0f0f0f;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-              <div style="padding:8px 12px;background:#1a1a1a;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">${g.name}</div>
-              ${slots.map((s,i)=>{
-                const reg = s.registrations;
-                if(s.is_bye || !reg) return `<div style="padding:7px 12px;border-bottom:1px solid #1a1a1a;font-size:11px;color:#444;font-style:italic;display:flex;align-items:center;gap:6px;"><span style="color:#333;font-weight:700;">${i+1}.</span> BYE</div>`;
-                return `<div style="padding:7px 12px;border-bottom:1px solid #1a1a1a;font-size:11px;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="color:var(--muted);font-weight:700;">${i+1}.</span>
-                    <div>
-                      <div style="font-weight:700;color:#f0f0f0;">${reg.Team_Name||'—'}</div>
-                      <div style="color:#666;font-size:10px;">${[reg.Player1_Name,reg.Player2_Name].filter(Boolean).join(' & ')}</div>
-                    </div>
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>`;
-          }).join('')}
+      <div class="bd-body">
+        <div class="bd-input-row">
+          <div class="bd-field">
+            <span class="bd-label">Brackets</span>
+            <input type="number" min="1" max="16" value="${l.brackets}"
+              onchange="bdUpdate('${l.level_key}','brackets',+this.value)">
+          </div>
+          <div class="bd-field">
+            <span class="bd-label">Slots / Bracket</span>
+            <input type="number" min="2" max="16" value="${l.slots}"
+              onchange="bdUpdate('${l.level_key}','slots',+this.value)">
+          </div>
         </div>
+        <div class="bd-field">
+          <span class="bd-label">Format</span>
+          <div class="bd-toggle">
+            <button class="${l.format==='round_robin'?'active':''}"
+              onclick="bdUpdate('${l.level_key}','format','round_robin')">Round Robin</button>
+            <button class="${l.format==='single_elim'?'active':''}"
+              onclick="bdUpdate('${l.level_key}','format','single_elim')">Single Elim</button>
+          </div>
+        </div>
+        <div class="bd-validation" style="background:${valColor}11;border:1px solid ${valColor}33;color:${valColor};">
+          ${valMsg}
+        </div>
+        <hr class="bd-divider">
+        <div class="bd-actions">
+          <button class="bd-btn bd-btn-outline" onclick="bdSave('${l.level_key}','draft')">Save Draft</button>
+          <button class="bd-btn bd-btn-primary" onclick="bdSave('${l.level_key}','published')" ${!valid?'disabled style="opacity:0.4;cursor:not-allowed;"':''}>Generate</button>
+        </div>
+        ${l.bracketId?`<button class="bd-btn bd-btn-danger" style="width:100%;padding:6px;" onclick="bdDelete('${l.level_key}')">Delete Bracket</button>`:''}
       </div>
     </div>`;
-  }
-  html += '</div>';
-  container.innerHTML = html;
+  }).join('');
 }
+
+function bdUpdate(levelKey, key, val){
+  const l = bdLevels.find(x=>x.level_key===levelKey);
+  if(!l) return;
+  l[key] = val;
+  // Auto-calc slots when brackets changes
+  if(key==='brackets' && l.teams > 0){
+    l.slots = Math.max(2, Math.ceil(l.teams / l.brackets));
+  }
+  bdRender();
+}
+
+async function bdSave(levelKey, status){
+  const l = bdLevels.find(x=>x.level_key===levelKey);
+  if(!l) return;
+  const btn = document.querySelector(`#bdcard-${levelKey} .bd-btn-primary`);
+  if(btn){ btn.textContent='Saving...'; btn.disabled=true; }
+  try{
+    // Delete existing bracket for this level
+    if(l.bracketId){
+      await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
+    }
+    // Create bracket
+    const bRes = await fetch(`${SB_URL}/rest/v1/brackets`,{
+      method:'POST', headers:{...HDRS,'Prefer':'return=representation'},
+      body:JSON.stringify({tournament_id:activeTournament.id, level_key:l.level_key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status}),
+    });
+    if(!bRes.ok) throw new Error(await bRes.text());
+    const [bracket] = await bRes.json();
+
+    if(status==='published'){
+      // Seed teams
+      const registered = allRegs.filter(r=>r.Level===l.level_key && ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status));
+      const shuffled   = [...registered].sort(()=>Math.random()-0.5);
+
+      // Check player conflicts
+      const conflicts = detectConflicts(registered);
+      if(conflicts.length){
+        _pendingConflicts  = conflicts;
+        _bsPendingPayload  = {level:l.level_key, format:l.format, numGroups:l.brackets, slotsPerGroup:l.slots, seeding:'auto_random', status, registrations:registered};
+        openConflictModal(conflicts);
+        return;
+      }
+
+      await _generateBrackets({level:l.level_key, format:l.format, numGroups:l.brackets, slotsPerGroup:l.slots, seeding:'auto_random', status, registrations:registered});
+    } else {
+      // Draft — just save config, no seeding
+      l.bracketId = bracket.id;
+      l.status    = status;
+      bdSetStatus(`${l.label} saved as draft.`);
+      bdRender();
+    }
+  }catch(e){
+    bdSetStatus('Save failed: '+e.message, true);
+    if(btn){ btn.textContent='Generate'; btn.disabled=false; }
+  }
+}
+
+async function bdDelete(levelKey){
+  const l = bdLevels.find(x=>x.level_key===levelKey);
+  if(!l||!l.bracketId) return;
+  const confirmed = await showConfirmDelete('Delete Bracket', `Delete bracket for <strong>${l.label}</strong>? All group and slot assignments will be removed.`);
+  if(!confirmed) return;
+  await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
+  l.bracketId = null; l.status = null;
+  bdSetStatus(`${l.label} bracket deleted.`);
+  // Reload bracketData
+  const res = await fetch(`${SB_URL}/rest/v1/brackets?tournament_id=eq.${activeTournament.id}&select=id,level_key,format,num_groups,slots_per_group,status`,{headers:HDRS});
+  bracketData = res.ok ? await res.json() : [];
+  bdRender();
+}
+
+async function bdGenerateAll(){
+  const valid = bdLevels.filter(l=>l.teams>0 && (l.brackets*l.slots) >= l.teams);
+  if(!valid.length){ bdSetStatus('No valid levels to generate.', true); return; }
+  for(const l of valid){
+    await bdSave(l.level_key, 'published');
+  }
+  bdSetStatus(`Generated brackets for ${valid.length} level${valid.length!==1?'s':''}.`);
+}
+
+function bdSetStatus(msg, isErr){
+  const el = document.getElementById('bdStatus');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#e8372a' : '#22c55e';
+  setTimeout(()=>{ el.textContent=''; }, 3000);
+}
+
 
 // ── Open setup modal ──
 function openBracketSetup(){
@@ -4619,6 +4752,59 @@ function checkBracketMinimums(){
   });
 }
 
+function goToBrackets(){
+  const tId = activeTournament?.id || '';
+  window.open(`brackets.html${tId ? '?t='+tId : ''}`, '_blank', 'noopener');
+}
+
+// Auto-check payment deadlines after registrations load
+async function checkPaymentDeadlines(){
+  if(!activeTournament || !allRegs) return;
+  const now = new Date();
+  const overdue = allRegs.filter(r=>{
+    if(r.Status !== 'Awaiting Payment') return false;
+    if(!r.approved_at) return false;
+    const approvedAt = new Date(r.approved_at);
+    const hoursElapsed = (now - approvedAt) / (1000*60*60);
+    return hoursElapsed >= 24; // 1 day passed
+  });
+  for(const rec of overdue){
+    // Update to Not Yet Received
+    await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${rec.id}`,{
+      method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+      body:JSON.stringify({Status:'Payment Not Received'}),
+    });
+    rec.Status = 'Payment Not Received';
+    console.log(`Auto: #${rec.id} moved to Not Yet Received (${Math.floor((now-new Date(rec.approved_at))/(1000*60*60))}h after approval)`);
+  }
+
+  // 2 days after approval → send follow-up email
+  const followUp = allRegs.filter(r=>{
+    if(r.Status !== 'Payment Not Received') return false;
+    if(!r.approved_at) return false;
+    const hoursElapsed = (now - new Date(r.approved_at)) / (1000*60*60);
+    return hoursElapsed >= 48 && hoursElapsed < 72; // between 2-3 days
+  });
+  for(const rec of followUp){
+    const deadline = rec.payment_deadline ? new Date(rec.payment_deadline).toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric'}) : 'soon';
+    sendEmail('follow_up',{
+      player_email:     rec.Email_Address,
+      player_name:      rec.Player1_Name||'Player',
+      player2_name:     rec.Player2_Name||'',
+      team_name:        rec.Team_Name,
+      level:            rec.Level,
+      tournament_name:  activeTournament.name||'',
+      payment_deadline: deadline,
+      payment_link:     getPaymentLink(rec.id),
+      reg_ref:          `#${String(rec.id).padStart(5,'0')}`,
+      admin_email:      currentUser?.notification_email||'',
+    });
+    console.log(`Auto follow-up email sent for #${rec.id}`);
+  }
+
+  if(overdue.length || followUp.length) fetchRegistrations();
+}
+
 function closeEmailSettings(){
   document.getElementById('emailSettingsModal').style.display='none';
 }
@@ -4779,10 +4965,12 @@ function initDatePickers(){
 // Init pickers after DOM is ready
 document.addEventListener('DOMContentLoaded', initDatePickers);
 (function(){
-  const saved = sessionStorage.getItem('adminUser');
+  const saved = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
   if(saved){
     try{
       currentUser = JSON.parse(saved);
+      sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+      localStorage.setItem('adminUser', JSON.stringify(currentUser));
       initApp();
     }catch(e){ /* ignore */ }
   }

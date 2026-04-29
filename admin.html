@@ -232,7 +232,7 @@
   .btn-save-sponsor.saved{background:var(--success);}
 
   /* MODAL */
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
   .modal{background:#181818;border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:480px;margin:1rem;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.25s cubic-bezier(0.175,0.885,0.32,1.275);}
   @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -390,10 +390,10 @@
   <div class="topbar-brand">Admin Panel</div>
   <div class="topbar-right">
     <span class="user-badge" id="userBadge">—</span>
-    <button onclick="try{openEmailSettings();}catch(e){document.getElementById('debugBar').style.display='block';document.getElementById('debugBar').textContent='Email btn error: '+e.message;}" title="Email Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Barlow',sans-serif;">Email</button>
+    <button onclick="try{openProfileSettings();}catch(e){console.error('Profile btn error:',e);}" title="Profile & Notification Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:14px;padding:6px 10px;border-radius:6px;cursor:pointer;line-height:1;"><i class="bi bi-person-gear"></i></button>
     <!-- Notification Bell -->
     <div style="position:relative;display:inline-block;">
-      <button id="notifBell" onclick="try{openNotifPanel();}catch(e){document.getElementById('debugBar').style.display='block';document.getElementById('debugBar').textContent='Bell btn error: '+e.message;}" title="Notifications"
+      <button id="notifBell" onclick="try{console.log('Bell clicked, _notifOpen=',_notifOpen);openNotifPanel();console.log('Panel opened');}catch(e){console.error('Bell error:',e);}" title="Notifications"
         style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:16px;padding:6px 11px;border-radius:6px;cursor:pointer;line-height:1;display:flex;align-items:center;">
         <i class="bi bi-bell-fill"></i>
       </button>
@@ -904,33 +904,27 @@
 </div>
 
 <!-- ══ EMAIL SETTINGS MODAL ══ -->
-<div class="modal-overlay" id="emailSettingsModal" onclick="if(event.target===this)closeEmailSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;">
+<!-- ══ PROFILE SETTINGS MODAL ══ -->
+<div class="modal-overlay" id="profileSettingsModal" onclick="if(event.target===this)closeProfileSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;">
   <div class="modal" style="max-width:420px;">
-    <div class="modal-header">
-      <div class="modal-title">Email Settings</div>
-      <button class="modal-close" onclick="closeEmailSettings()">✕</button>
+    <div class="modal-header" style="border-left:4px solid var(--primary);">
+      <div class="modal-title">Profile Settings</div>
+      <button class="modal-close" onclick="closeProfileSettings()">✕</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
-      Set your notification email. You'll be CC'd on every email sent to players for your tournaments.
+    <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+      <div class="modal-field">
+        <label>Notification Email</label>
+        <input class="modal-input" type="email" id="notifEmail" placeholder="your@email.com">
+        <div style="font-size:11px;color:#555;margin-top:4px;">All admin notifications (new registrations, payments) will be CC'd to this email.</div>
+      </div>
+      <div id="profileMsg" style="display:none;padding:8px 12px;border-radius:6px;font-size:12px;"></div>
     </div>
-    <div class="modal-field">
-      <label>Your Notification Email</label>
-      <input class="modal-input" type="email" id="notifEmail" placeholder="yourname@gmail.com">
-      <div style="font-size:11px;color:#555;margin-top:4px;">You'll be CC'd on all approval, rejection, and confirmation emails sent to your players.</div>
-    </div>
-    <div class="modal-field" id="siteUrlField" style="display:none;">
-      <label>Website Base URL <span style="color:var(--muted);font-weight:400;">(superadmin only)</span></label>
-      <input class="modal-input" type="text" id="siteBaseUrl" placeholder="https://alinabarazz.github.io/tournament/">
-      <div style="font-size:11px;color:#555;margin-top:4px;">Set once — all admins share this URL for payment links in emails.</div>
-    </div>
-    <div id="emailSettingsMsg" style="display:none;font-size:12px;padding:8px 12px;border-radius:6px;margin-top:0.5rem;"></div>
     <div class="modal-actions">
-      <button class="btn-modal-cancel" onclick="closeEmailSettings()">Cancel</button>
-      <button class="btn-modal-submit" onclick="saveEmailSettings()">Save</button>
+      <button class="btn-modal-cancel" onclick="closeProfileSettings()">Cancel</button>
+      <button class="btn-modal-submit" onclick="saveProfileSettings()">Save</button>
     </div>
   </div>
 </div>
-
 <!-- ══ NOTIFICATION PANEL ══ -->
 <div id="notifPanel" style="display:none;position:fixed;top:52px;right:12px;width:340px;max-height:460px;background:#141414;border:1px solid #2a2a2a;border-radius:12px;z-index:1500;box-shadow:0 8px 32px rgba(0,0,0,0.6);overflow:hidden;flex-direction:column;">
   <div style="padding:11px 16px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;">
@@ -1456,12 +1450,12 @@ let editingExpId     = null;
 /* ════════════════════════════════════════════
    CONSTANTS
 ════════════════════════════════════════════ */
-const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Rejected','Cancelled','Cancellation Requested','Transfer Requested'];
+const STATUSES     = ['Pending Review','Awaiting Payment','Payment Submitted','Overdue','Registered','Rejected','Cancelled','Cancellation Requested','Transfer Requested'];
 const STATUS_CLASS = {
   'Pending Review':         's-pending',
   'Awaiting Payment':       's-payment',
   'Payment Submitted':      's-submitted',
-  'Payment Not Received':   's-notpaid',
+  'Overdue':               's-notpaid',
   'Registered':             's-registered',
   'Rejected':               's-rejected',
   'Cancelled':              's-cancelled',
@@ -1473,9 +1467,9 @@ const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted',
 
 const STATUS_TRANSITIONS = {
   'Pending Review':          ['Pending Review','Awaiting Payment','Rejected'],
-  'Awaiting Payment':        ['Awaiting Payment','Payment Not Received','Rejected'],
-  'Payment Submitted':       ['Payment Submitted','Registered','Payment Not Received','Rejected'],
-  'Payment Not Received':    ['Payment Not Received','Registered','Rejected'],
+  'Awaiting Payment':        ['Awaiting Payment','Rejected'],
+  'Payment Submitted':       ['Payment Submitted','Registered','Cancelled'],
+  'Overdue':                 ['Overdue','Registered','Cancelled'],
   'Registered':              ['Registered','Cancellation Requested'],
   'Rejected':                ['Rejected','Pending Review'],
   'Cancelled':               ['Cancelled','Pending Review'],
@@ -1487,7 +1481,7 @@ const STATUS_LABELS = {
   'Pending Review':          'Pending Review',
   'Awaiting Payment':        'Awaiting Payment',
   'Rejected':                'Rejected',
-  'Payment Not Received':    'Not Yet Received',
+  'Overdue':               'Overdue',
   'Payment Submitted':       'Pay Submitted',
   'Registered':              'Registered',
   'Cancelled':               'Cancelled',
@@ -1497,10 +1491,10 @@ const STATUS_LABELS = {
 
 // Action labels used in dropdown options (what admin sees when choosing)
 const STATUS_ACTION_LABELS = {
-  'Pending Review':          'Keep Pending',
+  'Pending Review':          'Pending Review',
   'Awaiting Payment':        '✓ Approve',
   'Rejected':                '✗ Reject',
-  'Payment Not Received':    'Not Yet Received',
+  'Overdue':               'Overdue',
   'Payment Submitted':       'Pay Submitted',
   'Registered':              '✓ Registered',
   'Cancelled':               'Cancel',
@@ -1937,6 +1931,20 @@ async function loadTournaments(){
     renderHomeCards();
   }catch(e){
     console.error('loadTournaments failed:', e.message);
+    // Retry once after 2 seconds on network failure
+    if(e.message === 'Failed to fetch'){
+      setTimeout(async ()=>{
+        try{
+          const res = await fetch(`${SB_URL}/rest/v1/tournaments?select=${baseSelect}${extraSelect}&order=created_at.desc`+(currentUser?.role==='admin'?`&owner_id=eq.${currentUser.id}`:''),{headers:HDRS});
+          const data = await res.json();
+          if(Array.isArray(data)){
+            tournaments = data.map(t=>({id:t.id,name:t.name,owner_id:t.owner_id,owner_name:t.owner_name||'?',status:t.status,budget:t.budget,event_date_from:t.event_date_from,event_date_to:t.event_date_to,early_bird_to:t.early_bird_to,tournament_date_from:t.tournament_date_from,tournament_date_to:t.tournament_date_to,tournament_duration:t.tournament_duration,free_jersey_count:t.free_jersey_count,jersey_price:t.jersey_price,jersey_image_url:t.jersey_image_url,payment_qr_gcash:t.payment_qr_gcash,payment_qr_maya:t.payment_qr_maya,payment_qr_other:t.payment_qr_other,location:t.location,description:t.description,min_pairs_to_run:t.min_pairs_to_run}));
+            buildTournamentDropdown();
+            renderHomeCards();
+          }
+        }catch(e2){ console.warn('loadTournaments retry failed:', e2.message); }
+      }, 2000);
+    }
     buildTournamentDropdown();
     renderHomeCards();
   }
@@ -2188,7 +2196,7 @@ async function submitTournament(status){
       headers:{...HDRS,'Prefer':'return=representation'},
       body:JSON.stringify(payload),
     });
-    if(!res.ok) throw new Error(await res.text());
+    if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
     const [created] = await res.json();
 
     // Upload jersey image and QR codes if selected
@@ -2290,7 +2298,7 @@ async function fetchRegistrations(){
 
   try{
     const res = await fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTournament.id}&select=*&order=id.desc`,{headers:HDRS});
-    if(!res.ok) throw new Error(await res.text());
+    if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
     allRegs = await res.json();
     renderTable(allRegs);
     updateStats(allRegs);
@@ -2584,14 +2592,19 @@ async function updateStatus(id, sel){
     }
 
     // ── When marking payment received: prompt for payment channel ──
+    // Only show modal if no payment info already on file
     if(newStatus === 'Registered'){
-      const playerRef     = rec ? (rec.payment_reference || '') : '';
-      const playerChannel = rec ? (rec.payment_channel   || '') : '';
-      const channel = await promptPaymentChannel(playerRef, playerChannel);
-      if(channel === null){ sel.value = oldStatus; sel.classList.remove('saving'); return; }
-      extraFields.payment_channel     = channel.channel;
-      extraFields.payment_reference   = channel.reference || null;
-      extraFields.payment_notes       = channel.notes     || null;
+      const alreadyHasChannel = rec && rec.payment_channel;
+      if(!alreadyHasChannel){
+        const playerRef     = rec ? (rec.payment_reference || '') : '';
+        const playerChannel = rec ? (rec.payment_channel   || '') : '';
+        const channel = await promptPaymentChannel(playerRef, playerChannel);
+        if(channel === null){ sel.value = oldStatus; sel.classList.remove('saving'); return; }
+        extraFields.payment_channel     = channel.channel;
+        extraFields.payment_reference   = channel.reference || null;
+        extraFields.payment_notes       = channel.notes     || null;
+      }
+      extraFields.approved_at = extraFields.approved_at || new Date().toISOString();
     }
 
     // ── Save to Supabase ──
@@ -2599,7 +2612,10 @@ async function updateStatus(id, sel){
       method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
       body:JSON.stringify({Status:newStatus, ...extraFields}),
     });
-    if(!res.ok) throw new Error(await res.text());
+    if(!res.ok){
+      const errText = res.status === 204 ? 'No content' : await res.text().catch(()=>'Unknown error');
+      throw new Error(`Save failed (${res.status}): ${errText}`);
+    }
 
     if(rec) rec.Status = newStatus;
     Object.values(STATUS_CLASS).forEach(c=>sel.classList.remove(c));
@@ -2654,7 +2670,7 @@ async function updateStatus(id, sel){
     if(rec && newStatus === 'Registered'){
       const regsBefore = allRegs.filter(r=>
         r.id < rec.id &&
-        ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)
+        ['Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status)
       ).length;
       const freeCount = activeTournament?.free_jersey_count || 0;
       const jerseyEligible = freeCount > 0 && (regsBefore + 1) <= freeCount;
@@ -2781,7 +2797,7 @@ function filterTable(){
     // Multi-status groups
     let ms = true;
     if(status==='Awaiting Payment'){
-      ms = r.Status==='Awaiting Payment' || r.Status==='Payment Not Received';
+      ms = r.Status==='Awaiting Payment' || r.Status==='Overdue';
     } else if(status==='Cancelled'){
       ms = r.Status==='Cancelled' || r.Status==='Cancellation Requested';
     } else if(status==='Rejected'){
@@ -2842,7 +2858,7 @@ function renderPricing(){
         <div class="pricing-level-name" style="display:flex;align-items:center;gap:6px;">
           ${p.label||p.level_key}
           ${p.is_custom?`<span style="font-size:10px;color:var(--muted);background:#222;border:1px solid #333;padding:1px 6px;border-radius:3px;">Custom</span>`:''}
-          ${(()=>{ const minP = p.min_pairs || activeTournament?.min_pairs_to_run || 12; const registered = allRegs.filter(r=>r.Level===p.level_key&&['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length; return registered > 0 && registered < minP ? `<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;background:rgba(232,55,42,0.15);border:1px solid rgba(232,55,42,0.35);color:#ff6b6b;" title="${registered}/${minP} pairs registered">⚠ AT RISK</span>` : ''; })()}
+          ${(()=>{ const minP = p.min_pairs || activeTournament?.min_pairs_to_run || 12; const registered = allRegs.filter(r=>r.Level===p.level_key&&['Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status)).length; return registered > 0 && registered < minP ? `<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;background:rgba(232,55,42,0.15);border:1px solid rgba(232,55,42,0.35);color:#ff6b6b;" title="${registered}/${minP} pairs registered">⚠ AT RISK</span>` : ''; })()}
         </div>
         <div class="pricing-toggle">
           ${p.is_custom?`<button onclick="removeCustomPricingRow(this.dataset.key)" data-key="${p.level_key}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">✕</button>`:''}
@@ -3237,14 +3253,14 @@ async function submitExpense(){
         headers: { ...HDRS, 'Prefer': 'return=minimal' },
         body:    JSON.stringify(payload),
       });
-      if(!res.ok) throw new Error(await res.text());
+      if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
     } else {
       const res = await fetch(`${SB_URL}/rest/v1/expenses`, {
         method:  'POST',
         headers: { ...HDRS, 'Prefer': 'return=minimal' },
         body:    JSON.stringify(payload),
       });
-      if(!res.ok) throw new Error(await res.text());
+      if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
     }
     closeExpenseModal();
     await fetchExpenses();
@@ -3454,7 +3470,7 @@ async function submitSponsorModal(){
       headers:{...HDRS,'Prefer':'return=minimal'},
       body:JSON.stringify(payload),
     });
-    if(!res.ok) throw new Error(await res.text());
+    if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
     closeSponsorModal();
     await fetchSponsors();
   }catch(e){
@@ -3626,7 +3642,7 @@ async function fetchSales(){
 function renderSales(regs, exps, sponsors, pricing){
   const fmt = n => `₱${Number(n||0).toLocaleString()}`;
   const COLLECTED_STATUSES = new Set(['Registered']);
-  const PENDING_STATUSES   = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received']);
+  const PENDING_STATUSES   = new Set(['Awaiting Payment','Payment Submitted','Overdue']);
 
   const levelMap = {};
   pricing.forEach(p=>{
@@ -3882,7 +3898,7 @@ async function uploadToPublicStorage(file, path){
     headers:{ 'Authorization':`Bearer ${SB_KEY}`, 'Content-Type':file.type },
     body: file,
   });
-  if(!res.ok) throw new Error(await res.text());
+  if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
   return `${SB_URL}/storage/v1/object/public/sponsor-logos/${path}`;
 }
 
@@ -3976,7 +3992,7 @@ async function fetchNotifications(){
     if(pricingRows && pricingRows.length && activeTournament){
       pricingRows.filter(p=>p.enabled).forEach(p=>{
         const minP  = p.min_pairs || activeTournament.min_pairs_to_run || 12;
-        const count = allRegs.filter(r=>r.Level===p.level_key&&['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length;
+        const count = allRegs.filter(r=>r.Level===p.level_key&&['Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status)).length;
         if(count > 0 && count < minP){
           _notifItems.push({
             id:          'atrisk-'+p.level_key,
@@ -4082,18 +4098,36 @@ function switchNotifTab(tab){
 }
 
 function openNotifPanel(){
+  let panel = document.getElementById('notifPanel');
+  if(!panel){ console.error('notifPanel NOT FOUND'); return; }
+  if(panel.parentElement !== document.body) document.body.appendChild(panel);
   _notifOpen = !_notifOpen;
-  const panel = document.getElementById('notifPanel');
-  panel.style.display = _notifOpen ? 'flex' : 'none';
+  panel.style.display       = _notifOpen ? 'flex' : 'none';
+  panel.style.flexDirection = 'column';
+  panel.style.position      = 'fixed';
+  panel.style.top           = '56px';
+  panel.style.right         = '12px';
+  panel.style.width         = '340px';
+  panel.style.maxHeight     = '460px';
+  panel.style.background    = '#141414';
+  panel.style.border        = '1px solid #2a2a2a';
+  panel.style.borderRadius  = '12px';
+  panel.style.zIndex        = '999999';
+  panel.style.boxShadow     = '0 8px 32px rgba(0,0,0,0.8)';
+  panel.style.overflow      = 'hidden';
   if(_notifOpen){
     renderNotifList();
-    // Click outside to close
-    setTimeout(()=>document.addEventListener('click', outsideNotifClose, {once:true}), 10);
+    // Remove any existing listener first, then add new one after 200ms
+    document.removeEventListener('click', outsideNotifClose);
+    setTimeout(()=>document.addEventListener('click', outsideNotifClose), 200);
+  } else {
+    document.removeEventListener('click', outsideNotifClose);
   }
 }
 
 function closeNotifPanel(){
   _notifOpen = false;
+  document.removeEventListener('click', outsideNotifClose);
   const panel = document.getElementById('notifPanel');
   if(panel) panel.style.display = 'none';
 }
@@ -4101,7 +4135,8 @@ function closeNotifPanel(){
 function outsideNotifClose(e){
   const panel = document.getElementById('notifPanel');
   const bell  = document.getElementById('notifBell');
-  if(panel && !panel.contains(e.target) && !bell.contains(e.target)){
+  if(panel && !panel.contains(e.target) && bell && !bell.contains(e.target)){
+    document.removeEventListener('click', outsideNotifClose);
     closeNotifPanel();
   }
 }
@@ -4141,7 +4176,7 @@ async function fetchBrackets(){
   // Build local state from pricingRows + existing brackets
   bdLevels = (pricingRows||[]).filter(p=>p.enabled).map(p=>{
     const existing = bracketData.find(b=>b.level_key===p.level_key);
-    const teams    = allRegs.filter(r=>r.Level===p.level_key && ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length;
+    const teams    = allRegs.filter(r=>r.Level===p.level_key && ['Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status)).length;
     const minP     = p.min_pairs || activeTournament?.min_pairs_to_run || 12;
     return {
       level_key:   p.level_key,
@@ -4261,7 +4296,7 @@ async function bdSave(levelKey, status){
 
     if(status==='published'){
       // Seed teams
-      const registered = allRegs.filter(r=>r.Level===l.level_key && ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status));
+      const registered = allRegs.filter(r=>r.Level===l.level_key && ['Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status));
       const shuffled   = [...registered].sort(()=>Math.random()-0.5);
 
       // Check player conflicts
@@ -4796,7 +4831,7 @@ function checkDuplicatePlayer(rec){
   const p1 = (rec.Player1_Name||'').trim().toLowerCase();
   const p2 = (rec.Player2_Name||'').trim().toLowerCase();
   const level = rec.Level;
-  const activeStatuses = ['Awaiting Payment','Payment Submitted','Payment Not Received','Registered'];
+  const activeStatuses = ['Awaiting Payment','Payment Submitted','Overdue','Registered'];
 
   const conflicts = [];
   allRegs.forEach(other=>{
@@ -4838,113 +4873,150 @@ function goToBrackets(){
 async function checkPaymentDeadlines(){
   try{
     if(!activeTournament || !allRegs || !allRegs.length) return;
-  const now = new Date();
-  const overdue = allRegs.filter(r=>{
-    if(r.Status !== 'Awaiting Payment') return false;
-    if(!r.approved_at) return false;
-    const approvedAt = new Date(r.approved_at);
-    const hoursElapsed = (now - approvedAt) / (1000*60*60);
-    return hoursElapsed >= 24; // 1 day passed
-  });
-  for(const rec of overdue){
-    // Update to Not Yet Received
-    await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${rec.id}`,{
-      method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
-      body:JSON.stringify({Status:'Payment Not Received'}),
-    });
-    rec.Status = 'Payment Not Received';
-    console.log(`Auto: #${rec.id} moved to Not Yet Received (${Math.floor((now-new Date(rec.approved_at))/(1000*60*60))}h after approval)`);
-  }
+    const now = new Date();
 
-  // 2 days after approval → send follow-up email
-  const followUp = allRegs.filter(r=>{
-    if(r.Status !== 'Payment Not Received') return false;
-    if(!r.approved_at) return false;
-    const hoursElapsed = (now - new Date(r.approved_at)) / (1000*60*60);
-    return hoursElapsed >= 48 && hoursElapsed < 72; // between 2-3 days
-  });
-  for(const rec of followUp){
-    const deadline = rec.payment_deadline ? new Date(rec.payment_deadline).toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric'}) : 'soon';
-    sendEmail('follow_up',{
-      player_email:     rec.Email_Address,
-      player_name:      rec.Player1_Name||'Player',
-      player2_name:     rec.Player2_Name||'',
-      team_name:        rec.Team_Name,
-      level:            rec.Level,
-      tournament_name:  activeTournament.name||'',
-      payment_deadline: deadline,
-      payment_link:     getPaymentLink(rec.id),
-      reg_ref:          `#${String(rec.id).padStart(5,'0')}`,
-      admin_email:      currentUser?.notification_email||'',
-    });
-    console.log(`Auto follow-up email sent for #${rec.id}`);
-  }
+    for(const rec of allRegs){
+      if(!rec.approved_at) continue;
+      const approvedAt   = new Date(rec.approved_at);
+      const hoursElapsed = (now - approvedAt) / (1000*60*60);
+      const daysElapsed  = hoursElapsed / 24;
 
-  if(overdue.length || followUp.length) fetchRegistrations();
+      // ── AWAITING PAYMENT ──────────────────────────────
+      if(rec.Status === 'Awaiting Payment'){
+
+        // Day 3 — send follow-up reminder email (once only)
+        if(daysElapsed >= 3 && daysElapsed < 4 && !rec._followupSent){
+          rec._followupSent = true;
+          const deadline = rec.payment_deadline
+            ? new Date(rec.payment_deadline).toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric',year:'numeric'})
+            : 'soon';
+          sendEmail('follow_up',{
+            player_email:     rec.Email_Address,
+            player_name:      rec.Player1_Name||'Player',
+            player2_name:     rec.Player2_Name||'',
+            team_name:        rec.Team_Name,
+            level:            rec.Level,
+            tournament_name:  activeTournament.name||'',
+            payment_deadline: deadline,
+            payment_link:     getPaymentLink(rec.id),
+            reg_ref:          `#${String(rec.id).padStart(5,'0')}`,
+            admin_email:      currentUser?.notification_email||'',
+          });
+          console.log(`Day 3 follow-up sent for #${rec.id}`);
+        }
+
+        // Day 7 — move to Overdue, ring bell, email admin
+        if(daysElapsed >= 7){
+          await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${rec.id}`,{
+            method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+            body:JSON.stringify({Status:'Overdue'}),
+          });
+          rec.Status = 'Overdue';
+          console.log(`Day 7: #${rec.id} → Overdue`);
+          // Email admin
+          sendEmail('overdue_admin',{
+            admin_email:     currentUser?.notification_email||'',
+            player_name:     rec.Player1_Name||'Player',
+            player2_name:    rec.Player2_Name||'',
+            team_name:       rec.Team_Name,
+            level:           rec.Level,
+            tournament_name: activeTournament.name||'',
+            reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+            days_overdue:    Math.floor(daysElapsed - 7),
+          });
+        }
+      }
+
+      // ── OVERDUE ───────────────────────────────────────
+      if(rec.Status === 'Overdue'){
+        const overdueAt   = rec.payment_deadline ? new Date(rec.payment_deadline) : new Date(approvedAt.getTime() + 7*24*60*60*1000);
+        const overdueHours= (now - overdueAt) / (1000*60*60);
+
+        // Day 8 (24h after overdue) — auto-cancel
+        if(overdueHours >= 24){
+          await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${rec.id}`,{
+            method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+            body:JSON.stringify({Status:'Cancelled', notes:'Auto-cancelled: payment not received after 8 days', cancelled_at: now.toISOString()}),
+          });
+          rec.Status = 'Cancelled';
+          console.log(`Day 8: #${rec.id} → Auto-Cancelled`);
+          // Email player
+          sendEmail('cancellation_approved',{
+            player_email:    rec.Email_Address,
+            player_name:     rec.Player1_Name||'Player',
+            player2_name:    rec.Player2_Name||'',
+            team_name:       rec.Team_Name,
+            level:           rec.Level,
+            tournament_name: activeTournament.name||'',
+            reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
+            admin_email:     currentUser?.notification_email||'',
+          });
+        }
+      }
+    }
+
+    // Refresh if anything changed
+    const changed = allRegs.some(r=>r.Status==='Overdue'||r.Status==='Cancelled');
+    if(changed){ fetchRegistrations(); updateStats(allRegs); }
+
   }catch(e){ console.warn('checkPaymentDeadlines error:', e); }
 }
 
-function closeEmailSettings(){
-  document.getElementById('emailSettingsModal').style.display='none';
+function closeProfileSettings(){
+  document.getElementById('profileSettingsModal').style.display='none';
 }
+// Keep old name as alias so any remaining references don't crash
+function closeEmailSettings(){ closeProfileSettings(); }
 
-async function openEmailSettings(){
+async function openProfileSettings(){
+  if(!currentUser){ console.warn('No currentUser'); return; }
+  console.log('Opening profile settings for user:', currentUser.id);
   try{
     const res  = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}&select=notification_email`,{headers:HDRS});
     const data = await res.json();
     document.getElementById('notifEmail').value = (data&&data.length) ? (data[0].notification_email||'') : '';
-  }catch(e){ document.getElementById('notifEmail').value=''; }
-
-  // Only superadmin sees the URL field
-  const urlField = document.getElementById('siteUrlField');
-  if(currentUser.role === 'superadmin'){
-    urlField.style.display = 'block';
-    try{
-      const res2 = await fetch(`${SB_URL}/rest/v1/users?role=eq.superadmin&select=site_base_url&limit=1`,{headers:HDRS});
-      const d2   = await res2.json();
-      document.getElementById('siteBaseUrl').value = (d2&&d2.length&&d2[0].site_base_url) ? d2[0].site_base_url : (localStorage.getItem('siteBaseUrl')||'');
-    }catch(e){ document.getElementById('siteBaseUrl').value = localStorage.getItem('siteBaseUrl')||''; }
-  } else {
-    urlField.style.display = 'none';
-  }
-
-  document.getElementById('emailSettingsMsg').style.display='none';
-  document.getElementById('emailSettingsModal').style.display='flex';
+  }catch(e){ console.warn('Failed to load email:', e); document.getElementById('notifEmail').value=''; }
+  document.getElementById('profileMsg').style.display='none';
+  const modal = document.getElementById('profileSettingsModal');
+  if(modal.parentElement !== document.body) document.body.appendChild(modal);
+  modal.style.display        = 'flex';
+  modal.style.position       = 'fixed';
+  modal.style.inset          = '0';
+  modal.style.background     = 'rgba(0,0,0,0.88)';
+  modal.style.zIndex         = '999999';
+  modal.style.alignItems     = 'center';
+  modal.style.justifyContent = 'center';
+  console.log('Profile modal moved to body, display:', modal.style.display);
 }
+// Keep old name as alias
+async function openEmailSettings(){ return openProfileSettings(); }
 
-async function saveEmailSettings(){
-  const email  = document.getElementById('notifEmail').value.trim();
-  const msgEl  = document.getElementById('emailSettingsMsg');
+async function saveProfileSettings(){
+  const email = document.getElementById('notifEmail').value.trim();
+  const msgEl = document.getElementById('profileMsg');
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    msgEl.textContent='Please enter a valid email address.';
-    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;';
+    msgEl.textContent='Please enter a valid email.';
+    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;font-size:12px;';
     return;
   }
-
-  const patch = {notification_email: email||null};
-
-  // Superadmin also saves global site URL to DB
-  if(currentUser.role === 'superadmin'){
-    const siteUrl = document.getElementById('siteBaseUrl')?.value.trim()||'';
-    if(siteUrl) localStorage.setItem('siteBaseUrl', siteUrl);
-    patch.site_base_url = siteUrl||null;
-  }
-
-  const res = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}`,{
-    method:'PATCH',
-    headers:{...HDRS,'Prefer':'return=minimal'},
-    body:JSON.stringify(patch),
-  });
-  if(res.ok){
-    if(email) currentUser.notification_email = email;
+  try{
+    const r = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}`,{
+      method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+      body:JSON.stringify({notification_email: email||null}),
+    });
+    if(!r.ok && r.status!==204){ throw new Error('Save failed'); }
+    if(currentUser) currentUser.notification_email = email;
     msgEl.textContent='✓ Saved!';
-    msgEl.style.cssText='display:block;background:#0d1a0d;color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:8px 12px;border-radius:6px;';
-    setTimeout(closeEmailSettings, 1500);
-  } else {
-    msgEl.textContent='Save failed. Please try again.';
-    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;';
+    msgEl.style.cssText='display:block;background:#0d1a0d;color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:8px 12px;border-radius:6px;font-size:12px;';
+    setTimeout(closeProfileSettings, 1200);
+  }catch(e){
+    msgEl.textContent='Error: '+e.message;
+    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;font-size:12px;';
   }
 }
+// Keep alias
+async function saveEmailSettings(){ return saveProfileSettings(); }
+
 
 /* ════════════════════════════════════════════
    EMAIL HELPER — calls Supabase Edge Function

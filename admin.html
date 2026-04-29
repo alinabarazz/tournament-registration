@@ -443,6 +443,7 @@
       <div class="stat-card" onclick="filterByStatus('')" id="sc-total" title="Show all"><div class="stat-label">Total</div><div class="stat-num red" id="statTotal">—</div></div>
       <div class="stat-card" onclick="filterByStatus('Pending Review')" id="sc-pending" title="Filter Pending"><div class="stat-label">Pending Review</div><div class="stat-num amber" id="statPending">—</div></div>
       <div class="stat-card" onclick="filterByStatus('Awaiting Payment')" id="sc-payment" title="Filter Awaiting Payment"><div class="stat-label">Awaiting Payment</div><div class="stat-num amber" id="statPayment">—</div></div>
+      <div class="stat-card" onclick="filterByStatus('Payment Submitted')" id="sc-payrec" title="Filter Payment Received"><div class="stat-label">Payment Received</div><div class="stat-num" style="color:#60a5fa;" id="statPayRec">—</div></div>
       <div class="stat-card" onclick="filterByStatus('Registered')" id="sc-registered" title="Filter Registered"><div class="stat-label">Registered</div><div class="stat-num green" id="statRegistered">—</div></div>
       <div class="stat-card" onclick="filterByStatus('Rejected')" id="sc-rejected" title="Filter Rejected"><div class="stat-label">Rejected</div><div class="stat-num gray" id="statRejected">—</div></div>
       <div class="stat-card" onclick="filterByStatus('Cancelled')" id="sc-cancelled" title="Filter Cancelled"><div class="stat-label">Cancelled</div><div class="stat-num gray" id="statCancelled">—</div></div>
@@ -2297,6 +2298,7 @@ function updateStats(data){
   document.getElementById('statTotal').textContent      = data.length;
   document.getElementById('statPending').textContent    = data.filter(r=>r.Status==='Pending Review').length;
   document.getElementById('statPayment').textContent    = data.filter(r=>r.Status==='Awaiting Payment'||r.Status==='Payment Not Received').length;
+  document.getElementById('statPayRec').textContent     = data.filter(r=>r.Status==='Payment Submitted').length;
   document.getElementById('statRegistered').textContent = data.filter(r=>r.Status==='Registered').length;
   document.getElementById('statRejected').textContent   = data.filter(r=>r.Status==='Rejected').length;
   document.getElementById('statCancelled').textContent  = data.filter(r=>r.Status==='Cancelled'||r.Status==='Cancellation Requested').length;
@@ -2742,7 +2744,7 @@ let _activeStatusFilter = '';
 function filterByStatus(status){
   _activeStatusFilter = status;
   // Highlight active card
-  ['total','pending','payment','registered','rejected','cancelled'].forEach(k=>{
+  ['total','pending','payment','payrec','registered','rejected','cancelled'].forEach(k=>{
     const card = document.getElementById('sc-'+k);
     if(card){ card.style.borderColor=''; card.style.background=''; }
   });
@@ -2750,6 +2752,7 @@ function filterByStatus(status){
     '':                  'sc-total',
     'Pending Review':    'sc-pending',
     'Awaiting Payment':  'sc-payment',
+    'Payment Submitted': 'sc-payrec',
     'Registered':        'sc-registered',
     'Rejected':          'sc-rejected',
     'Cancelled':         'sc-cancelled',
@@ -3523,13 +3526,12 @@ async function confirmPaymentChannel(){
   errEl.style.display='none';
   mismatchEl.style.display='none';
 
-  if(!channel){   errEl.textContent='Please select a payment channel.'; errEl.style.display='block'; return; }
-  if(!reference){ errEl.textContent='Reference number is required.';    errEl.style.display='block'; return; }
+  if(!channel){ errEl.textContent='Please select a payment method.'; errEl.style.display='block'; return; }
+  // Reference is now optional — admin may not have it handy
 
   // Warn if REF# doesn't match player's submitted REF#
-  if(_pcPlayerRef && reference.trim().toLowerCase() !== _pcPlayerRef.trim().toLowerCase()){
+  if(_pcPlayerRef && reference && reference.trim().toLowerCase() !== _pcPlayerRef.trim().toLowerCase()){
     mismatchEl.style.display='block';
-    // Don't block — show warning but let admin override with confirmation
     const proceed = confirm(`REF# mismatch!\n\nPlayer submitted: "${_pcPlayerRef}"\nYou entered: "${reference}"\n\nConfirm anyway?`);
     if(!proceed) return;
   }
@@ -3541,8 +3543,10 @@ async function confirmPaymentChannel(){
 
 function cancelPaymentChannel(){
   document.getElementById('paymentChannelModal').style.display = 'none';
-  if(_resolvePaymentChannel) _resolvePaymentChannel(null);
+  if(_resolvePaymentChannel){ _resolvePaymentChannel(null); }
   _resolvePaymentChannel = null;
+  // Also allow status dropdown to recover
+  document.querySelectorAll('.status-select.saving').forEach(s=>s.classList.remove('saving'));
 }
 
 async function openScreenshot(url){
@@ -4754,6 +4758,8 @@ function promptRejectionNotes(){
     document.querySelectorAll('input[name="rejReason"]').forEach(r=>r.checked=false);
     document.getElementById('rejectionNotes').value = '';
     document.getElementById('rejectionModal').style.display = 'flex';
+    // Safety: if modal never resolved after 10min, cancel
+    setTimeout(()=>{ if(_resolveRejection){ _resolveRejection(null); _resolveRejection=null; document.getElementById('rejectionModal').style.display='none'; }},600000);
   });
 }
 

@@ -379,6 +379,9 @@
 ══════════════════════════════════════════ -->
 <div id="mainDashboard" style="display:none;">
 
+<!-- DEBUG BAR - remove after fixing -->
+<div id="debugBar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#e8372a;color:#fff;font-size:12px;padding:8px 16px;z-index:9999;font-family:monospace;cursor:pointer;" onclick="this.style.display='none'">Click to dismiss</div>
+
 <div class="topbar">
   <div class="topbar-left">
     <a href="#" onclick="showHomeScreen();return false;">← Admin</a>
@@ -388,10 +391,10 @@
   <div class="topbar-brand">Admin Panel</div>
   <div class="topbar-right">
     <span class="user-badge" id="userBadge">—</span>
-    <button onclick="openEmailSettings()" title="Email Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Barlow',sans-serif;">Email</button>
+    <button onclick="try{openEmailSettings();}catch(e){document.getElementById('debugBar').style.display='block';document.getElementById('debugBar').textContent='Email btn error: '+e.message;}" title="Email Settings" style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Barlow',sans-serif;">Email</button>
     <!-- Notification Bell -->
     <div style="position:relative;display:inline-block;">
-      <button id="notifBell" onclick="openNotifPanel()" title="Notifications"
+      <button id="notifBell" onclick="try{openNotifPanel();}catch(e){document.getElementById('debugBar').style.display='block';document.getElementById('debugBar').textContent='Bell btn error: '+e.message;}" title="Notifications"
         style="background:#1a1a1a;border:1px solid #333;color:#888;font-size:16px;padding:6px 11px;border-radius:6px;cursor:pointer;line-height:1;display:flex;align-items:center;">
         <i class="bi bi-bell-fill"></i>
       </button>
@@ -1425,10 +1428,14 @@
 // Global error handler — prevents one crash from killing all buttons
 window.onerror = function(msg, src, line, col, err){
   console.error('Global JS Error:', msg, 'Line:', line, err);
-  return false; // don't suppress
+  const bar = document.getElementById('debugBar');
+  if(bar){ bar.style.display='block'; bar.textContent='JS Error line '+line+': '+msg; }
+  return false;
 };
 window.addEventListener('unhandledrejection', e=>{
   console.error('Unhandled promise rejection:', e.reason);
+  const bar = document.getElementById('debugBar');
+  if(bar){ bar.style.display='block'; bar.textContent='Promise Error: '+(e.reason?.message||e.reason); }
 });
 
 const SB_URL  = 'https://qpxhpvntnltsevcfxfjl.supabase.co';

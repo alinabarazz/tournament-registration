@@ -1463,7 +1463,7 @@ const STATUS_CLASS = {
   'Transfer Requested':     's-transfer-req',
 };
 
-const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Payment Not Received','Registered','Cancellation Requested','Transfer Requested']);
+const SLOT_CONSUMING_STATUSES = new Set(['Awaiting Payment','Payment Submitted','Overdue','Registered','Cancellation Requested','Transfer Requested']);
 
 const STATUS_TRANSITIONS = {
   'Pending Review':          ['Pending Review','Awaiting Payment','Rejected'],
@@ -1759,7 +1759,7 @@ function editTournament(id){
 
   // ── Open modal ──
   document.removeEventListener('click', outsideNotifClose);
-  document.getElementById('tournamentModal').classList.add('open');
+  showModal('tournamentModal');
   setTimeout(()=>{ document.getElementById('tName')?.focus(); }, 80);
 }
 
@@ -2120,12 +2120,12 @@ function openTournamentModal(){
   _editingTournamentId = null;
   console.log('🟡 openTournamentModal | _editingTournamentId reset to null');
   document.removeEventListener('click', outsideNotifClose);
-  document.getElementById('tournamentModal').classList.add('open');
+  showModal('tournamentModal');
   setTimeout(()=>{ const n=document.getElementById('tName'); if(n) n.focus(); }, 80);
 }
 
 function closeTournamentModal(){
-  document.getElementById('tournamentModal').classList.remove('open');
+  hideModal('tournamentModal');
 }
 
 async function submitTournament(status){
@@ -2254,6 +2254,29 @@ async function seedDefaultPricing(tournamentId){
 /* ════════════════════════════════════════════
    TAB SWITCHING
 ════════════════════════════════════════════ */
+/* ════════════════════════════════════════════
+   UNIVERSAL MODAL HELPER
+════════════════════════════════════════════ */
+function showModal(id){
+  document.removeEventListener('click', outsideNotifClose);
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(el.parentElement !== document.body) document.body.appendChild(el);
+  el.style.display        = 'flex';
+  el.style.position       = 'fixed';
+  el.style.inset          = '0';
+  el.style.zIndex         = '99999';
+  el.style.alignItems     = 'center';
+  el.style.justifyContent = 'center';
+  if(!el.style.background) el.style.background = 'rgba(0,0,0,0.8)';
+}
+function hideModal(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = 'none';
+  el.classList.remove('open');
+}
+
 function showTab(name, event){
   // Always clear the notif listener when switching tabs
   document.removeEventListener('click', outsideNotifClose);
@@ -2316,7 +2339,7 @@ async function fetchRegistrations(){
 function updateStats(data){
   document.getElementById('statTotal').textContent      = data.length;
   document.getElementById('statPending').textContent    = data.filter(r=>r.Status==='Pending Review').length;
-  document.getElementById('statPayment').textContent    = data.filter(r=>r.Status==='Awaiting Payment'||r.Status==='Payment Not Received').length;
+  document.getElementById('statPayment').textContent    = data.filter(r=>r.Status==='Awaiting Payment'||r.Status==='Overdue').length;
   document.getElementById('statPayRec').textContent     = data.filter(r=>r.Status==='Payment Submitted').length;
   document.getElementById('statRegistered').textContent = data.filter(r=>r.Status==='Registered').length;
   document.getElementById('statRejected').textContent   = data.filter(r=>r.Status==='Rejected').length;
@@ -2404,7 +2427,7 @@ function renderTable(data){
                   style="background:#1a1a1a;border:1px solid #333;color:#aaa;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;">
                   Copy Link
                 </button>
-                ${['Awaiting Payment','Payment Not Received'].includes(r.Status) ? `
+                ${['Awaiting Payment','Overdue'].includes(r.Status) ? `
                 <button onclick="resendApprovalEmail(${r.id}, this)"
                   style="background:#1a2a1a;border:1px solid rgba(34,197,94,0.3);color:#22c55e;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;white-space:nowrap;">
                   Resend Email
@@ -3100,11 +3123,11 @@ function addCustomCategory(){
   document.getElementById('catPrice').value='';
   document.getElementById('catError').style.display='none';
   document.removeEventListener('click', outsideNotifClose);
-  document.getElementById('categoryModal').classList.add('open');
+  showModal('categoryModal');
   setTimeout(()=>document.getElementById('catName').focus(),80);
 }
 
-function closeCategoryModal(){ document.getElementById('categoryModal').classList.remove('open'); }
+function closeCategoryModal(){ hideModal('categoryModal'); }
 
 async function submitCategory(){
   const rawName = document.getElementById('catName').value.trim().toUpperCase();
@@ -3220,11 +3243,11 @@ function openExpenseModal(id){
     document.getElementById('mNotes').value  = '';
   }
   document.removeEventListener('click', outsideNotifClose);
-  document.getElementById('expenseModal').classList.add('open');
+  showModal('expenseModal');
   document.getElementById('mDesc').focus();
 }
 
-function closeExpenseModal(){ document.getElementById('expenseModal').classList.remove('open'); editingExpId=null; }
+function closeExpenseModal(){ hideModal('expenseModal'); editingExpId=null; }
 
 async function submitExpense(){
   const desc   = document.getElementById('mDesc').value.trim();
@@ -3291,12 +3314,12 @@ function showConfirmDelete(title, message){
     document.getElementById('cdmTitle').textContent   = title;
     document.getElementById('cdmMessage').innerHTML   = message;
     document.getElementById('cdmConfirmBtn').onclick  = () => { closeConfirmDelete(); resolve(true); };
-    document.getElementById('confirmDeleteModal').style.display = 'flex';
+    showModal('confirmDeleteModal');
   });
 }
 
 function closeConfirmDelete(){
-  document.getElementById('confirmDeleteModal').style.display = 'none';
+  hideModal('confirmDeleteModal');
   if(_confirmDeleteResolve){ _confirmDeleteResolve(false); _confirmDeleteResolve = null; }
 }
 
@@ -3409,12 +3432,12 @@ function addSponsor(){
   document.getElementById('sponsorLogoPreview').style.background = '#0f0f0f';
   _smLogoFile = null;
   document.removeEventListener('click', outsideNotifClose);
-  document.getElementById('sponsorModal').classList.add('open');
+  showModal('sponsorModal');
   setTimeout(()=>document.getElementById('smName').focus(), 80);
 }
 
 function closeSponsorModal(){
-  document.getElementById('sponsorModal').classList.remove('open');
+  hideModal('sponsorModal');
 }
 
 let _smLogoFile = null;
@@ -3541,7 +3564,7 @@ function promptPaymentChannel(playerRef, playerChannel){
     document.getElementById('pcConfirmBtn').disabled      = false;
     const playerRefEl = document.getElementById('pcPlayerRef');
     if(playerRefEl) playerRefEl.textContent = playerRef || '(none submitted)';
-    document.getElementById('paymentChannelModal').style.display = 'flex';
+    showModal('paymentChannelModal');
     setTimeout(()=>document.getElementById('pcChannel').focus(), 80);
   });
 }
@@ -3566,13 +3589,13 @@ async function confirmPaymentChannel(){
     if(!proceed) return;
   }
 
-  document.getElementById('paymentChannelModal').style.display = 'none';
+  hideModal('paymentChannelModal');
   if(_resolvePaymentChannel) _resolvePaymentChannel({channel, reference, notes});
   _resolvePaymentChannel = null;
 }
 
 function cancelPaymentChannel(){
-  document.getElementById('paymentChannelModal').style.display = 'none';
+  hideModal('paymentChannelModal');
   if(_resolvePaymentChannel){ _resolvePaymentChannel(null); }
   _resolvePaymentChannel = null;
   // Also allow status dropdown to recover
@@ -3800,8 +3823,7 @@ function openShareModal(){
   _qrInstance = null;
   _qrGenerated = false;
 
-  const overlay = document.getElementById('shareModal');
-  overlay.style.display = 'flex';
+  showModal('shareModal');
 }
 
 function generateQR(){
@@ -4379,11 +4401,11 @@ function openBracketSetup(){
   document.getElementById('bsError').style.display = 'none';
   document.getElementById('bsLevelInfo').textContent = '';
   document.querySelector('input[name="bsFormat"][value="round_robin"]').checked = true;
-  document.getElementById('bracketSetupModal').style.display = 'flex';
+  showModal('bracketSetupModal');
 }
 
 function closeBracketSetup(){
-  document.getElementById('bracketSetupModal').style.display = 'none';
+  hideModal('bracketSetupModal');
 }
 
 function onFormatChange(val){
@@ -4394,7 +4416,7 @@ function onFormatChange(val){
 async function onBracketLevelChange(){
   const level = document.getElementById('bsLevel').value;
   if(!level) return;
-  const registered = allRegs.filter(r=>r.Level===level && ['Registered','Payment Submitted','Payment Not Received','Awaiting Payment'].includes(r.Status));
+  const registered = allRegs.filter(r=>r.Level===level && ['Registered','Payment Submitted','Overdue','Awaiting Payment'].includes(r.Status));
   const confirmed  = allRegs.filter(r=>r.Level===level && r.Status==='Registered');
   const infoEl = document.getElementById('bsLevelInfo');
   infoEl.innerHTML = `<strong style="color:#f0f0f0;">${registered.length}</strong> registered · <strong style="color:#22c55e;">${confirmed.length}</strong> confirmed (Registered status)`;
@@ -4637,7 +4659,7 @@ function openConflictModal(conflicts){
       </div>
     </div>`).join('');
 
-  document.getElementById('conflictModal').style.display = 'flex';
+  showModal('conflictModal');
   checkAllConflictsResolved();
 }
 
@@ -4664,7 +4686,7 @@ function checkAllConflictsResolved(){
 }
 
 async function proceedAfterConflicts(){
-  document.getElementById('conflictModal').style.display = 'none';
+  hideModal('conflictModal');
   _pendingConflicts = [];
   if(_bsPendingPayload){
     await _generateBrackets(_bsPendingPayload);
@@ -4673,7 +4695,7 @@ async function proceedAfterConflicts(){
 }
 
 function cancelConflictResolution(){
-  document.getElementById('conflictModal').style.display = 'none';
+  hideModal('conflictModal');
   _pendingConflicts = [];
   _bsPendingPayload = null;
 }
@@ -4698,24 +4720,24 @@ function openDissolveLevelModal(){
   sel.innerHTML = '<option value="">— Select level —</option>';
   if(pricingRows){
     pricingRows.filter(p=>p.enabled).forEach(p=>{
-      const count = allRegs.filter(r=>r.Level===p.level_key && ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status)).length;
+      const count = allRegs.filter(r=>r.Level===p.level_key && ['Pending Review','Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status)).length;
       sel.innerHTML += `<option value="${p.level_key}">${p.label||p.level_key} (${count} registered)</option>`;
     });
   }
   document.getElementById('dlLevelInfo').textContent = '';
   document.getElementById('dlAffectedTeams').style.display = 'none';
   document.getElementById('dlError').style.display = 'none';
-  document.getElementById('dissolveLevelModal').style.display = 'flex';
+  showModal('dissolveLevelModal');
 }
 
 function closeDissolveLevelModal(){
-  document.getElementById('dissolveLevelModal').style.display = 'none';
+  hideModal('dissolveLevelModal');
 }
 
 function onDissolveLevelChange(){
   const level = document.getElementById('dlLevel').value;
   if(!level) return;
-  const affected = allRegs.filter(r=>r.Level===level && ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status));
+  const affected = allRegs.filter(r=>r.Level===level && ['Pending Review','Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status));
   const infoEl = document.getElementById('dlLevelInfo');
   const teamsEl = document.getElementById('dlAffectedTeams');
   const listEl  = document.getElementById('dlTeamList');
@@ -4743,7 +4765,7 @@ async function confirmDissolveLevel(){
   if(!message){ errEl.textContent='Please provide a message to players.'; errEl.style.display='block'; return; }
   errEl.style.display='none';
 
-  const affected = allRegs.filter(r=>r.Level===level && ['Pending Review','Awaiting Payment','Payment Submitted','Payment Not Received','Registered'].includes(r.Status));
+  const affected = allRegs.filter(r=>r.Level===level && ['Pending Review','Awaiting Payment','Payment Submitted','Overdue','Registered'].includes(r.Status));
   if(!affected.length){ closeDissolveLevelModal(); return; }
 
   const btn = document.getElementById('dlConfirmBtn');
@@ -4806,7 +4828,7 @@ function promptRejectionNotes(){
     _resolveRejection = resolve;
     document.querySelectorAll('input[name="rejReason"]').forEach(r=>r.checked=false);
     document.getElementById('rejectionNotes').value = '';
-    document.getElementById('rejectionModal').style.display = 'flex';
+    showModal('rejectionModal');
     // Safety: if modal never resolved after 10min, cancel
     setTimeout(()=>{ if(_resolveRejection){ _resolveRejection(null); _resolveRejection=null; document.getElementById('rejectionModal').style.display='none'; }},600000);
   });
@@ -4820,13 +4842,13 @@ function confirmRejection(){
     alert('Please select a reason or add notes before confirming rejection.');
     return;
   }
-  document.getElementById('rejectionModal').style.display = 'none';
+  hideModal('rejectionModal');
   if(_resolveRejection) _resolveRejection({reason: reason==='other'?'':reason, notes});
   _resolveRejection = null;
 }
 
 function cancelRejection(){
-  document.getElementById('rejectionModal').style.display = 'none';
+  hideModal('rejectionModal');
   if(_resolveRejection) _resolveRejection(null);
   _resolveRejection = null;
 }

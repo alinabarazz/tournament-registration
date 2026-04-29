@@ -929,12 +929,15 @@
 </div>
 
 <!-- ══ NOTIFICATION PANEL ══ -->
-<div id="notifPanel" style="display:none;position:fixed;top:52px;right:12px;width:320px;max-height:420px;background:#141414;border:1px solid #2a2a2a;border-radius:12px;z-index:1500;box-shadow:0 8px 32px rgba(0,0,0,0.6);overflow:hidden;flex-direction:column;">
-  <div style="padding:12px 16px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;">
-    <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.95rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">Notifications</span>
+<div id="notifPanel" style="display:none;position:fixed;top:52px;right:12px;width:340px;max-height:460px;background:#141414;border:1px solid #2a2a2a;border-radius:12px;z-index:1500;box-shadow:0 8px 32px rgba(0,0,0,0.6);overflow:hidden;flex-direction:column;">
+  <div style="padding:11px 16px;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;gap:0;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;">
+      <button id="notifTabNew" onclick="switchNotifTab('new')" style="background:#e8372a;border:none;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;">New</button>
+      <button id="notifTabHistory" onclick="switchNotifTab('history')" style="background:transparent;border:none;color:#555;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;">History</button>
+    </div>
     <button onclick="markAllRead()" style="background:none;border:none;color:#555;font-size:11px;cursor:pointer;text-decoration:underline;">Mark all read</button>
   </div>
-  <div id="notifList" style="overflow-y:auto;max-height:360px;"></div>
+  <div id="notifList" style="overflow-y:auto;max-height:400px;"></div>
 </div>
 
 <!-- ══ SCREENSHOT LIGHTBOX ══ -->
@@ -1418,6 +1421,15 @@
 /* ════════════════════════════════════════════
    SUPABASE CONFIG  (NEW PROJECT)
 ════════════════════════════════════════════ */
+// Global error handler — prevents one crash from killing all buttons
+window.onerror = function(msg, src, line, col, err){
+  console.error('Global JS Error:', msg, 'Line:', line, err);
+  return false; // don't suppress
+};
+window.addEventListener('unhandledrejection', e=>{
+  console.error('Unhandled promise rejection:', e.reason);
+});
+
 const SB_URL  = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
 const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
 const HDRS = {'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json'};
@@ -2415,12 +2427,39 @@ async function saveNote(regId, value){
   }
 }
 
+function copyToClipboard(text, btn, successLabel){
+  const label = successLabel || 'Copied!';
+  const orig  = btn ? btn.textContent : '';
+  function onSuccess(){
+    if(btn){ btn.textContent=label; btn.style.color='#22c55e'; setTimeout(()=>{ btn.textContent=orig; btn.style.color=''; },2000); }
+  }
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(onSuccess).catch(()=>fallbackCopy(text, btn, label, orig));
+  } else {
+    fallbackCopy(text, btn, label, orig);
+  }
+}
+
+function fallbackCopy(text, btn, label, orig){
+  // Create temp textarea, select, copy
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try{
+    document.execCommand('copy');
+    if(btn){ btn.textContent=label||'Copied!'; btn.style.color='#22c55e'; setTimeout(()=>{ btn.textContent=orig||'Copy'; btn.style.color=''; },2000); }
+  }catch(e){
+    // Last resort: prompt
+    window.prompt('Copy this link:', text);
+  }
+  document.body.removeChild(ta);
+}
+
 function copyPaymentLink(regId, btn){
   const url = getPaymentLink(regId);
-  navigator.clipboard.writeText(url).then(()=>{
-    btn.textContent='Copied!'; btn.style.color='#22c55e';
-    setTimeout(()=>{ btn.textContent='Copy Link'; btn.style.color='#aaa'; },2000);
-  });
+  copyToClipboard(url, btn, '✓ Copied!');
 }
 
 async function resendApprovalEmail(regId, btn){
@@ -2698,30 +2737,49 @@ function rebuildStatusDropdown(sel, currentStatus){
   });
 }
 
+let _activeStatusFilter = '';
+
 function filterByStatus(status){
-  // Update hidden select
-  document.getElementById('statusFilter').value = status;
-  // Highlight active stat card
+  _activeStatusFilter = status;
+  // Highlight active card
   ['total','pending','payment','registered','rejected','cancelled'].forEach(k=>{
     const card = document.getElementById('sc-'+k);
-    if(card) card.style.borderColor = '';
+    if(card){ card.style.borderColor=''; card.style.background=''; }
   });
-  const map = {'':'sc-total','Pending Review':'sc-pending','Awaiting Payment':'sc-payment','Registered':'sc-registered','Rejected':'sc-rejected','Cancelled':'sc-cancelled'};
-  const activeCard = map[status];
-  if(activeCard){
-    const el = document.getElementById(activeCard);
-    if(el) el.style.borderColor = '#e8372a';
+  const map = {
+    '':                  'sc-total',
+    'Pending Review':    'sc-pending',
+    'Awaiting Payment':  'sc-payment',
+    'Registered':        'sc-registered',
+    'Rejected':          'sc-rejected',
+    'Cancelled':         'sc-cancelled',
+  };
+  const activeId = map[status];
+  if(activeId){
+    const el = document.getElementById(activeId);
+    if(el){ el.style.borderColor='#e8372a'; el.style.background='rgba(232,55,42,0.05)'; }
   }
   filterTable();
 }
 
 function filterTable(){
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const level  = document.getElementById('levelFilter').value;
-  const status = document.getElementById('statusFilter').value;
+  const search = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const level  = document.getElementById('levelFilter')?.value||'';
+  // Use _activeStatusFilter instead of hidden select
+  const status = _activeStatusFilter;
   const filtered = allRegs.filter(r=>{
-    const ml = !level||r.Level===level;
-    const ms = !status||r.Status===status;
+    const ml = !level || r.Level===level;
+    // Multi-status groups
+    let ms = true;
+    if(status==='Awaiting Payment'){
+      ms = r.Status==='Awaiting Payment' || r.Status==='Payment Not Received';
+    } else if(status==='Cancelled'){
+      ms = r.Status==='Cancelled' || r.Status==='Cancellation Requested';
+    } else if(status==='Rejected'){
+      ms = r.Status==='Rejected';
+    } else if(status){
+      ms = r.Status===status;
+    }
     const ref= `#${String(r.id).padStart(5,'0')}`.toLowerCase();
     const mq = !search||ref.includes(search)||(r.Team_Name||'').toLowerCase().includes(search)||(r.Player1_Name||'').toLowerCase().includes(search)||(r.Player2_Name||'').toLowerCase().includes(search)||(r.Email_Address||'').toLowerCase().includes(search);
     return ml&&ms&&mq;
@@ -3746,19 +3804,8 @@ function closeShareModal(){
 
 function copyShareLink(){
   const input = document.getElementById('shareLinkInput');
-  input.select();
-  input.setSelectionRange(0,99999);
-  try{
-    navigator.clipboard.writeText(input.value).then(()=>{
-      const btn = document.getElementById('copyLinkBtn');
-      const orig = btn.textContent;
-      btn.textContent = '✓ Copied!';
-      btn.style.background = '#22c55e';
-      setTimeout(()=>{ btn.textContent=orig; btn.style.background='#e8372a'; }, 2000);
-    });
-  }catch(e){
-    document.execCommand('copy');
-  }
+  const btn   = document.getElementById('copyLinkBtn');
+  copyToClipboard(input.value, btn, '✓ Copied!');
 }
 
 function downloadQR(){
@@ -3882,7 +3929,8 @@ function handleTournamentSave(status){
    NOTIFICATION SYSTEM
 ════════════════════════════════════════════ */
 let _notifItems = [];
-let _notifSeen  = new Set(JSON.parse(localStorage.getItem('_notifSeen')||'[]'));
+let _notifSeen  = new Set();
+try{ _notifSeen = new Set(JSON.parse(localStorage.getItem('_notifSeen')||'[]')); }catch(e){}
 let _notifOpen  = false;
 
 async function fetchNotifications(){
@@ -3952,11 +4000,17 @@ function updateNotifBadge(){
 function renderNotifList(){
   const el = document.getElementById('notifList');
   if(!el) return;
-  if(!_notifItems.length){
-    el.innerHTML = '<div style="padding:24px;text-align:center;color:#555;font-size:13px;"><i class="bi bi-bell-slash" style="font-size:1.5rem;display:block;margin-bottom:8px;"></i>No new notifications</div>';
+
+  const showHistory = _notifTab === 'history';
+  const items = showHistory
+    ? _notifItems  // all items including read ones
+    : _notifItems.filter(n=>!_notifSeen.has(n.id)); // only unread
+
+  if(!items.length){
+    el.innerHTML = `<div style="padding:24px;text-align:center;color:#555;font-size:13px;"><i class="bi bi-bell-slash" style="font-size:1.5rem;display:block;margin-bottom:8px;"></i>${showHistory?'No notification history':'No new notifications'}</div>`;
     return;
   }
-  el.innerHTML = _notifItems.map(n=>{
+  el.innerHTML = items.map(n=>{
     const isNew  = !_notifSeen.has(n.id);
     const when   = n.time ? new Date(n.time).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) : '';
     const isPayment = n.type==='payment';
@@ -3964,16 +4018,16 @@ function renderNotifList(){
     const icon   = isAtRisk ? 'bi-exclamation-triangle-fill' : isPayment ? 'bi-credit-card-fill' : 'bi-person-plus-fill';
     const color  = isAtRisk ? '#f5a623' : isPayment ? '#f5a623' : '#22c55e';
     return `<div onclick="onNotifClick(${n.refId},${n.tournamentId},'${n.id}')"
-      style="padding:11px 16px;border-bottom:1px solid #1e1e1e;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:${isNew?'#181810':'transparent'};transition:background 0.15s;"
-      onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='${isNew?'#181810':'transparent'}'">
+      style="padding:11px 16px;border-bottom:1px solid #1e1e1e;cursor:pointer;display:flex;gap:10px;align-items:flex-start;background:${isNew&&!showHistory?'#181810':'transparent'};transition:background 0.15s;"
+      onmouseover="this.style.background='#1e1e1e'" onmouseout="this.style.background='${isNew&&!showHistory?'#181810':'transparent'}'">
       <div style="width:30px;height:30px;border-radius:8px;background:${isNew?color+'22':'#1a1a1a'};border:1px solid ${isNew?color+'44':'#2a2a2a'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
         <i class="bi ${icon}" style="color:${isNew?color:'#444'};font-size:13px;"></i>
       </div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:12px;font-weight:${isNew?'700':'500'};color:${isNew?'#f0f0f0':'#777'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.text}</div>
-        <div style="font-size:10px;color:#555;margin-top:2px;">${n.sub} · ${when}</div>
+        <div style="font-size:10px;color:#555;margin-top:2px;">${n.sub}${when?' · '+when:''}</div>
       </div>
-      ${isNew?`<div style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;margin-top:5px;"></div>`:''}
+      ${isNew&&!showHistory?`<div style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;margin-top:5px;"></div>`:''}
     </div>`;
   }).join('');
 }
@@ -4004,6 +4058,17 @@ function onNotifClick(regId, tournamentId, notifId){
       }
     }, 800);
   }, 300);
+}
+
+let _notifTab = 'new';
+
+function switchNotifTab(tab){
+  _notifTab = tab;
+  const btnNew = document.getElementById('notifTabNew');
+  const btnHist= document.getElementById('notifTabHistory');
+  if(btnNew){  btnNew.style.background  = tab==='new'?'#e8372a':'transparent'; btnNew.style.color  = tab==='new'?'#fff':'#555'; }
+  if(btnHist){ btnHist.style.background = tab==='history'?'#e8372a':'transparent'; btnHist.style.color= tab==='history'?'#fff':'#555'; }
+  renderNotifList();
 }
 
 function openNotifPanel(){
@@ -4759,7 +4824,8 @@ function goToBrackets(){
 
 // Auto-check payment deadlines after registrations load
 async function checkPaymentDeadlines(){
-  if(!activeTournament || !allRegs) return;
+  try{
+    if(!activeTournament || !allRegs || !allRegs.length) return;
   const now = new Date();
   const overdue = allRegs.filter(r=>{
     if(r.Status !== 'Awaiting Payment') return false;
@@ -4803,6 +4869,7 @@ async function checkPaymentDeadlines(){
   }
 
   if(overdue.length || followUp.length) fetchRegistrations();
+  }catch(e){ console.warn('checkPaymentDeadlines error:', e); }
 }
 
 function closeEmailSettings(){
@@ -4893,17 +4960,12 @@ async function sendEmail(type, data){
 
 // Get base URL for payment confirm link
 // Loaded once on init from DB (superadmin's site_base_url)
-let _globalSiteUrl = localStorage.getItem('siteBaseUrl') || 'https://alinabarazz.github.io/tournament/';
+// Always GitHub Pages — hardcoded until custom domain is set up
+let _globalSiteUrl = 'https://alinabarazz.github.io/tournament/';
 
 async function loadGlobalSiteUrl(){
-  try{
-    const res  = await fetch(`${SB_URL}/rest/v1/users?role=eq.superadmin&select=site_base_url&limit=1`,{headers:HDRS});
-    const data = await res.json();
-    if(data&&data.length&&data[0].site_base_url){
-      _globalSiteUrl = data[0].site_base_url;
-      localStorage.setItem('siteBaseUrl', _globalSiteUrl);
-    }
-  }catch(e){}
+  // Hardcoded — no DB override until domain is ready
+  _globalSiteUrl = 'https://alinabarazz.github.io/tournament/';
 }
 
 function getCancelLink(regId){

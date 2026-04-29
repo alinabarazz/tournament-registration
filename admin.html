@@ -4735,7 +4735,7 @@ async function confirmDissolveLevel(){
   alert(`Level ${level} dissolved.\n${sent} email${sent!==1?'s':''} sent.${failed?`\n${failed} failed — check console.`:''}`);
 }
 
-const SITE_BASE_URL = 'https://alinabarazz.github.io/tournament/';
+const SITE_BASE_URL = 'https://alinabarazz.github.io/tournament-registration/';
 
 function getTransferLink(regId, fromLevel){
   const base = (_globalSiteUrl || SITE_BASE_URL).trim().replace(/\/$/, '') + '/';
@@ -4961,11 +4961,11 @@ async function sendEmail(type, data){
 // Get base URL for payment confirm link
 // Loaded once on init from DB (superadmin's site_base_url)
 // Always GitHub Pages — hardcoded until custom domain is set up
-let _globalSiteUrl = 'https://alinabarazz.github.io/tournament/';
+let _globalSiteUrl = 'https://alinabarazz.github.io/tournament-registration/';
 
 async function loadGlobalSiteUrl(){
   // Hardcoded — no DB override until domain is ready
-  _globalSiteUrl = 'https://alinabarazz.github.io/tournament/';
+  _globalSiteUrl = 'https://alinabarazz.github.io/tournament-registration/';
 }
 
 function getCancelLink(regId){

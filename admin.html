@@ -2262,13 +2262,18 @@ function showModal(id){
   const el = document.getElementById(id);
   if(!el) return;
   if(el.parentElement !== document.body) document.body.appendChild(el);
+  // Set all required styles explicitly — don't rely on CSS class after body move
   el.style.display        = 'flex';
   el.style.position       = 'fixed';
   el.style.inset          = '0';
   el.style.zIndex         = '99999';
   el.style.alignItems     = 'center';
   el.style.justifyContent = 'center';
-  if(!el.style.background) el.style.background = 'rgba(0,0,0,0.8)';
+  // Preserve background if already set, else use default
+  if(!el.style.background || el.style.background === 'rgba(0, 0, 0, 0)'){
+    el.style.background = 'rgba(0,0,0,0.82)';
+  }
+  // Preserve padding if set (e.g. confirmDeleteModal has padding:1rem)
 }
 function hideModal(id){
   const el = document.getElementById(id);
@@ -3311,10 +3316,24 @@ let _confirmDeleteResolve = null;
 function showConfirmDelete(title, message){
   return new Promise(resolve => {
     _confirmDeleteResolve = resolve;
-    document.getElementById('cdmTitle').textContent   = title;
-    document.getElementById('cdmMessage').innerHTML   = message;
-    document.getElementById('cdmConfirmBtn').onclick  = () => { closeConfirmDelete(); resolve(true); };
+    document.getElementById('cdmTitle').textContent = title;
+    document.getElementById('cdmMessage').innerHTML = message;
+    // showModal first (moves to body), THEN set onclick
     showModal('confirmDeleteModal');
+    // Small delay to ensure DOM is settled after body move
+    setTimeout(()=>{
+      const btn = document.getElementById('cdmConfirmBtn');
+      if(btn){
+        // Clone to remove any previous onclick listeners
+        const fresh = btn.cloneNode(true);
+        btn.parentNode.replaceChild(fresh, btn);
+        fresh.onclick = () => {
+          hideModal('confirmDeleteModal');
+          _confirmDeleteResolve = null;
+          resolve(true);
+        };
+      }
+    }, 10);
   });
 }
 
@@ -3332,8 +3351,8 @@ async function deleteExpense(id){
   );
   if(!confirmed) return;
   const res = await fetch(`${SB_URL}/rest/v1/expenses?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok) await fetchExpenses();
-  else alert('Delete failed.');
+  if(res.ok || res.status===204) await fetchExpenses();
+  else alert('Delete failed. Please try again.');
 }
 
 async function removeSponsor(id){
@@ -3346,7 +3365,8 @@ async function removeSponsor(id){
   );
   if(!confirmed) return;
   const res = await fetch(`${SB_URL}/rest/v1/sponsors?id=eq.${id}`,{method:'DELETE',headers:HDRS});
-  if(res.ok) await fetchSponsors();
+  if(res.ok || res.status===204) await fetchSponsors();
+  else alert('Delete failed. Please try again.');
 }
 
 /* ════════════════════════════════════════════
@@ -3608,13 +3628,19 @@ async function openScreenshot(url){
   const errEl = document.getElementById('screenshotError');
   const linkEl= document.getElementById('screenshotDirectLink');
 
-  // Reset state — hide error, show spinner text
-  img.style.display = 'none';
-  errEl.style.display = 'none';
-  linkEl.href = url;
-  lb.style.display = 'flex';
+  // Move to body first so it's not trapped by parent stacking context
+  if(lb.parentElement !== document.body) document.body.appendChild(lb);
 
-  // Set up load/error handlers BEFORE setting src
+  img.style.display  = 'none';
+  errEl.style.display= 'none';
+  linkEl.href        = url;
+  lb.style.display   = 'flex';
+  lb.style.position  = 'fixed';
+  lb.style.inset     = '0';
+  lb.style.zIndex    = '999999';
+  lb.style.alignItems= 'center';
+  lb.style.justifyContent = 'center';
+
   img.onload  = () => { img.style.display='block'; errEl.style.display='none'; };
   img.onerror = () => { img.style.display='none';  errEl.style.display='block'; };
 
@@ -3622,13 +3648,10 @@ async function openScreenshot(url){
     const match = url.match(/payment-screenshots\/(.+)$/);
     if(!match){ img.src = url; return; }
     const path = match[1];
-
     const res = await fetch(`${SB_URL}/storage/v1/object/sign/payment-screenshots/${path}`,{
-      method:'POST',
-      headers:{...HDRS},
+      method:'POST', headers:{...HDRS},
       body:JSON.stringify({expiresIn: 3600}),
     });
-
     if(res.ok){
       const data = await res.json();
       img.src = `${SB_URL}/storage/v1${data.signedURL}`;
@@ -5105,6 +5128,18 @@ function initDatePickers(){
     altInput:      true,
     altFormat:     'F j, Y',
     disableMobile: false,
+    appendTo:      document.body,  // always attach to body so z-index works
+    onReady(sel, dateStr, instance){
+      // Force calendar above modal overlay
+      if(instance.calendarContainer){
+        instance.calendarContainer.style.zIndex = '9999999';
+      }
+    },
+    onOpen(sel, dateStr, instance){
+      if(instance.calendarContainer){
+        instance.calendarContainer.style.zIndex = '9999999';
+      }
+    },
   };
 
   fpRegFrom = flatpickr('#tDateFrom', {

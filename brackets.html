@@ -640,6 +640,7 @@ async function renderPrintableView(levelKey){
       <span class="card-head-name">${escapeHtml(level.label)}</span>
       <div class="bracket-card-actions">
         <button class="btn btn-outline" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        <button class="btn btn-outline" id="shuffle-${levelKey}" onclick="shuffleFromOpenView('${levelKey}')"><i class="bi bi-shuffle"></i> Shuffle</button>
         <button class="btn btn-primary" onclick="exportBracketExcel('${levelKey}', ${level.bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
       </div>
     </div>
@@ -717,6 +718,47 @@ async function shuffleLevel(key){
   }catch(e){
     setStatus('Shuffle failed: '+e.message, true);
     renderLevels();
+  }
+}
+
+async function shuffleFromOpenView(key){
+  const l = levels.find(x=>x.level_key===key);
+  if(!l || !l.bracketId) return;
+  l.teams = registeredTeamsForLevel(l.level_key).length;
+  const eligibility = getBracketEligibility(l);
+  if(!eligibility.canGenerate){
+    alert('Cannot shuffle: '+(staleGeneratedReason(l) || 'at least 4 Registered teams are required.'));
+    return;
+  }
+  const confirmed = confirm(`Shuffle teams for ${l.label}? This will replace the current group assignments.`);
+  if(!confirmed) return;
+  const btn = document.getElementById('shuffle-'+key);
+  if(btn){ btn.innerHTML='<i class="bi bi-arrow-clockwise"></i> Shuffling...'; btn.disabled=true; }
+  try{
+    // Delete old bracket + reseed
+    await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
+    l.bracketId = null; l.status = null;
+
+    // Create new bracket record
+    const bRes = await fetch(`${SB_URL}/rest/v1/brackets`,{
+      method:'POST', headers:{...HDRS,'Prefer':'return=representation'},
+      body:JSON.stringify({tournament_id:activeTId, level_key:l.level_key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status:'published'}),
+    });
+    if(!bRes.ok) throw new Error(await bRes.text());
+    const [bracket] = await bRes.json();
+    l.bracketId = bracket.id; l.status = 'published';
+
+    // Update bracketData
+    bracketData = bracketData.filter(b=>b.level_key!==key);
+    bracketData.push({id:bracket.id, level_key:key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status:'published'});
+
+    // Seed and re-render the open view in place
+    await seedBracket(l, bracket.id);
+    await renderPrintableView(key);
+    setStatus('Shuffled — '+l.label, false);
+  }catch(e){
+    alert('Shuffle failed: '+e.message);
+    if(btn){ btn.innerHTML='<i class="bi bi-shuffle"></i> Shuffle'; btn.disabled=false; }
   }
 }
 

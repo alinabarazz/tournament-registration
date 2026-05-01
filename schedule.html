@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule Generator — Badminton Tournament</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#e8372a;--accent:#f5a623;--bg:#0a0a0a;--card:#141414;
+  --border:#2a2a2a;--text:#f0f0f0;--muted:#666;--success:#22c55e;
+  --danger:#e8372a;--info:#60a5fa;--warning:#f5a623;
+}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:52px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.topbar-left{display:flex;align-items:center;gap:8px;}
+.topbar-back{color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;transition:all 0.2s;}
+.topbar-back:hover{color:var(--text);background:#1e1e1e;}
+.topbar-sep{color:#333;font-size:14px;margin:0 1px;}
+.topbar-brand{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.15em;color:var(--primary);}
+.topbar-sub{font-size:11px;color:var(--muted);margin-left:6px;}
+
+/* PAGE */
+.page{max-width:1400px;margin:0 auto;padding:1.5rem;}
+.page-header{margin-bottom:1.5rem;}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;}
+.page-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* TOURNAMENT SELECTOR */
+.t-select-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.t-select-bar label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);}
+.t-select-bar select{background:#0f0f0f;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:6px 10px;cursor:pointer;min-width:200px;}
+.t-select-bar select:focus{outline:none;border-color:var(--primary);}
+
+/* CONFIG GRID */
+.config-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.config-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;}
+.config-card-title{font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
+.config-card-title i{color:var(--primary);}
+.config-field{margin-bottom:0.875rem;}
+.config-field:last-child{margin-bottom:0;}
+.config-field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:5px;}
+.config-input{background:#0f0f0f;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;padding:8px 12px;width:100%;transition:border-color 0.15s;}
+.config-input:focus{outline:none;border-color:var(--primary);}
+.config-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* COURT REDUCTION RULES */
+.reduction-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px;}
+.reduction-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
+.reduction-row input{background:#0f0f0f;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:7px 10px;width:100%;transition:border-color 0.15s;}
+.reduction-row input:focus{outline:none;border-color:var(--primary);}
+.btn-remove-row{background:transparent;border:1px solid rgba(232,55,42,0.25);color:var(--primary);border-radius:5px;cursor:pointer;padding:6px 9px;font-size:12px;transition:all 0.15s;}
+.btn-remove-row:hover{background:rgba(232,55,42,0.08);}
+.btn-add-rule{background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--muted);font-family:'Barlow',sans-serif;font-size:12px;padding:7px 12px;cursor:pointer;transition:all 0.2s;width:100%;display:flex;align-items:center;gap:6px;justify-content:center;}
+.btn-add-rule:hover{border-color:var(--primary);color:var(--primary);}
+
+/* LEVEL SELECTOR */
+.level-checkboxes{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;}
+.level-check-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:#0f0f0f;border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;}
+.level-check-item:hover{border-color:#3a3a3a;}
+.level-check-item.selected{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.04);}
+.level-check-item input[type=checkbox]{accent-color:var(--success);width:14px;height:14px;cursor:pointer;}
+.level-check-label{font-size:13px;font-weight:600;flex:1;}
+.level-check-count{font-size:11px;color:var(--muted);}
+
+/* GENERATE BTN */
+.generate-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:1.5rem;flex-wrap:wrap;}
+.generate-bar-info{font-size:12px;color:var(--muted);}
+.generate-bar-info span{color:var(--text);font-weight:600;}
+.btn-generate{background:var(--primary);border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;padding:11px 28px;border-radius:8px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px;}
+.btn-generate:hover{background:#c0281c;}
+.btn-generate:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem;}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:800;}
+.stat-num.red{color:var(--primary);}
+.stat-num.green{color:var(--success);}
+.stat-num.amber{color:var(--accent);}
+.stat-num.blue{color:#60a5fa;}
+
+/* WARNING BOX */
+.warn-box{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-left:3px solid var(--warning);border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:var(--warning);line-height:1.6;margin-bottom:1rem;}
+.warn-box strong{display:block;margin-bottom:2px;}
+.err-box{background:rgba(232,55,42,0.08);border:1px solid rgba(232,55,42,0.3);border-left:3px solid var(--primary);border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:#ff8080;line-height:1.6;margin-bottom:1rem;}
+.info-box{background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.25);border-left:3px solid var(--info);border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:#90bffa;line-height:1.6;margin-bottom:1rem;}
+
+/* SCHEDULE OUTPUT */
+.schedule-output{display:none;}
+.schedule-output.visible{display:block;}
+
+.output-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1rem;}
+.output-title{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;}
+.output-actions{display:flex;gap:8px;}
+.btn-action{background:#1a1a1a;border:1px solid var(--border);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;padding:8px 16px;border-radius:7px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+.btn-action:hover{background:#222;border-color:#3a3a3a;}
+.btn-action.primary{background:var(--primary);border-color:var(--primary);color:#fff;}
+.btn-action.primary:hover{background:#c0281c;}
+
+/* LEVEL TABS */
+.level-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1rem;overflow-x:auto;}
+.level-tab{background:none;border:none;border-bottom:3px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;padding:10px 18px;cursor:pointer;transition:all 0.2s;white-space:nowrap;margin-bottom:-1px;}
+.level-tab:hover{color:var(--text);}
+.level-tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+.level-tab-panel{display:none;}
+.level-tab-panel.active{display:block;}
+
+/* SCHEDULE TABLE */
+.schedule-section{margin-bottom:2rem;}
+.schedule-section-title{font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);padding:8px 0;margin-bottom:0.5rem;display:flex;align-items:center;gap:8px;}
+.schedule-section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.slot-block{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.slot-header{background:#1a1a1a;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.slot-time{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:var(--primary);}
+.slot-count{font-size:11px;color:var(--muted);font-weight:600;}
+.slot-matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0;}
+.match-cell{padding:10px 16px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);transition:background 0.15s;}
+.match-cell:hover{background:#1a1a1a;}
+.match-court{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;}
+.match-teams{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;line-height:1.3;}
+.match-vs{color:var(--muted);font-size:0.75rem;font-weight:400;margin:0 4px;}
+.match-level-badge{display:inline-block;font-size:9px;font-weight:800;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:0.05em;margin-top:3px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--success);}
+
+/* CONFLICT TABLE */
+.conflict-section{background:rgba(232,55,42,0.05);border:1px solid rgba(232,55,42,0.2);border-radius:10px;padding:1rem;margin-bottom:1rem;}
+.conflict-title{font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:var(--primary);margin-bottom:0.75rem;display:flex;align-items:center;gap:6px;}
+.conflict-item{font-size:12px;color:#ff8080;padding:5px 0;border-bottom:1px solid rgba(232,55,42,0.1);}
+.conflict-item:last-child{border-bottom:none;}
+
+/* ALL COURTS VIEW */
+.all-courts-table{width:100%;border-collapse:collapse;font-size:12px;}
+.all-courts-table thead th{background:#1a1a1a;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;color:#ccc;padding:8px 10px;text-align:left;border:1px solid var(--border);white-space:nowrap;}
+.all-courts-table tbody td{padding:7px 10px;border:1px solid #1a1a1a;vertical-align:top;font-size:11px;line-height:1.4;}
+.all-courts-table tbody tr:hover td{background:#111;}
+.all-courts-table .time-col{font-family:'Barlow Condensed',sans-serif;font-size:0.95rem;font-weight:800;color:var(--primary);white-space:nowrap;background:#0f0f0f;}
+.court-match{font-weight:600;line-height:1.3;}
+.court-match .lvl{font-size:9px;color:var(--muted);display:block;font-weight:400;}
+.court-empty{color:#333;font-style:italic;font-size:10px;}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted);}
+.empty i{font-size:3rem;opacity:0.2;display:block;margin-bottom:1rem;}
+.empty p{font-size:13px;}
+.loading-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* PRINT */
+@media print{
+  .topbar,.t-select-bar,.config-grid,.generate-bar,.stats-row,.output-actions,.level-tabs,.no-print{display:none!important;}
+  .page{padding:0;}
+  body{background:#fff;color:#111;}
+  .slot-block{background:#fff;border:1px solid #ccc;break-inside:avoid;}
+  .slot-header{background:#f0f0f0;}
+  .slot-time{color:#c0281c;}
+  .match-cell{border-color:#ddd;}
+  .all-courts-table thead th{background:#eee;color:#333;}
+  .all-courts-table .time-col{background:#f5f5f5;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="admin.html" class="topbar-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    <span class="topbar-sep">|</span>
+    <a href="brackets.html" class="topbar-back">Brackets</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <div class="topbar-brand">Schedule Generator</div>
+    <span class="topbar-sub" id="topbarTournament"></span>
+  </div>
+  <div style="font-size:11px;color:var(--muted);" id="topbarUser"></div>
+</div>
+
+<div class="page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-title">Schedule Generator</div>
+    <div class="page-sub">Auto-generate match schedules with player conflict detection across all levels.</div>
+  </div>
+
+  <!-- TOURNAMENT SELECTOR -->
+  <div class="t-select-bar">
+    <label>Tournament</label>
+    <select id="tournamentSelect" onchange="onTournamentChange()">
+      <option value="">— Select tournament —</option>
+    </select>
+    <span id="tSelectInfo" style="font-size:12px;color:var(--muted);"></span>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="config-grid" id="configGrid" style="display:none;">
+
+    <!-- TIMING -->
+    <div class="config-card">
+      <div class="config-card-title"><i class="bi bi-clock"></i> Timing</div>
+      <div class="config-field">
+        <label>Start Time</label>
+        <input class="config-input" type="time" id="cfgStartTime" value="08:00">
+      </div>
+      <div class="config-row">
+        <div class="config-field">
+          <label>Match Duration (min)</label>
+          <input class="config-input" type="number" id="cfgMatchDuration" value="20" min="5" max="120">
+        </div>
+        <div class="config-field">
+          <label>Break Between (min)</label>
+          <input class="config-input" type="number" id="cfgBreak" value="2" min="0" max="60">
+        </div>
+      </div>
+    </div>
+
+    <!-- COURTS -->
+    <div class="config-card">
+      <div class="config-card-title"><i class="bi bi-grid-3x3"></i> Court Availability</div>
+      <div class="config-field">
+        <label>Courts at Start</label>
+        <input class="config-input" type="number" id="cfgCourts" value="12" min="1" max="30">
+      </div>
+      <div class="config-field">
+        <label>Court Reduction Rules <span style="color:var(--muted);font-weight:400;font-size:9px;">(optional)</span></label>
+        <div class="reduction-list" id="reductionList"></div>
+        <button class="btn-add-rule" onclick="addReductionRule()">
+          <i class="bi bi-plus-circle"></i> Add court reduction rule
+        </button>
+      </div>
+    </div>
+
+    <!-- LEVELS -->
+    <div class="config-card">
+      <div class="config-card-title"><i class="bi bi-layers"></i> Levels to Schedule</div>
+      <div id="levelCheckboxes" class="level-checkboxes">
+        <div style="color:var(--muted);font-size:12px;">Select a tournament first.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GENERATE BAR -->
+  <div class="generate-bar" id="generateBar" style="display:none;">
+    <div class="generate-bar-info" id="schedSummary">Configure settings above, then generate.</div>
+    <button class="btn-generate" id="btnGenerate" onclick="generateSchedule()">
+      <i class="bi bi-lightning-fill"></i> Generate Schedule
+    </button>
+  </div>
+
+  <!-- SCHEDULE OUTPUT -->
+  <div class="schedule-output" id="scheduleOutput">
+
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- WARNINGS -->
+    <div id="warningsArea"></div>
+
+    <!-- TOOLBAR -->
+    <div class="output-toolbar">
+      <div class="output-title" id="outputTitle">Generated Schedule</div>
+      <div class="output-actions no-print">
+        <button class="btn-action" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        <button class="btn-action primary" onclick="exportExcel()"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+      </div>
+    </div>
+
+    <!-- VIEW TOGGLE -->
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:1rem;">
+      <button class="btn-action active" id="btnViewCards" onclick="setView('cards')"><i class="bi bi-grid"></i> Card View</button>
+      <button class="btn-action" id="btnViewTable" onclick="setView('table')"><i class="bi bi-table"></i> Court Grid</button>
+    </div>
+
+    <!-- CARD VIEW -->
+    <div id="viewCards">
+      <div class="level-tabs" id="levelTabs"></div>
+      <div id="levelTabPanels"></div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div id="viewTable" style="display:none;">
+      <div style="overflow-x:auto;">
+        <table class="all-courts-table" id="courtGridTable"></table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty" id="emptyState">
+    <i class="bi bi-calendar3"></i>
+    <p>Select a tournament above to begin.</p>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════ */
+const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
+const HDRS  = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+
+let tournaments   = [];
+let activeTId     = null;
+let activeTName   = '';
+let allRegs       = [];
+let levels        = [];
+let currentUser   = null;
+let generatedSchedule = null; // { slots, conflicts, levelMap }
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+(async function init(){
+  const saved = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  if(!saved){ window.location.href='admin.html'; return; }
+  currentUser = JSON.parse(saved);
+  document.getElementById('topbarUser').textContent = currentUser.username + ' · ' + currentUser.role;
+
+  let url = `${SB_URL}/rest/v1/tournaments?select=id,name,owner_id,status&order=created_at.desc`;
+  if(currentUser.role==='admin') url+=`&owner_id=eq.${currentUser.id}`;
+  const res  = await fetch(url,{headers:HDRS});
+  tournaments = res.ok ? await res.json() : [];
+
+  const sel = document.getElementById('tournamentSelect');
+  tournaments.forEach(t=>{
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name + (t.status ? ` [${t.status}]` : '');
+    sel.appendChild(opt);
+  });
+
+  // Auto-select tournament from URL param ?t=ID (passed by admin.html)
+  const tFromUrl = new URLSearchParams(window.location.search).get('t');
+  if(tFromUrl){
+    sel.value = tFromUrl;
+    if(sel.value) await onTournamentChange();
+  }
+})();
+
+/* ═══════════════════════════════════════════
+   TOURNAMENT CHANGE
+═══════════════════════════════════════════ */
+async function onTournamentChange(){
+  activeTId = parseInt(document.getElementById('tournamentSelect').value)||null;
+  document.getElementById('scheduleOutput').classList.remove('visible');
+  document.getElementById('emptyState').style.display = 'none';
+
+  if(!activeTId){
+    document.getElementById('configGrid').style.display='none';
+    document.getElementById('generateBar').style.display='none';
+    document.getElementById('emptyState').style.display='block';
+    return;
+  }
+
+  const t = tournaments.find(x=>x.id===activeTId)||{};
+  activeTName = t.name||'';
+  document.getElementById('topbarTournament').textContent = activeTName;
+  document.getElementById('tSelectInfo').textContent = `ID: ${activeTId}`;
+  document.getElementById('configGrid').style.display='grid';
+  document.getElementById('generateBar').style.display='flex';
+
+  // Load registrations + pricing
+  const [rRes, pRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTId}&Status=eq.Registered&select=id,Level,Team_Name,Player1_Name,Player2_Name`,{headers:HDRS}),
+    fetch(`${SB_URL}/rest/v1/pricing?tournament_id=eq.${activeTId}&enabled=eq.true&select=level_key,label&order=label.asc`,{headers:HDRS}),
+  ]);
+  allRegs = rRes.ok ? await rRes.json() : [];
+  const pricing = pRes.ok ? await pRes.json() : [];
+
+  // Build levels list
+  levels = pricing.map(p=>{
+    const teams = allRegs.filter(r=>r.Level===p.level_key);
+    return { key:p.level_key, label:p.label||p.level_key, teams };
+  }).filter(l=>l.teams.length > 0);
+
+  renderLevelCheckboxes();
+  updateSummary();
+}
+
+/* ═══════════════════════════════════════════
+   LEVEL CHECKBOXES
+═══════════════════════════════════════════ */
+function renderLevelCheckboxes(){
+  const wrap = document.getElementById('levelCheckboxes');
+  if(!levels.length){
+    wrap.innerHTML='<div style="color:var(--muted);font-size:12px;">No registered teams found.</div>';
+    return;
+  }
+  wrap.innerHTML = levels.map(l=>`
+    <label class="level-check-item selected" id="lci_${l.key}">
+      <input type="checkbox" checked value="${l.key}" onchange="toggleLevel('${l.key}',this.checked)">
+      <span class="level-check-label">${l.label}</span>
+      <span class="level-check-count">${l.teams.length} teams · ${calcMatchCount(l.teams.length)} matches</span>
+    </label>
+  `).join('');
+}
+
+function toggleLevel(key, checked){
+  const el = document.getElementById('lci_'+key);
+  if(el) el.classList.toggle('selected', checked);
+  updateSummary();
+}
+
+function getSelectedLevels(){
+  return levels.filter(l=>{
+    const cb = document.querySelector(`#levelCheckboxes input[value="${l.key}"]`);
+    return cb && cb.checked;
+  });
+}
+
+function calcMatchCount(n){ return n*(n-1)/2; }
+
+/* ═══════════════════════════════════════════
+   COURT REDUCTION RULES
+═══════════════════════════════════════════ */
+function addReductionRule(){
+  const list = document.getElementById('reductionList');
+  const div = document.createElement('div');
+  div.className = 'reduction-row';
+  div.innerHTML = `
+    <input type="time" value="16:00" placeholder="Time">
+    <input type="number" value="5" min="1" max="30" placeholder="Courts">
+    <button class="btn-remove-row" onclick="this.parentElement.remove();updateSummary()"><i class="bi bi-x"></i></button>
+  `;
+  div.querySelectorAll('input').forEach(i=>i.addEventListener('change',updateSummary));
+  list.appendChild(div);
+  updateSummary();
+}
+
+function getCourtRules(){
+  const startCourts = parseInt(document.getElementById('cfgCourts').value)||12;
+  const startTime   = document.getElementById('cfgStartTime').value||'08:00';
+  const rules = [{ minutes: timeToMinutes(startTime), courts: startCourts }];
+  document.querySelectorAll('#reductionList .reduction-row').forEach(row=>{
+    const [tIn, cIn] = row.querySelectorAll('input');
+    const t = tIn.value, c = parseInt(cIn.value);
+    if(t && c > 0) rules.push({ minutes: timeToMinutes(t), courts: c });
+  });
+  rules.sort((a,b)=>a.minutes-b.minutes);
+  return rules;
+}
+
+function getCourtsAt(slotMinutes, rules){
+  let courts = rules[0].courts;
+  for(const r of rules){
+    if(slotMinutes >= r.minutes) courts = r.courts;
+    else break;
+  }
+  return courts;
+}
+
+/* ═══════════════════════════════════════════
+   SUMMARY
+═══════════════════════════════════════════ */
+function updateSummary(){
+  const sel = getSelectedLevels();
+  const totalMatches = sel.reduce((s,l)=>s+calcMatchCount(l.teams.length),0);
+  const dur = (parseInt(document.getElementById('cfgMatchDuration').value)||20)
+            + (parseInt(document.getElementById('cfgBreak').value)||2);
+  const courts = parseInt(document.getElementById('cfgCourts').value)||12;
+  const totalSlots = Math.ceil(totalMatches / courts);
+  const totalMins  = totalSlots * dur;
+  const hours = Math.floor(totalMins/60), mins = totalMins%60;
+  document.getElementById('schedSummary').innerHTML =
+    `<span>${sel.length} levels</span> · <span>${totalMatches} total matches</span> · Est. duration <span>~${hours}h ${mins}m</span>`;
+}
+
+// Hook inputs to summary update
+['cfgMatchDuration','cfgBreak','cfgCourts'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input', updateSummary);
+});
+
+/* ═══════════════════════════════════════════
+   CORE SCHEDULE GENERATOR
+═══════════════════════════════════════════ */
+function generateSchedule(){
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+
+  // Small timeout to let browser render the loading state
+  setTimeout(()=>{
+    try{
+      _doGenerate();
+    }catch(e){
+      console.error(e);
+      alert('Generation failed: '+e.message);
+    }finally{
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-lightning-fill"></i> Regenerate';
+    }
+  }, 50);
+}
+
+function _doGenerate(){
+  const selectedLevels = getSelectedLevels();
+  if(!selectedLevels.length){ alert('Select at least one level.'); return; }
+
+  const startTime    = document.getElementById('cfgStartTime').value || '08:00';
+  const matchDur     = parseInt(document.getElementById('cfgMatchDuration').value)||20;
+  const breakDur     = parseInt(document.getElementById('cfgBreak').value)||2;
+  const slotDur      = matchDur + breakDur;
+  const courtRules   = getCourtRules();
+  const startMinutes = timeToMinutes(startTime);
+
+  // ── Step 1: Generate all round-robin match pairs per level ──
+  const allMatches = []; // { level, levelLabel, team1, team2 }
+  for(const lv of selectedLevels){
+    const teams = lv.teams;
+    for(let i=0;i<teams.length;i++){
+      for(let j=i+1;j<teams.length;j++){
+        allMatches.push({ level:lv.key, levelLabel:lv.label, team1:teams[i], team2:teams[j] });
+      }
+    }
+  }
+
+  // Shuffle to interleave levels (so Level A doesn't all go first)
+  shuffleArray(allMatches);
+
+  // ── Step 2: Assign slots using constraint checker ──
+  // Slot = { slotIndex, courtIndex } → match
+  // playerBusy: Map<slotIndex, Set<playerNameLower>>
+  const slotAssignments = []; // array of { slotIndex, slotStart, court, match }
+  const playerBusy      = new Map(); // slotIndex → Set of player names (lowercase)
+  const courtBusy       = new Map(); // slotIndex → Set of court numbers in use
+
+  const conflicts = []; // matches we couldn't schedule
+  const MAX_SLOTS = 500; // safety cap
+
+  for(const match of allMatches){
+    const players = getPlayerNames(match);
+    let assigned = false;
+
+    for(let si=0; si<MAX_SLOTS; si++){
+      const slotMinutes = startMinutes + si * slotDur;
+      const availCourts = getCourtsAt(slotMinutes, courtRules);
+
+      // Which courts are busy in this slot?
+      const busyCourts = courtBusy.get(si) || new Set();
+      const busyPlayers = playerBusy.get(si) || new Set();
+
+      // Check for player conflicts
+      const hasPlayerConflict = players.some(p => busyPlayers.has(p.toLowerCase()));
+      if(hasPlayerConflict) continue; // try next slot
+
+      // Find a free court in this slot
+      let freeCourt = -1;
+      for(let c=1; c<=availCourts; c++){
+        if(!busyCourts.has(c)){ freeCourt = c; break; }
+      }
+      if(freeCourt === -1) continue; // all courts busy this slot
+
+      // Assign
+      slotAssignments.push({ slotIndex:si, slotStart:slotMinutes, court:freeCourt, match });
+
+      // Mark court busy
+      if(!courtBusy.has(si)) courtBusy.set(si, new Set());
+      courtBusy.get(si).add(freeCourt);
+
+      // Mark players busy
+      if(!playerBusy.has(si)) playerBusy.set(si, new Set());
+      players.forEach(p => playerBusy.get(si).add(p.toLowerCase()));
+
+      assigned = true;
+      break;
+    }
+
+    if(!assigned){
+      conflicts.push(match);
+    }
+  }
+
+  // ── Step 3: Sort by slotIndex, then court ──
+  slotAssignments.sort((a,b)=> a.slotIndex - b.slotIndex || a.court - b.court);
+
+  // ── Step 4: Group by slot ──
+  const slotMap = new Map();
+  for(const a of slotAssignments){
+    if(!slotMap.has(a.slotIndex)) slotMap.set(a.slotIndex, { slotStart:a.slotStart, matches:[] });
+    slotMap.get(a.slotIndex).matches.push(a);
+  }
+  const slots = [...slotMap.entries()].map(([si, data])=>({ slotIndex:si, ...data }));
+
+  // ── Step 5: Build level → matches map for card view ──
+  const levelMap = new Map();
+  for(const lv of selectedLevels) levelMap.set(lv.key, { label:lv.label, slots:[] });
+  for(const slot of slots){
+    for(const a of slot.matches){
+      if(levelMap.has(a.match.level)){
+        levelMap.get(a.match.level).slots.push({ ...slot, matches:[a] });
+      }
+    }
+  }
+
+  generatedSchedule = { slots, conflicts, levelMap, selectedLevels, slotDur, startTime, courtRules };
+
+  renderOutput();
+}
+
+/* ═══════════════════════════════════════════
+   RENDER OUTPUT
+═══════════════════════════════════════════ */
+function renderOutput(){
+  const { slots, conflicts, levelMap, selectedLevels } = generatedSchedule;
+  const totalMatches = slots.reduce((s,sl)=>s+sl.matches.length,0);
+
+  // Stats
+  const endSlot = slots[slots.length-1];
+  const endMin  = endSlot ? endSlot.slotStart + generatedSchedule.slotDur : 0;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Matches</div><div class="stat-num blue">${totalMatches}</div></div>
+    <div class="stat-card"><div class="stat-label">Time Slots</div><div class="stat-num amber">${slots.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Levels</div><div class="stat-num green">${selectedLevels.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Est. End Time</div><div class="stat-num">${minutesToTime(endMin)}</div></div>
+    <div class="stat-card"><div class="stat-label">Conflicts</div><div class="stat-num ${conflicts.length>0?'red':'green'}">${conflicts.length}</div></div>
+  `;
+
+  // Warnings
+  const warnArea = document.getElementById('warningsArea');
+  warnArea.innerHTML='';
+  if(conflicts.length > 0){
+    const div = document.createElement('div');
+    div.className='conflict-section';
+    div.innerHTML=`<div class="conflict-title"><i class="bi bi-exclamation-triangle-fill"></i> ${conflicts.length} Unscheduled Match${conflicts.length>1?'es':''}</div>`+
+      conflicts.map(m=>`<div class="conflict-item">⚠ ${m.levelLabel}: <strong>${m.team1.Team_Name}</strong> vs <strong>${m.team2.Team_Name}</strong> — could not find a conflict-free slot</div>`).join('');
+    warnArea.appendChild(div);
+  }
+
+  // Estimate end-time warning
+  const endHour = Math.floor(endMin/60);
+  if(endHour >= 21){
+    warnArea.insertAdjacentHTML('afterbegin',`<div class="warn-box"><strong>⚠ Late Finish Detected</strong>Schedule ends at ${minutesToTime(endMin)} — consider adding more courts or splitting to multiple days.</div>`);
+  }
+
+  document.getElementById('outputTitle').textContent = `Schedule — ${activeTName}`;
+
+  renderCardView();
+  renderTableView();
+
+  document.getElementById('scheduleOutput').classList.add('visible');
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('scheduleOutput').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderCardView(){
+  const { slots, levelMap } = generatedSchedule;
+  const tabs    = document.getElementById('levelTabs');
+  const panels  = document.getElementById('levelTabPanels');
+  const allKey  = '__all__';
+
+  // Build tabs: All + per level
+  const tabDefs = [{key:allKey, label:'All Courts'}];
+  for(const [key,lv] of levelMap) tabDefs.push({key, label:lv.label});
+
+  tabs.innerHTML = tabDefs.map((t,i)=>`
+    <button class="level-tab ${i===0?'active':''}" onclick="switchLevelTab('${t.key}')" id="lt_${t.key}">${t.label}</button>
+  `).join('');
+
+  panels.innerHTML='';
+
+  // ALL COURTS panel
+  const allPanel = document.createElement('div');
+  allPanel.className='level-tab-panel active';
+  allPanel.id='ltp_'+allKey;
+  allPanel.innerHTML = renderSlotsHTML(slots);
+  panels.appendChild(allPanel);
+
+  // Per-level panels
+  for(const [key,lv] of levelMap){
+    // Regroup slots for this level
+    const lvSlots = [];
+    const siMap = new Map();
+    for(const slot of slots){
+      const lvMatches = slot.matches.filter(a=>a.match.level===key);
+      if(!lvMatches.length) continue;
+      lvSlots.push({ ...slot, matches:lvMatches });
+    }
+    const panel = document.createElement('div');
+    panel.className='level-tab-panel';
+    panel.id='ltp_'+key;
+    panel.innerHTML=`<div class="info-box"><strong>${lv.label}</strong> — ${lvSlots.reduce((s,sl)=>s+sl.matches.length,0)} matches across ${lvSlots.length} time slots</div>`+renderSlotsHTML(lvSlots);
+    panels.appendChild(panel);
+  }
+}
+
+function renderSlotsHTML(slots){
+  if(!slots.length) return '<div class="empty"><i class="bi bi-calendar-x"></i><p>No matches.</p></div>';
+  return slots.map(slot=>`
+    <div class="slot-block">
+      <div class="slot-header">
+        <div class="slot-time">${minutesToTime(slot.slotStart)}</div>
+        <div class="slot-count">${slot.matches.length} match${slot.matches.length!==1?'es':''}</div>
+      </div>
+      <div class="slot-matches">
+        ${slot.matches.map(a=>`
+          <div class="match-cell">
+            <div class="match-court">Court ${a.court}</div>
+            <div class="match-teams">
+              ${a.match.team1.Team_Name}
+              <span class="match-vs">vs</span>
+              ${a.match.team2.Team_Name}
+            </div>
+            <span class="match-level-badge">${a.match.levelLabel}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTableView(){
+  const { slots, courtRules } = generatedSchedule;
+  if(!slots.length) return;
+
+  // Find max courts across all slots
+  const maxCourts = Math.max(...slots.map(slot=>{
+    const available = getCourtsAt(slot.slotStart, courtRules);
+    return Math.max(available, ...slot.matches.map(a=>a.court));
+  }));
+
+  const table = document.getElementById('courtGridTable');
+  const courtHeaders = Array.from({length:maxCourts},(_,i)=>`<th>Court ${i+1}</th>`).join('');
+  table.innerHTML = `<thead><tr><th>Time</th>${courtHeaders}</tr></thead><tbody></tbody>`;
+  const tbody = table.querySelector('tbody');
+
+  for(const slot of slots){
+    const courtMap = new Map();
+    slot.matches.forEach(a=>courtMap.set(a.court,a));
+
+    const cells = Array.from({length:maxCourts},(_,i)=>{
+      const a = courtMap.get(i+1);
+      if(!a) return `<td><span class="court-empty">—</span></td>`;
+      return `<td>
+        <div class="court-match">
+          ${a.match.team1.Team_Name} vs ${a.match.team2.Team_Name}
+          <span class="lvl">${a.match.levelLabel}</span>
+        </div>
+      </td>`;
+    }).join('');
+
+    tbody.insertAdjacentHTML('beforeend',`<tr><td class="time-col">${minutesToTime(slot.slotStart)}</td>${cells}</tr>`);
+  }
+}
+
+function switchLevelTab(key){
+  document.querySelectorAll('.level-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.level-tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('lt_'+key)?.classList.add('active');
+  document.getElementById('ltp_'+key)?.classList.add('active');
+}
+
+function setView(view){
+  document.getElementById('viewCards').style.display = view==='cards'?'block':'none';
+  document.getElementById('viewTable').style.display = view==='table'?'block':'none';
+  document.getElementById('btnViewCards').classList.toggle('primary', view==='cards');
+  document.getElementById('btnViewTable').classList.toggle('primary', view==='table');
+}
+
+/* ═══════════════════════════════════════════
+   EXCEL EXPORT
+═══════════════════════════════════════════ */
+function exportExcel(){
+  if(!generatedSchedule) return;
+  const { slots } = generatedSchedule;
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Full schedule by time slot
+  const rows1 = [['Time','Court','Level','Team 1','Team 2']];
+  for(const slot of slots){
+    for(const a of slot.matches){
+      rows1.push([
+        minutesToTime(slot.slotStart),
+        'Court '+a.court,
+        a.match.levelLabel,
+        a.match.team1.Team_Name,
+        a.match.team2.Team_Name,
+      ]);
+    }
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows1), 'Full Schedule');
+
+  // Sheet 2: Per level
+  for(const [key,lv] of generatedSchedule.levelMap){
+    const lvSlots = slots.map(sl=>({...sl,matches:sl.matches.filter(a=>a.match.level===key)})).filter(sl=>sl.matches.length);
+    const rows = [['Match #','Time','Court','Team 1','Team 2']];
+    let matchNum=1;
+    for(const slot of lvSlots){
+      for(const a of slot.matches){
+        rows.push([matchNum++, minutesToTime(slot.slotStart), 'Court '+a.court, a.match.team1.Team_Name, a.match.team2.Team_Name]);
+      }
+    }
+    const safeName = lv.label.replace(/[\\/?*[\]]/g,'').substring(0,31);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), safeName);
+  }
+
+  // Sheet 3: Conflicts (if any)
+  if(generatedSchedule.conflicts.length){
+    const rows3 = [['Level','Team 1','Team 2','Reason']];
+    for(const m of generatedSchedule.conflicts){
+      rows3.push([m.levelLabel, m.team1.Team_Name, m.team2.Team_Name, 'Player conflict — could not find free slot']);
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows3), 'Conflicts');
+  }
+
+  const tName = activeTName.replace(/[^a-zA-Z0-9_-]/g,'_');
+  XLSX.writeFile(wb, `Schedule_${tName}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+function getPlayerNames(match){
+  const names = [];
+  const add = n=>{ if(n && n.trim()) names.push(n.trim()); };
+  add(match.team1.Player1_Name);
+  add(match.team1.Player2_Name);
+  add(match.team2.Player1_Name);
+  add(match.team2.Player2_Name);
+  return names;
+}
+
+function timeToMinutes(t){
+  if(!t) return 0;
+  const [h,m] = t.split(':').map(Number);
+  return h*60+(m||0);
+}
+
+function minutesToTime(m){
+  const totalMins = Math.round(m);
+  const h = Math.floor(totalMins/60)%24;
+  const min = totalMins%60;
+  const ampm = h>=12?'PM':'AM';
+  const hh   = h%12||12;
+  return `${hh}:${String(min).padStart(2,'0')} ${ampm}`;
+}
+
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>

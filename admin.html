@@ -425,6 +425,7 @@
   <button class="tab-btn" onclick="showTab('sponsors',event)">Sponsors</button>
   <button class="tab-btn" onclick="showTab('sales',event)">Sales</button>
   <button class="tab-btn" onclick="goToBrackets()" id="bracketTabBtn">Brackets <i class="bi bi-box-arrow-up-right" style="font-size:10px;"></i></button>
+  <button class="tab-btn" onclick="window.open('schedule.html?t='+(document.getElementById('tournamentSelect').value||''),'_blank','noopener')">Schedule <i class="bi bi-box-arrow-up-right" style="font-size:10px;"></i></button>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -741,6 +742,70 @@
 </div><!-- /mainDashboard -->
 
 </div><!-- /app -->
+
+<!-- ══ EDIT REGISTRATION MODAL ══ -->
+<div id="editRegModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:3000;align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeEditRegistration()">
+  <div class="modal" style="max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+    <div class="modal-header" style="border-left:4px solid #60a5fa;">
+      <div>
+        <div class="modal-title" style="color:#60a5fa;">Edit Registration</div>
+        <div id="editRegRef" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeEditRegistration()">✕</button>
+    </div>
+    <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+
+      <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#93c5fd;line-height:1.6;">
+        <i class="bi bi-info-circle-fill"></i> Only player names and team name can be edited. Use <strong>Transfer</strong> to change level, and the <strong>Status dropdown</strong> for status changes.
+      </div>
+
+      <div class="modal-field">
+        <label>Team Name *</label>
+        <input class="modal-input" type="text" id="erTeamName" placeholder="Team name">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="modal-field">
+          <label>Player 1 Name *</label>
+          <input class="modal-input" type="text" id="erPlayer1" placeholder="Player 1 full name">
+        </div>
+        <div class="modal-field">
+          <label>Player 2 Name</label>
+          <input class="modal-input" type="text" id="erPlayer2" placeholder="Player 2 full name">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="modal-field">
+          <label>Player 1 Facebook</label>
+          <input class="modal-input" type="text" id="erP1Facebook" placeholder="facebook.com/...">
+        </div>
+        <div class="modal-field">
+          <label>Player 2 Facebook</label>
+          <input class="modal-input" type="text" id="erP2Facebook" placeholder="facebook.com/...">
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label>Phone Number</label>
+        <input class="modal-input" type="text" id="erPhone" placeholder="09XX XXX XXXX">
+      </div>
+
+      <div class="modal-field">
+        <label>Change Reason <span style="color:var(--muted);font-weight:400;">(for audit trail)</span></label>
+        <input class="modal-input" type="text" id="erReason" placeholder="e.g. Player 2 replacement — original partner injured">
+      </div>
+
+      <div id="editRegError" style="display:none;padding:8px 12px;border-radius:6px;font-size:12px;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;"></div>
+
+      <div style="display:flex;gap:8px;" id="editRegChanges" style="display:none;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeEditRegistration()">Cancel</button>
+      <button class="btn-modal-submit" onclick="saveEditRegistration()" id="erSaveBtn" style="background:#60a5fa;">Save Changes</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ REJECTION NOTES MODAL ══ -->
 <div class="modal-overlay" id="rejectionModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;padding:1rem;">
@@ -2439,6 +2504,16 @@ function renderTable(data){
                 </button>` : ''}
               </span>
             </div>
+            ${!['Cancelled','Rejected'].includes(r.Status) ? `
+            <div class="detail-item" style="margin-top:4px;">
+              <span class="detail-label">Admin Actions</span>
+              <span class="detail-value">
+                <button onclick="openEditRegistration(${r.id})"
+                  style="background:#1a1a2a;border:1px solid rgba(96,165,250,0.35);color:#60a5fa;font-size:10px;font-weight:700;padding:4px 12px;border-radius:4px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:0.05em;">
+                  <i class="bi bi-pencil-fill"></i> Edit Registration
+                </button>
+              </span>
+            </div>` : ''}
           </div>
         </td>
       </tr>`;
@@ -5026,6 +5101,101 @@ function closeProfileSettings(){
   document.getElementById('profileSettingsModal').style.display='none';
 }
 // Keep old name as alias so any remaining references don't crash
+/* ════════════════════════════════════════════
+   EDIT REGISTRATION
+════════════════════════════════════════════ */
+let _editingRegId = null;
+
+function openEditRegistration(regId){
+  const rec = allRegs.find(r=>r.id===regId);
+  if(!rec){ alert('Registration not found.'); return; }
+  _editingRegId = regId;
+
+  document.getElementById('editRegRef').textContent    = `#${String(rec.id).padStart(5,'0')} · ${rec.Level} · ${rec.Status}`;
+  document.getElementById('erTeamName').value   = rec.Team_Name        || '';
+  document.getElementById('erPlayer1').value    = rec.Player1_Name     || '';
+  document.getElementById('erPlayer2').value    = rec.Player2_Name     || '';
+  document.getElementById('erP1Facebook').value = rec.Player1_Facebook || '';
+  document.getElementById('erP2Facebook').value = rec.Player2_Facebook || '';
+  document.getElementById('erPhone').value      = rec.Phone_Number     || '';
+  document.getElementById('erReason').value     = '';
+  document.getElementById('editRegError').style.display = 'none';
+
+  showModal('editRegModal');
+}
+
+function closeEditRegistration(){
+  hideModal('editRegModal');
+  _editingRegId = null;
+}
+
+async function saveEditRegistration(){
+  const rec = allRegs.find(r=>r.id===_editingRegId);
+  if(!rec) return;
+
+  const newTeam = document.getElementById('erTeamName').value.trim();
+  const newP1   = document.getElementById('erPlayer1').value.trim();
+  const newP2   = document.getElementById('erPlayer2').value.trim();
+  const newP1fb = document.getElementById('erP1Facebook').value.trim();
+  const newP2fb = document.getElementById('erP2Facebook').value.trim();
+  const newPhone= document.getElementById('erPhone').value.trim();
+  const reason  = document.getElementById('erReason').value.trim();
+  const errEl   = document.getElementById('editRegError');
+
+  if(!newTeam){ errEl.textContent='Team name is required.'; errEl.style.display='block'; return; }
+  if(!newP1){   errEl.textContent='Player 1 name is required.'; errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+
+  // Build audit trail
+  const changes = [];
+  if(newTeam !== (rec.Team_Name||''))        changes.push(`Team: "${rec.Team_Name}" → "${newTeam}"`);
+  if(newP1   !== (rec.Player1_Name||''))     changes.push(`P1: "${rec.Player1_Name}" → "${newP1}"`);
+  if(newP2   !== (rec.Player2_Name||''))     changes.push(`P2: "${rec.Player2_Name||'—'}" → "${newP2||'—'}"`);
+  if(newPhone!== (rec.Phone_Number||''))     changes.push(`Phone: "${rec.Phone_Number||'—'}" → "${newPhone||'—'}"`);
+
+  if(!changes.length){ closeEditRegistration(); return; }
+
+  const btn = document.getElementById('erSaveBtn');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  const now       = new Date().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+  const auditNote = `[Edited ${now}${reason?' — '+reason:''}] ${changes.join(', ')}`;
+  const existingNotes = rec.notes ? rec.notes + '\n' + auditNote : auditNote;
+
+  const patch = {
+    Team_Name:        newTeam,
+    Player1_Name:     newP1,
+    Player2_Name:     newP2 || null,
+    Player1_Facebook: newP1fb || null,
+    Player2_Facebook: newP2fb || null,
+    Phone_Number:     newPhone || null,
+    notes:            existingNotes,
+  };
+
+  try{
+    const res = await fetch(`${SB_URL}/rest/v1/registrations?id=eq.${_editingRegId}`,{
+      method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
+      body:JSON.stringify(patch),
+    });
+    if(!res.ok && res.status!==204) throw new Error(await res.text().catch(()=>'Save failed'));
+
+    // Update local record
+    Object.assign(rec, patch);
+    closeEditRegistration();
+    renderTable(allRegs);
+    // Show brief success toast
+    const toast = document.createElement('div');
+    toast.textContent = `✓ Registration #${String(rec.id).padStart(5,'0')} updated`;
+    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:999999;';
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(), 2500);
+  }catch(e){
+    errEl.textContent = 'Save failed: '+e.message;
+    errEl.style.display = 'block';
+    btn.textContent = 'Save Changes'; btn.disabled = false;
+  }
+}
+
 function closeEmailSettings(){ closeProfileSettings(); }
 
 async function openProfileSettings(){

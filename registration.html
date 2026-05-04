@@ -638,7 +638,17 @@
     return ok;
   }
 
+  // ── Anti-spam: 15 second cooldown between submissions ──
+  let _lastSubmitTime = 0;
+
   async function submitForm(){
+    const now = Date.now();
+    if(now - _lastSubmitTime < 15000){
+      const wait = Math.ceil((15000 - (now - _lastSubmitTime)) / 1000);
+      showError('err-email', `⏳ Please wait ${wait}s before submitting again.`);
+      return;
+    }
+
     const phoneRaw = document.getElementById('phone').value.trim().replace(/\D/g,'');
     const email    = document.getElementById('email').value.trim();
     const emailOk  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
@@ -647,7 +657,19 @@
     if(!email){             showError('err-email','Email is required.');          ok=false; }
     else if(!emailOk){      showError('err-email','Please enter a valid email address (e.g. name@gmail.com).'); ok=false; }
     else                    showError('err-email','');
+
+    // ── Same player name check: P1 and P2 cannot have the same name ──
+    const p1n = document.getElementById('p1Name').value.trim().toLowerCase();
+    const p2n = document.getElementById('p2Name').value.trim().toLowerCase();
+    if(ok && p1n && p2n && p1n === p2n){
+      showError('err-p2Name', `❌ Player 2 cannot have the same name as Player 1 ("${document.getElementById('p1Name').value.trim()}"). For singles, leave Player 2 blank.`);
+      setErr('p2Name', true);
+      ok = false;
+    }
+
     if(!ok) return;
+
+    _lastSubmitTime = Date.now(); // stamp BEFORE the fetch to prevent double-tap race
 
     const btn=document.getElementById('submitBtn');
     btn.classList.add('loading');btn.disabled=true;
@@ -662,6 +684,7 @@
     }
 
     // Column names match Supabase schema exactly
+    // Status is ALWAYS forced to "Pending Review" — never trust client-side status
     const payload={
       "tournament_id":   activeTournamentId,
       "Level":           level,
@@ -672,7 +695,7 @@
       "Player2_Facebook":document.getElementById('p2Facebook').value.trim(),
       "Phone_Number":    parseInt(phoneRaw,10),
       "Email_Address":   email,
-      "Status":          "Pending Review",
+      "Status":          "Pending Review", // ← hardcoded, never accept from input
     };
 
     if(isAge){
@@ -747,6 +770,16 @@
       showError('err-email','❌ Submission failed: '+err.message);
     }
   }
+
+  // ── Live same-name check on P2 name field ──
+  document.getElementById('p2Name').addEventListener('blur', function(){
+    const p1n = document.getElementById('p1Name').value.trim().toLowerCase();
+    const p2n = this.value.trim().toLowerCase();
+    if(p1n && p2n && p1n === p2n){
+      showError('err-p2Name', `❌ Player 2 cannot have the same name as Player 1. For singles, leave Player 2 blank.`);
+      setErr('p2Name', true);
+    }
+  });
 
   ['p1Bday','p1Age','p2Bday','p2Age'].forEach(id=>{
     document.getElementById(id).addEventListener('input',function(){

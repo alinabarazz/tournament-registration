@@ -10,11 +10,26 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --primary:#e8372a;--accent:#f5a623;--bg:#0a0a0a;--card:#141414;
-  --border:#2a2a2a;--text:#f0f0f0;--muted:#666;--success:#22c55e;
-  --info:#60a5fa;--warning:#f5a623;
+  --primary:#e8372a;--success:#22c55e;
+  --bg:#0a0a0a;--card:#141414;--card2:#1a1a1a;
+  --border:#252525;--text:#f0f0f0;--muted:#666;--muted2:#888;
 }
+[data-theme="light"]{
+  --bg:#f4f4f0;--card:#ffffff;--card2:#f0f0ec;
+  --border:#e0e0da;--text:#111;--muted:#888;--muted2:#aaa;
+}
+[data-theme="light"] body{background:var(--bg);color:var(--text);}
+[data-theme="light"] .topbar,[data-theme="light"] .t-select-bar{background:var(--card);border-color:var(--border);}
+[data-theme="light"] .config-card,[data-theme="light"] .stats-card{background:var(--card);border-color:var(--border);}
+[data-theme="light"] .config-input,[data-theme="light"] .reduction-row input,[data-theme="light"] .t-select-bar select{background:var(--card2);border-color:var(--border);color:var(--text);}
+[data-theme="light"] .topbar-back:hover{background:var(--card2);}
+body,*{transition:background-color 0.2s,border-color 0.2s,color 0.1s;}
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.theme-toggle{background:none;border:1px solid var(--border);color:var(--muted2);width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.theme-toggle:hover{border-color:var(--text);color:var(--text);}
+.theme-icon-sun{display:none;}.theme-icon-moon{display:block;}
+[data-theme="light"] .theme-icon-sun{display:block;}[data-theme="light"] .theme-icon-moon{display:none;}
 
 /* TOPBAR */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:52px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
@@ -170,6 +185,30 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
   .all-courts-table thead th{background:#eee;color:#333;}
   .all-courts-table .time-col{background:#f5f5f5;}
 }
+@media(max-width:768px){
+  .topbar{padding:0 0.75rem;height:48px;}
+  .topbar-sub{display:none;}
+  .topbar-brand{font-size:0.85rem;}
+  .page{padding:0.75rem;}
+  .page-title{font-size:1.5rem;}
+  .t-select-bar{padding:10px 12px;flex-direction:column;align-items:stretch;}
+  .t-select-bar select{min-width:0;width:100%;}
+  .config-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr!important;}
+  .generate-bar{flex-direction:column;align-items:stretch;}
+  .generate-bar .btn{width:100%;justify-content:center;}
+  .level-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .level-tabs::-webkit-scrollbar{display:none;}
+  .slot-matches{grid-template-columns:1fr!important;}
+  .all-courts-table{font-size:10px;}
+  .output-actions{flex-wrap:wrap;gap:8px;}
+  .output-actions .btn{flex:1;min-width:120px;}
+}
+@media(max-width:480px){
+  .config-row{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr!important;}
+  .page{padding:0.5rem;}
+}
 </style>
 </head>
 <body>
@@ -184,7 +223,13 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="topbar-brand">Schedule Generator</div>
     <span class="topbar-sub" id="topbarTournament"></span>
   </div>
-  <div style="font-size:11px;color:var(--muted);" id="topbarUser"></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">
+      <i class="bi bi-sun-fill theme-icon-sun"></i>
+      <i class="bi bi-moon-fill theme-icon-moon"></i>
+    </button>
+    <div style="font-size:11px;color:var(--muted);" id="topbarUser"></div>
+  </div>
 </div>
 
 <div class="page">
@@ -296,6 +341,10 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 </div>
 
 <script>
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toggleTheme(){const h=document.documentElement,n=h.getAttribute('data-theme')==='light'?'dark':'light';h.setAttribute('data-theme',n);localStorage.setItem('bt-theme',n);}
+(function(){const s=localStorage.getItem('bt-theme');if(s)document.documentElement.setAttribute('data-theme',s);})();
+
 const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
 const HDRS   = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};

@@ -165,6 +165,86 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
   .bracket-drag-dots,.bracket-print-note{display:none;}
 }
 
+/* ═══════════════════════════════════════
+   MOBILE RESPONSIVE — brackets.html
+   Tested at 320px, 375px, 414px, 768px
+═══════════════════════════════════════ */
+@media(max-width:768px){
+  /* TOPBAR */
+  .topbar{padding:0 0.75rem;height:48px;}
+  .topbar-back{font-size:11px;}
+  .topbar-brand{font-size:0.9rem;}
+  .topbar-sub{display:none;} /* tournament name hidden on mobile — too cramped */
+
+  /* PAGE PADDING */
+  .page{padding:0.75rem;}
+  .page-title{font-size:1.5rem;}
+  .page-sub{font-size:11px;}
+
+  /* PAGE HEADER — stack action buttons below title */
+  .page-header{flex-direction:column;align-items:stretch;gap:8px;margin-bottom:1rem;}
+  .page-header > div:last-child{display:flex;gap:8px;flex-wrap:wrap;}
+  .page-header .btn-dissolve{flex:1;}
+  #refreshBtn{flex:1;}
+
+  /* TOURNAMENT SELECTOR */
+  .t-select-bar{padding:10px 12px;gap:8px;flex-direction:column;align-items:stretch;}
+  .t-select-bar select{min-width:0;width:100%;font-size:0.9rem;}
+
+  /* LEVEL GRID — single column on small phones */
+  .level-grid{grid-template-columns:1fr;}
+
+  /* BRACKET BOARD — reduce massive desktop padding */
+  .bracket-board{padding:16px 12px 20px;min-height:200px;}
+  .bracket-board-header{margin-bottom:18px;}
+  .bracket-board-title{font-size:1.4rem;}
+  .bracket-board-subtitle{font-size:12px;}
+
+  /* BRACKET GROUPS — horizontal scroll, natural width */
+  .bracket-groups{
+    display:flex;
+    flex-direction:row;
+    gap:12px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    min-width:0;
+    padding-bottom:8px;
+    scrollbar-width:thin;
+    scrollbar-color:var(--border) transparent;
+  }
+  .bracket-group{min-width:200px;flex-shrink:0;}
+  .bracket-slot{height:38px;}
+  .bracket-team-name{font-size:13px;}
+
+  /* BRACKET CARD ACTIONS — wrap nicely */
+  .bracket-card-actions{justify-content:flex-start;gap:6px;}
+  .bracket-card-actions .btn{font-size:10px;padding:6px 10px;}
+
+  /* EDITOR TOOLBAR */
+  .editor-toolbar{flex-direction:column;align-items:stretch;}
+  .editor-toolbar-actions{justify-content:flex-end;}
+
+  /* DISSOLVE MODAL */
+  .modal-overlay{padding:0.5rem;}
+  .modal{max-height:95vh;overflow-y:auto;border-radius:10px;}
+  .modal-body{padding:12px 14px;}
+  .modal-actions{padding:10px 14px;}
+
+  /* FOOTER BAR */
+  .footer-bar{flex-direction:column;align-items:stretch;gap:8px;}
+  .btn-gen-all{width:100%;text-align:center;}
+  .footer-status{text-align:center;}
+}
+
+@media(max-width:480px){
+  .page{padding:0.5rem;}
+  .level-grid{gap:10px;}
+  .bracket-group{min-width:175px;}
+  .bracket-slot{height:36px;padding:0 8px;}
+  .bracket-team-name{font-size:12px;}
+  .bracket-player-icon{width:18px;height:18px;font-size:9px;}
+}
+
 </style>
 </head>
 <body>
@@ -1067,7 +1147,7 @@ function setStatus(msg, isErr){
 function openDissolveModal(){
   const sel = document.getElementById('dissolveLevel');
   sel.innerHTML = '<option value="">— Select level —</option>';
-  levels.forEach(l=>{ sel.innerHTML+=`<option value="${l.level_key}">${l.label} (${l.teams} teams)</option>`; });
+  levels.forEach(l=>{ sel.innerHTML+=`<option value="${escapeHtml(l.level_key)}">${escapeHtml(l.label)} (${Number(l.teams)||0} teams)</option>`; });
   document.getElementById('dissolveLevelInfo').textContent = '';
   document.getElementById('dissolveModal').classList.add('open');
 }

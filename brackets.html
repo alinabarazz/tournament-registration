@@ -109,6 +109,31 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
 .warn-box{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.3);border-left:3px solid var(--warn);border-radius:0 7px 7px 0;padding:10px 13px;font-size:12px;color:var(--warn);line-height:1.6;}
 
 
+/* EDITOR MODE */
+.editor-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 14px;background:#0f1a1b;border-bottom:1px solid #1f3032;}
+.editor-toolbar-title{font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#60a5fa;display:flex;align-items:center;gap:6px;}
+.editor-toolbar-actions{display:flex;gap:8px;}
+.btn-save-edit{background:#22c55e;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;padding:7px 16px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-save-edit:hover{background:#16a34a;}
+.btn-save-edit:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-cancel-edit{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;padding:7px 14px;border-radius:6px;cursor:pointer;}
+.btn-cancel-edit:hover{color:var(--text);background:#1a1a1a;}
+.editor-hint{font-size:11px;color:#60a5fa;display:flex;align-items:center;gap:5px;padding:7px 14px;background:rgba(96,165,250,0.06);border-bottom:1px solid rgba(96,165,250,0.15);}
+
+/* SLOT DRAG STATES */
+.bracket-slot.dragging{opacity:0.4;border-style:dashed;transform:scale(0.97);}
+.bracket-slot.drag-over{border-color:#60a5fa;background:#1a2e3a;transform:scale(1.01);box-shadow:0 0 0 2px rgba(96,165,250,0.3);}
+.bracket-slot.editable{cursor:grab;}
+.bracket-slot.editable:active{cursor:grabbing;}
+.bracket-slot.editable:hover{background:#2a5f70;border-color:rgba(96,165,250,0.3);}
+.bracket-slot.bye-editable{cursor:default;background:#18292f;border-style:dashed;opacity:0.55;}
+.bracket-slot.bye-editable:hover{background:#18292f;}
+.slot-drag-indicator{font-size:10px;color:rgba(255,255,255,0.3);margin-left:auto;padding-left:8px;}
+.group-drop-zone{min-height:44px;border:2px dashed rgba(96,165,250,0.15);border-radius:6px;margin-top:8px;display:none;align-items:center;justify-content:center;font-size:11px;color:rgba(96,165,250,0.4);transition:all 0.15s;}
+.group-drop-zone.active{display:flex;}
+.group-drop-zone.drag-over{border-color:#60a5fa;background:rgba(96,165,250,0.05);color:#60a5fa;}
+.edit-mode-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;padding:2px 8px;border-radius:3px;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:#60a5fa;text-transform:uppercase;letter-spacing:0.05em;}
+
 /* GENERATED BRACKET BOARD */
 .level-card.bracket-full{grid-column:1/-1;}
 .bracket-card-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
@@ -174,7 +199,10 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="page-title">Bracket Setup</div>
       <div class="page-sub">Configure brackets per level. Teams are auto-seeded when you Generate.</div>
     </div>
-    <button class="btn-dissolve" onclick="openDissolveModal()"><i class="bi bi-exclamation-triangle"></i> Dissolve Level</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-dissolve" id="refreshBtn" onclick="refreshData()" style="border-color:rgba(96,165,250,0.3);color:var(--info);"><i class="bi bi-arrow-clockwise" id="refreshIcon"></i> Refresh</button>
+      <button class="btn-dissolve" onclick="openDissolveModal()"><i class="bi bi-exclamation-triangle"></i> Dissolve Level</button>
+    </div>
   </div>
 
   <!-- CONTENT -->
@@ -270,10 +298,12 @@ function getBracketEligibility(l){
 function staleGeneratedReason(l){
   const e = getBracketEligibility(l);
   if(!l.bracketId || l.status !== 'published') return '';
-  if(e.noTeams) return 'No Registered teams remain. Delete this bracket or wait for eligible registrations.';
+  if(e.noTeams) return 'No Registered teams remain. Click Regenerate or Delete to clean up this bracket.';
   if(e.tooFew) return `Only ${l.teams} Registered ${l.teams===1?'team':'teams'} remain — minimum ${MIN_BRACKET_TEAMS} needed. Cancelled/non-Registered teams are excluded.`;
   if(e.invalidSlots) return `Slots / Bracket must be at least 4. Current value is ${l.slots}.`;
   if(e.notEnoughSlots) return `Current setup has ${e.totalSlots} slots but ${l.teams} Registered teams. Increase brackets or slots, then regenerate.`;
+  // Over-provisioned: bracket was generated with more test data — more groups than real teams
+  if(l.brackets > l.teams) return `Bracket has ${l.brackets} groups but only ${l.teams} Registered team${l.teams!==1?'s':''} — teams were likely added/removed since last generation. Click Regenerate to fix.`;
   return '';
 }
 
@@ -350,7 +380,7 @@ async function onTournamentChange(){
       teams,
       minPairs:   minP,
       atRisk:     withinTwoWeeks && teams > 0 && teams < minP,
-      brackets:   ex?.num_groups     || Math.max(1,Math.ceil(teams/4)||2),
+      brackets:   (ex?.num_groups && !(teams>0 && ex.num_groups>teams)) ? ex.num_groups : Math.max(1,Math.ceil(teams/4)||2),
       slots:      ex?.slots_per_group|| 4,
       format:     ex?.format         || 'round_robin',
       status:     ex?.status         || null,
@@ -401,8 +431,9 @@ function renderCard(l){
 
   const formatLabel = l.format==='round_robin' ? 'Round Robin' : 'Single Elim';
   const cardClass = ['level-card', l.atRisk?'atrisk':'', isUsablePublished?'published':''].filter(Boolean).join(' ');
+  const k = jsKey(l.level_key); // apostrophe-safe key for onclick attrs
 
-  return `<div class="${cardClass}" id="lcard-${l.level_key}">
+  return `<div class="${cardClass}" id="lcard-${escapeHtml(l.level_key)}">
     <div class="card-head">
       <span class="card-head-name">${escapeHtml(l.label)}</span>
       <div class="badges">
@@ -418,21 +449,21 @@ function renderCard(l){
         <div>
           <span class="field-label">Brackets</span>
           <input class="field-input" type="number" min="1" max="16" value="${l.brackets}"
-            onchange="levelUpdate('${l.level_key}','brackets',+this.value)">
+            onchange="levelUpdate('${k}','brackets',+this.value)">
         </div>
         <div>
           <span class="field-label">Slots / Bracket</span>
           <input class="field-input" type="number" min="2" max="16" value="${l.slots}"
-            onchange="levelUpdate('${l.level_key}','slots',+this.value)">
+            onchange="levelUpdate('${k}','slots',+this.value)">
         </div>
       </div>
       <div>
         <span class="field-label">Format</span>
         <div class="format-toggle">
           <button class="format-btn ${l.format==='round_robin'?'active':''}"
-            onclick="levelUpdate('${l.level_key}','format','round_robin')">Round Robin</button>
+            onclick="levelUpdate('${k}','format','round_robin')">Round Robin</button>
           <button class="format-btn ${l.format==='single_elim'?'active':''}"
-            onclick="levelUpdate('${l.level_key}','format','single_elim')">Single Elim</button>
+            onclick="levelUpdate('${k}','format','single_elim')">Single Elim</button>
         </div>
       </div>
       ${valClass==='ok'?'':`<div class="validation ${valClass}"><i class="bi bi-exclamation-triangle-fill"></i> ${valMsg}</div>`}
@@ -441,20 +472,23 @@ function renderCard(l){
       <hr class="card-divider">
       ${isUsablePublished?`
         <div class="btn-row">
-          <button class="btn btn-outline" onclick="openBracketPage('${l.level_key}')"><i class="bi bi-box-arrow-up-right"></i> Open</button>
-          <button class="btn btn-primary" onclick="exportBracketExcel('${l.level_key}', ${l.bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+          <button class="btn btn-outline" onclick="openBracketPage('${k}')"><i class="bi bi-box-arrow-up-right"></i> Open</button>
+          <button class="btn btn-primary" onclick="exportBracketExcel('${k}', ${l.bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
         </div>
         <div class="btn-row">
-          <button class="btn btn-outline" id="shuffle-${l.level_key}" onclick="shuffleLevel('${l.level_key}')"><i class="bi bi-shuffle"></i> Shuffle</button>
-          <button class="btn btn-delete" style="margin-top:0;" onclick="deleteLevel('${l.level_key}')"><i class="bi bi-trash3"></i> Delete</button>
+          <button class="btn btn-outline" onclick="regenerateFromCard('${k}')"><i class="bi bi-arrow-clockwise"></i> Regenerate</button>
+          <button class="btn btn-delete" style="margin-top:0;" onclick="deleteLevel('${k}')"><i class="bi bi-trash3"></i> Delete</button>
         </div>`:`
         <div class="btn-row">
-          <button class="btn btn-outline" onclick="saveLevel('${l.level_key}','draft')" ${noTeams?'disabled style="opacity:0.35;cursor:not-allowed;"':''}>Save Draft</button>
-          <button class="btn btn-primary" id="gbtn-${l.level_key}"
-            onclick="saveLevel('${l.level_key}','published')"
+          <button class="btn btn-outline" onclick="saveLevel('${k}','draft')" ${noTeams?'disabled style="opacity:0.35;cursor:not-allowed;"':''}>Save Draft</button>
+          <button class="btn btn-primary" id="gbtn-${escapeHtml(l.level_key)}"
+            onclick="saveLevel('${k}','published')"
             ${!eligibility.canGenerate?'disabled style="opacity:0.35;cursor:not-allowed;"':''}>Generate</button>
         </div>
-        ${l.bracketId?`<button class="btn btn-delete" onclick="deleteLevel('${l.level_key}')"><i class="bi bi-trash3"></i> Delete Blocked Bracket</button>`:''}`}
+        ${l.bracketId?`
+          ${eligibility.canGenerate?`<button class="btn btn-outline" style="width:100%;margin-top:0;color:var(--warn);border-color:rgba(245,166,35,0.35);" onclick="regenerateFromCard('${k}')"><i class="bi bi-arrow-clockwise"></i> Fix &amp; Regenerate</button>`:''}
+          <button class="btn btn-delete" onclick="deleteLevel('${k}')"><i class="bi bi-trash3"></i> Delete Stale Bracket</button>
+        `:''}`}
     </div>
   </div>`;
 }
@@ -519,9 +553,10 @@ async function showBracketView(levelKey, bracketId){
   if(!l) return;
   const groups = await loadBracketGroups(bracketId);
   const formatLabel = l.format==='round_robin' ? 'Round Robin' : 'Single Elim';
-  const card = document.getElementById('lcard-'+levelKey);
+  const card = document.getElementById('lcard-'+escapeHtml(levelKey));
   if(!card) return;
-  card.outerHTML = `<div class="level-card published bracket-full" id="lcard-${levelKey}">
+  const jk = jsKey(levelKey);
+  card.outerHTML = `<div class="level-card published bracket-full" id="lcard-${escapeHtml(levelKey)}">
     <div class="card-head">
       <span class="card-head-name">${escapeHtml(l.label)}</span>
       <div class="badges">
@@ -532,15 +567,15 @@ async function showBracketView(levelKey, bracketId){
     </div>
     <div class="card-body">
       <div class="bracket-card-actions no-print">
-        <button class="btn btn-outline" onclick="openBracketPage('${levelKey}')"><i class="bi bi-box-arrow-up-right"></i> Open Printable Page</button>
-        <button class="btn btn-outline" onclick="copyBracketLink('${levelKey}')"><i class="bi bi-link-45deg"></i> Copy Link</button>
-        <button class="btn btn-primary" onclick="exportBracketExcel('${levelKey}', ${bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
+        <button class="btn btn-outline" onclick="openBracketPage('${jk}')"><i class="bi bi-box-arrow-up-right"></i> Open Printable Page</button>
+        <button class="btn btn-outline" onclick="copyBracketLink('${jk}')"><i class="bi bi-link-45deg"></i> Copy Link</button>
+        <button class="btn btn-primary" onclick="exportBracketExcel('${jk}', ${bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
       </div>
       ${renderBracketBoard(l, groups)}
       <hr class="card-divider no-print">
       <div class="btn-row no-print">
-        <button class="btn btn-outline" onclick="regenerateLevel('${levelKey}')"><i class="bi bi-arrow-clockwise"></i> Regenerate</button>
-        <button class="btn btn-delete" style="margin-top:0;" onclick="deleteLevel('${levelKey}')"><i class="bi bi-trash3"></i> Delete</button>
+        <button class="btn btn-outline" onclick="regenerateLevel('${jk}')"><i class="bi bi-arrow-clockwise"></i> Regenerate</button>
+        <button class="btn btn-delete" style="margin-top:0;" onclick="deleteLevel('${jk}')"><i class="bi bi-trash3"></i> Delete</button>
       </div>
     </div>
   </div>`;
@@ -549,6 +584,11 @@ async function showBracketView(levelKey, bracketId){
 function escapeHtml(value){
   return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 }
+
+// Safe encoding for level_key values used INSIDE onclick="fn('...')" attributes.
+// escapeHtml() alone is not enough — HTML decodes &#39; back to ' before JS runs,
+// re-breaking the string. A JS backslash-escape survives both HTML and JS parsing.
+function jsKey(k){ return String(k||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 
 function safeFileName(value){
   return String(value || 'bracket').replace(/[^a-z0-9-_]+/gi,'_').replace(/^_+|_+$/g,'').slice(0,80) || 'bracket';
@@ -632,20 +672,37 @@ async function renderPrintableView(levelKey){
     return;
   }
   const groups = await loadBracketGroups(level.bracketId);
+
+  // Fix: validate min 2 teams per group — not just bracket existence
+  const underfilledGroups = groups.filter(g=>{
+    const tc = (g.bracket_slots||[]).filter(s=>!s.is_bye && s.registrations).length;
+    return tc < 2;
+  });
+
   document.querySelector('.page-title').textContent = level.label;
-  document.querySelector('.page-sub').textContent = 'Printable bracket page. Admin can print this page or export it to Excel.';
+  document.querySelector('.page-sub').textContent = 'Printable bracket. Drag teams to manually adjust. Use Edit Groups to move teams between groups.';
   document.getElementById('footerBar').style.display='none';
-  document.getElementById('mainContent').innerHTML = `<div class="level-card published bracket-full">
-    <div class="card-head no-print">
-      <span class="card-head-name">${escapeHtml(level.label)}</span>
-      <div class="bracket-card-actions">
-        <button class="btn btn-outline" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
-        <button class="btn btn-outline" id="shuffle-${levelKey}" onclick="shuffleFromOpenView('${levelKey}')"><i class="bi bi-shuffle"></i> Shuffle</button>
-        <button class="btn btn-primary" onclick="exportBracketExcel('${levelKey}', ${level.bracketId})"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>
-      </div>
-    </div>
-    <div class="card-body">${renderBracketBoard(level, groups)}</div>
-  </div>`;
+
+  const warnHtml = underfilledGroups.length
+    ? '<div style="background:rgba(232,55,42,0.08);border:1px solid rgba(232,55,42,0.3);border-left:3px solid var(--primary);border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:#ff8080;margin-bottom:1rem;"><strong>&#9888; '
+      + underfilledGroups.length + ' group' + (underfilledGroups.length!==1?'s':'') + ' need at least 2 teams to be scheduled:</strong> '
+      + underfilledGroups.map(g=>escapeHtml(g.name||'Group '+g.group_number)).join(', ')
+      + ' — use <strong>Edit Groups</strong> to fix, or Shuffle to re-seed.</div>'
+    : '';
+
+  const jkv = jsKey(levelKey);
+  document.getElementById('mainContent').innerHTML =
+    '<div class="level-card published bracket-full" id="lcard-view-'+escapeHtml(levelKey)+'">'
+    + '<div class="card-head no-print">'
+    + '<span class="card-head-name">'+escapeHtml(level.label)+'</span>'
+    + '<div class="bracket-card-actions">'
+    + '<button class="btn btn-outline" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>'
+    + '<button class="btn btn-outline" id="shuffle-'+escapeHtml(levelKey)+'" onclick="shuffleFromOpenView(\''+jkv+'\')"><i class="bi bi-shuffle"></i> Shuffle</button>'
+    + '<button class="btn btn-outline" onclick="enterEditMode(\''+jkv+'\','+level.bracketId+')"><i class="bi bi-pencil-square"></i> Edit Groups</button>'
+    + '<button class="btn btn-primary" onclick="exportBracketExcel(\''+jkv+'\','+level.bracketId+')"><i class="bi bi-file-earmark-excel"></i> Export Excel</button>'
+    + '</div></div>'
+    + '<div class="card-body">'+warnHtml+renderBracketBoard(level, groups)+'</div>'
+    + '</div>';
 }
 
 async function exportBracketExcel(levelKey, bracketId){
@@ -721,6 +778,163 @@ async function shuffleLevel(key){
   }
 }
 
+// ─── MANUAL BRACKET EDITOR ───────────────────────────────────────────────────
+
+let _editState = null; // { levelKey, bracketId, groups: [{id, name, group_number, teams:[reg]}] }
+let _dragSource = null; // { groupIdx, teamIdx, reg }
+
+async function enterEditMode(levelKey, bracketId){
+  const level = levels.find(x=>x.level_key===levelKey);
+  if(!level) return;
+  const rawGroups = await loadBracketGroups(bracketId);
+
+  // Build editable state — each group has an array of team registrations
+  _editState = {
+    levelKey,
+    bracketId,
+    level,
+    groups: rawGroups.map(g=>({
+      id:           g.id,
+      group_number: g.group_number,
+      name:         g.name || ('Group '+g.group_number),
+      slots:        g.bracket_slots||[],
+      teams:        (g.bracket_slots||[])
+                      .filter(s=>!s.is_bye && s.registrations)
+                      .sort((a,b)=>a.slot_number-b.slot_number)
+                      .map(s=>({...s.registrations, slotId: s.registration_id})),
+    })),
+  };
+
+  renderEditMode();
+}
+
+function renderEditMode(){
+  const {level, groups, levelKey, bracketId} = _editState;
+  const teamTotal = groups.reduce((s,g)=>s+g.teams.length,0);
+
+  const groupsHtml = groups.map((g,gi)=>`
+    <div class="bracket-group" id="eg-${gi}" ondragover="editorDragOver(event,${gi})" ondrop="editorDrop(event,${gi})" ondragleave="editorDragLeave(event,${gi})">
+      <div class="bracket-group-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>${escapeHtml(g.name)}</span>
+        <span style="font-size:11px;color:var(--muted);font-weight:400;">${g.teams.length} team${g.teams.length!==1?'s':''}</span>
+      </div>
+      ${g.teams.map((t,ti)=>`
+        <div class="bracket-slot editable" id="eslot-${gi}-${ti}"
+          draggable="true"
+          ondragstart="editorDragStart(event,${gi},${ti})"
+          ondragend="editorDragEnd(event)">
+          <div class="bracket-slot-main">
+            <span class="bracket-player-icon"><i class="bi bi-person"></i></span>
+            <span class="bracket-team-name" title="${escapeHtml(t.Team_Name)}">${escapeHtml(t.Team_Name)}</span>
+          </div>
+          <span class="slot-drag-indicator"><i class="bi bi-grip-vertical"></i></span>
+        </div>`).join('')}
+      <div class="group-drop-zone active" id="dz-${gi}">Drop team here</div>
+    </div>`).join('');
+
+  const board = '<div class="bracket-board" style="background:#101a1b;border:1px solid #1f3032;border-radius:12px;padding:28px;overflow-x:auto;">'
+    +'<div class="bracket-board-header">'
+    +'<div class="bracket-board-title">'+escapeHtml(activeTName||level.label)+'</div>'
+    +'<div class="bracket-board-subtitle">'+escapeHtml(level.label)+' &mdash; Edit Mode</div>'
+    +'</div>'
+    +'<div class="bracket-groups">'+groupsHtml+'</div>'
+    +'</div>';
+
+  const jke = jsKey(levelKey);
+  document.getElementById('mainContent').innerHTML =
+    '<div class="level-card published bracket-full">'
+    +'<div class="editor-toolbar no-print">'
+    +'<div class="editor-toolbar-title"><i class="bi bi-pencil-square"></i> Editing: '+escapeHtml(level.label)+' <span class="edit-mode-badge"><i class="bi bi-grip-vertical"></i> Drag to move</span></div>'
+    +'<div class="editor-toolbar-actions">'
+    +'<button class="btn-cancel-edit" onclick="renderPrintableView(\''+jke+'\')">Cancel</button>'
+    +'<button class="btn-save-edit" id="btnSaveEdit" onclick="saveEditChanges()"><i class="bi bi-check-lg"></i> Save Changes</button>'
+    +'</div></div>'
+    +'<div class="editor-hint no-print"><i class="bi bi-info-circle"></i> Drag any team to a different group. Changes are saved to the database when you click Save Changes.</div>'
+    +'<div class="card-body">'+board+'</div>'
+    +'</div>';
+}
+
+function editorDragStart(event, groupIdx, teamIdx){
+  _dragSource = { groupIdx, teamIdx, reg: _editState.groups[groupIdx].teams[teamIdx] };
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', groupIdx+','+teamIdx);
+  setTimeout(()=>{ const el=document.getElementById('eslot-'+groupIdx+'-'+teamIdx); if(el) el.classList.add('dragging'); },0);
+  // Highlight all drop zones
+  document.querySelectorAll('.group-drop-zone').forEach(dz=>dz.classList.add('active'));
+}
+
+function editorDragEnd(event){
+  document.querySelectorAll('.bracket-slot').forEach(s=>s.classList.remove('dragging','drag-over'));
+  document.querySelectorAll('.group-drop-zone').forEach(dz=>dz.classList.remove('drag-over'));
+  _dragSource = null;
+}
+
+function editorDragOver(event, groupIdx){
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  const dz = document.getElementById('dz-'+groupIdx);
+  if(dz && _dragSource && _dragSource.groupIdx!==groupIdx) dz.classList.add('drag-over');
+}
+
+function editorDragLeave(event, groupIdx){
+  const dz = document.getElementById('dz-'+groupIdx);
+  if(dz) dz.classList.remove('drag-over');
+}
+
+function editorDrop(event, targetGroupIdx){
+  event.preventDefault();
+  if(!_dragSource) return;
+  const { groupIdx: srcGIdx, teamIdx: srcTIdx, reg } = _dragSource;
+  if(srcGIdx === targetGroupIdx){ editorDragEnd(); return; }
+
+  // Move team from source group to target group
+  _editState.groups[srcGIdx].teams.splice(srcTIdx, 1);
+  _editState.groups[targetGroupIdx].teams.push(reg);
+
+  renderEditMode(); // Re-render editor with new state
+}
+
+async function saveEditChanges(){
+  const btn = document.getElementById('btnSaveEdit');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="bi bi-arrow-clockwise"></i> Saving...'; }
+
+  try{
+    const { bracketId, levelKey, level, groups } = _editState;
+
+    // Delete all existing bracket_slots for this bracket's groups
+    const groupIds = groups.map(g=>g.id);
+    await Promise.all(groupIds.map(gid=>
+      fetch(SB_URL+'/rest/v1/bracket_slots?group_id=eq.'+gid,{method:'DELETE',headers:HDRS})
+    ));
+
+    // Re-insert slots with new group assignments
+    const allSlots = [];
+    for(const g of groups){
+      g.teams.forEach((t,i)=>{
+        allSlots.push({ group_id: g.id, slot_number: i+1, registration_id: t.id||t.slotId, is_bye: false });
+      });
+    }
+
+    if(allSlots.length){
+      const res = await fetch(SB_URL+'/rest/v1/bracket_slots',{
+        method:'POST', headers:{...HDRS,'Prefer':'return=minimal'},
+        body: JSON.stringify(allSlots),
+      });
+      if(!res.ok) throw new Error(await res.text());
+    }
+
+    setStatus('Groups saved — '+level.label, false);
+    _editState = null;
+    await renderPrintableView(levelKey);
+
+  } catch(e){
+    alert('Save failed: '+e.message);
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="bi bi-check-lg"></i> Save Changes'; }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function shuffleFromOpenView(key){
   const l = levels.find(x=>x.level_key===key);
   if(!l || !l.bracketId) return;
@@ -730,29 +944,22 @@ async function shuffleFromOpenView(key){
     alert('Cannot shuffle: '+(staleGeneratedReason(l) || 'at least 4 Registered teams are required.'));
     return;
   }
-  const confirmed = confirm(`Shuffle teams for ${l.label}? This will replace the current group assignments.`);
+  const confirmed = confirm('Shuffle teams for '+l.label+'? This will replace the current group assignments.');
   if(!confirmed) return;
   const btn = document.getElementById('shuffle-'+key);
   if(btn){ btn.innerHTML='<i class="bi bi-arrow-clockwise"></i> Shuffling...'; btn.disabled=true; }
   try{
-    // Delete old bracket + reseed
-    await fetch(`${SB_URL}/rest/v1/brackets?id=eq.${l.bracketId}`,{method:'DELETE',headers:HDRS});
-    l.bracketId = null; l.status = null;
-
-    // Create new bracket record
-    const bRes = await fetch(`${SB_URL}/rest/v1/brackets`,{
+    await fetch(SB_URL+'/rest/v1/brackets?id=eq.'+l.bracketId,{method:'DELETE',headers:HDRS});
+    l.bracketId=null; l.status=null;
+    bracketData = bracketData.filter(b=>b.level_key!==key);
+    const bRes = await fetch(SB_URL+'/rest/v1/brackets',{
       method:'POST', headers:{...HDRS,'Prefer':'return=representation'},
       body:JSON.stringify({tournament_id:activeTId, level_key:l.level_key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status:'published'}),
     });
     if(!bRes.ok) throw new Error(await bRes.text());
     const [bracket] = await bRes.json();
-    l.bracketId = bracket.id; l.status = 'published';
-
-    // Update bracketData
-    bracketData = bracketData.filter(b=>b.level_key!==key);
-    bracketData.push({id:bracket.id, level_key:key, format:l.format, num_groups:l.brackets, slots_per_group:l.slots, status:'published'});
-
-    // Seed and re-render the open view in place
+    l.bracketId=bracket.id; l.status='published';
+    bracketData.push({id:bracket.id,level_key:key,format:l.format,num_groups:l.brackets,slots_per_group:l.slots,status:'published'});
     await seedBracket(l, bracket.id);
     await renderPrintableView(key);
     setStatus('Shuffled — '+l.label, false);
@@ -811,6 +1018,34 @@ async function deleteLevel(key){
   bracketData = bracketData.filter(b=>b.level_key!==key);
   setStatus('Bracket deleted — '+l.label, false);
   renderLevels();
+}
+
+async function regenerateFromCard(key){
+  const l = levels.find(x=>x.level_key===key);
+  if(!l) return;
+  // Always re-fetch live team count so we're not working with stale in-memory data
+  l.teams = registeredTeamsForLevel(l.level_key).length;
+  if(l.teams < MIN_BRACKET_TEAMS){
+    setStatus(`Cannot regenerate ${l.label}: only ${l.teams} Registered team${l.teams!==1?'s':''} — minimum ${MIN_BRACKET_TEAMS} needed.`, true);
+    return;
+  }
+  // Auto-correct stale bracket config to match current team count
+  l.brackets = Math.max(1, Math.ceil(l.teams / 4));
+  l.slots    = 4;
+  if(!confirm(`Regenerate bracket for ${l.label}?\n\nWill create ${l.brackets} group${l.brackets!==1?'s':''} × ${l.slots} slots for ${l.teams} Registered team${l.teams!==1?'s':''}.\n\nThe current bracket will be permanently replaced.`)) return;
+  await saveLevel(key, 'published');
+}
+
+async function refreshData(){
+  if(!activeTId){ setStatus('No tournament selected.', true); return; }
+  const btn  = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  if(btn){  btn.disabled = true; }
+  if(icon){ icon.style.cssText = 'display:inline-block;animation:spin 0.7s linear infinite;'; }
+  await onTournamentChange();
+  if(btn){  btn.disabled = false; }
+  if(icon){ icon.style.cssText = ''; }
+  setStatus('Data refreshed — all levels updated from server.', false);
 }
 
 async function generateAll(){

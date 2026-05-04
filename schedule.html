@@ -367,7 +367,7 @@ async function onTournamentChange(){
   await Promise.all(published.map(async b=>{
     const gRes = await fetch(
       `${SB_URL}/rest/v1/bracket_groups?bracket_id=eq.${b.id}`+
-      `&select=id,group_number,name,bracket_slots(slot_number,is_bye,registrations(id,Team_Name,Player1_Name,Player2_Name))`+
+      `&select=id,group_number,name,bracket_slots(slot_number,is_bye,registrations(id,Team_Name,Player1_Name,Player2_Name,Status))`+
       `&order=group_number.asc`,
       {headers:HDRS}
     );
@@ -376,8 +376,9 @@ async function onTournamentChange(){
       id:           g.id,
       group_number: g.group_number,
       name:         g.name||('Group '+g.group_number),
+      // Mirror brackets.html exactly: only count Status=Registered teams
       teams:        (g.bracket_slots||[])
-                      .filter(s=>!s.is_bye && s.registrations)
+                      .filter(s=>!s.is_bye && s.registrations && s.registrations.Status==='Registered')
                       .sort((a,b)=>a.slot_number-b.slot_number)
                       .map(s=>s.registrations),
     })));
@@ -390,7 +391,21 @@ async function onTournamentChange(){
     const matchCount = groups.reduce((sum,g)=>{
       const n=g.teams.length; return sum+n*(n-1)/2;
     },0);
-    return { key:p.level_key, label:p.label||p.level_key, hasB:!!bracket, bracketId:bracket?.id||null, groups, matchCount };
+    // Mirror brackets.html stale detection exactly:
+    // 1. Every group must have >= 2 registered teams
+    // 2. Total registered teams across all groups must be >= 4 (MIN_BRACKET_TEAMS)
+    // 3. At least one match must exist
+    const MIN_BRACKET_TEAMS = 4;
+    const totalRegistered   = groups.reduce((s,g)=>s+g.teams.length, 0);
+    const underfilledGroups = groups.filter(g=>g.teams.length < 2);
+    const isBracketStale    = bracket && (totalRegistered < MIN_BRACKET_TEAMS || underfilledGroups.length > 0);
+    const isSchedulable     = !!bracket && !isBracketStale && groups.length > 0 && matchCount > 0;
+    const staleReason       = !bracket ? null
+      : totalRegistered === 0          ? 'No Registered teams remain'
+      : totalRegistered < MIN_BRACKET_TEAMS ? `Only ${totalRegistered} Registered team${totalRegistered!==1?'s':''} — minimum ${MIN_BRACKET_TEAMS} needed`
+      : underfilledGroups.length > 0   ? `${underfilledGroups.length} group${underfilledGroups.length!==1?'s':''} have fewer than 2 teams`
+      : null;
+    return { key:p.level_key, label:p.label||p.level_key, hasB:!!bracket, isSchedulable, isBracketStale, staleReason, bracketId:bracket?.id||null, groups, matchCount, totalRegistered, underfilledGroups };
   });
 
   renderLevelList();
@@ -405,7 +420,7 @@ function renderLevelList(){
     return;
   }
   wrap.innerHTML = levelDefs.map(l=>{
-    if(l.hasB){
+    if(l.hasB && l.isSchedulable){
       const tc = l.groups.reduce((s,g)=>s+g.teams.length,0);
       return `<div class="level-status-card bracketed">
         <input type="checkbox" class="lsc-cb" id="lcb_${l.key}" checked onchange="updateSummary()">
@@ -415,6 +430,19 @@ function renderLevelList(){
           <div class="lsc-meta">${l.groups.length} group${l.groups.length!==1?'s':''} · ${tc} teams · ${l.matchCount} matches</div>
         </div>
         <span class="lsc-badge badge-ready">Ready</span>
+      </div>`;
+    } else if(l.hasB && !l.isSchedulable){
+      // Has bracket but stale — mirrors brackets.html "NEEDS FIX" state
+      return `<div class="level-status-card" style="border-color:rgba(245,166,35,0.3);opacity:0.9;">
+        <input type="checkbox" class="lsc-cb" id="lcb_${l.key}" disabled>
+        <i class="lsc-icon bi bi-exclamation-triangle-fill" style="color:var(--warning);"></i>
+        <div style="flex:1;min-width:0;">
+          <div class="lsc-name">${esc(l.label)}</div>
+          <div class="lsc-meta" style="color:var(--warning);">Bracket needs fix: ${esc(l.staleReason||'fix bracket first')}</div>
+        </div>
+        <a href="brackets.html?t=${activeTId}" target="_blank" class="lsc-link" style="color:var(--warning);">
+          Fix in Brackets <i class="bi bi-box-arrow-up-right" style="font-size:9px;"></i>
+        </a>
       </div>`;
     } else {
       return `<div class="level-status-card no-bracket">
@@ -433,7 +461,7 @@ function renderLevelList(){
 }
 
 function getSelectedLevels(){
-  return levelDefs.filter(l=>{ if(!l.hasB) return false; const cb=document.getElementById('lcb_'+l.key); return cb&&cb.checked; });
+  return levelDefs.filter(l=>{ if(!l.hasB || !l.isSchedulable) return false; const cb=document.getElementById('lcb_'+l.key); return cb&&cb.checked; });
 }
 
 /* ── COURT RULES ── */

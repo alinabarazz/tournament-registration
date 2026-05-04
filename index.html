@@ -1,348 +1,926 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Badminton Tournament</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #e8372a;
-      --primary-dark: #b82a1f;
-      --bg: #0a0a0a;
-      --card: #141414;
-      --border: #2a2a2a;
-      --text: #f0f0f0;
-      --muted: #666;
-      --success: #22c55e;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Badminton Tournament System</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#e8372a;
+  --court:#1a6b3c;
+  --court-light:#22c55e;
+  --gold:#f5a623;
+  --bg:#080c08;
+  --card:#0f1a0f;
+  --card2:#111b11;
+  --border:#1c2e1c;
+  --text:#f0f0f0;
+  --muted:#6b7c6b;
+}
+/* ── LIGHT THEME VARS ── */
+[data-theme="light"]{
+  --bg:#f0f0ec;
+  --card:#ffffff;
+  --card2:#f5f5f1;
+  --border:#ddddd6;
+  --text:#141414;
+  --muted:#747472;
+}
+[data-theme="light"] .nav{background:rgba(240,240,236,0.92);}
+[data-theme="light"] .mobile-menu{background:rgba(240,240,236,0.98);}
+[data-theme="light"] .court-bg{
+  background:
+    linear-gradient(rgba(26,107,60,0.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(26,107,60,0.07) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+[data-theme="light"] .court-bg::after{
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(26,107,60,0.07) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 40% at 50% 100%,rgba(232,55,42,0.04) 0%,transparent 70%);
+}
+[data-theme="light"] .hero-sub{color:#5a5a58;}
+[data-theme="light"] .btn-outline{border-color:#bbbbb4;color:var(--text);}
+[data-theme="light"] .btn-outline:hover{border-color:var(--court-light);color:var(--court-light);}
+[data-theme="light"] .step-num{background:var(--bg);}
+[data-theme="light"] .feature-card:hover{box-shadow:0 12px 40px rgba(0,0,0,0.1);}
+[data-theme="light"] .cta-inner{background:linear-gradient(135deg,rgba(26,107,60,0.07),rgba(232,55,42,0.04));}
+[data-theme="light"] .court-score{background:rgba(255,255,255,0.88);}
+[data-theme="light"] .court-score .s2{color:#1a1a1a;}
+[data-theme="light"] .deco-line{background:linear-gradient(90deg,transparent,rgba(34,197,94,0.18),transparent);}
+[data-theme="light"] .deco-circle{background:radial-gradient(circle,rgba(26,107,60,0.08) 0%,transparent 70%);}
+[data-theme="light"] .deco-c2{background:radial-gradient(circle,rgba(232,55,42,0.06) 0%,transparent 70%);}
+[data-theme="light"] .hero-eyebrow{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);}
+[data-theme="light"] .section-label::before{background:var(--court-light);}
+[data-theme="light"] .players-dot{background:#ccc;}
+[data-theme="light"] .players-dot.active{background:var(--primary);}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── SMOOTH TRANSITIONS ── */
+body,html,.nav,.stats-bar,.workflow,.footer,
+.feature-card,.btn-outline,.step-num,.cta-inner,
+.mobile-menu,.players-nav-btn,
+.players-section,.players-dot{
+  transition:background-color 0.35s ease,border-color 0.35s ease,color 0.35s ease;
+}
 
-    body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+/* ── THEME TOGGLE BUTTON ── */
+.theme-toggle{
+  background:none;border:1px solid var(--border);color:var(--text);
+  width:36px;height:36px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;transition:all 0.2s;margin-right:4px;
+}
+.theme-toggle:hover{border-color:var(--court-light);color:var(--court-light);}
+.icon-sun{display:none;}
+.icon-moon{display:block;}
+[data-theme="light"] .icon-sun{display:block;}
+[data-theme="light"] .icon-moon{display:none;}
 
-    /* Navigation */
-    nav {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 1rem 1.5rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+/* ── PLAYERS CAROUSEL ── */
+.players-section{
+  position:relative;z-index:1;
+  padding:5rem 1.5rem;
+  background:var(--card);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.players-inner{max-width:1100px;margin:0 auto;}
+.players-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem;
+}
+.players-nav{display:flex;gap:8px;align-items:center;}
+.players-nav-btn{
+  width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--border);background:var(--card2);
+  color:var(--text);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;transition:all 0.2s;
+}
+.players-nav-btn:hover{border-color:var(--primary);color:var(--primary);transform:scale(1.05);}
+.players-track-wrap{overflow:hidden;margin:0 -4px;}
+.players-track{
+  display:flex;gap:16px;
+  transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);
+  padding:4px 4px 20px;
+  will-change:transform;
+}
+.player-card{
+  flex:0 0 calc(25% - 12px);min-width:0;
+  cursor:pointer;
+  transition:transform 0.3s ease,box-shadow 0.3s ease;
+}
+.player-card:hover .player-card-inner{
+  box-shadow:0 20px 50px rgba(0,0,0,0.45);
+  transform:translateY(-8px);
+}
+[data-theme="light"] .player-card:hover .player-card-inner{
+  box-shadow:0 20px 50px rgba(0,0,0,0.18);
+}
+.player-card-inner{
+  border-radius:16px;overflow:hidden;
+  position:relative;aspect-ratio:3/4;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  border:1px solid rgba(255,255,255,0.07);
+  transition:transform 0.3s ease,box-shadow 0.3s ease;
+}
+[data-theme="light"] .player-card-inner{border-color:rgba(0,0,0,0.07);}
+.player-card-bg{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg,var(--pc1,#1a6b3c) 0%,var(--pc2,#05120a) 100%);
+}
+.player-card-bg::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(255,255,255,0.06) 0%,transparent 70%);
+}
+.player-big-init{
+  position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:7.5rem;font-weight:900;
+  color:rgba(255,255,255,0.06);
+  letter-spacing:-3px;user-select:none;line-height:1;
+  white-space:nowrap;
+}
+.player-icon-wrap{
+  position:absolute;
+  top:50%;left:50%;transform:translate(-50%,-60%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  z-index:2;
+}
+.player-icon-wrap i{font-size:4rem;color:rgba(255,255,255,0.7);}
+.player-cat-label{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:0.18em;
+  text-transform:uppercase;color:rgba(255,255,255,0.4);
+  text-align:center;
+}
+.player-flag-badge{
+  position:absolute;top:13px;left:13px;
+  font-size:1.4rem;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+  line-height:1;
+}
+.player-rank-pill{
+  position:absolute;top:13px;right:13px;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,0.16);
+  color:#fff;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:10px;font-weight:800;letter-spacing:0.08em;
+  padding:4px 10px;border-radius:20px;
+  text-transform:uppercase;
+}
+.player-rank-pill.gold{border-color:rgba(245,166,35,0.55);color:var(--gold);}
+.player-info-overlay{
+  position:relative;z-index:3;
+  padding:0.9rem 1rem 1rem;
+  background:linear-gradient(transparent,rgba(0,0,0,0.9) 38%);
+}
+.player-info-name{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1rem;font-weight:900;
+  text-transform:uppercase;letter-spacing:0.04em;
+  color:#fff;line-height:1.1;margin-bottom:3px;
+}
+.player-info-country{
+  font-size:10px;color:rgba(255,255,255,0.5);
+  text-transform:uppercase;letter-spacing:0.1em;font-weight:600;
+}
+.player-info-titles{
+  margin-top:6px;font-size:10px;
+  color:rgba(245,166,35,0.88);
+  font-weight:600;letter-spacing:0.03em;
+}
+.players-dots{
+  display:flex;justify-content:center;gap:6px;margin-top:1.5rem;
+}
+.players-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--border);cursor:pointer;
+  transition:all 0.25s;border:none;padding:0;
+}
+.players-dot.active{background:var(--primary);width:20px;border-radius:3px;}
+@media(max-width:900px){.player-card{flex:0 0 calc(33.33% - 11px);}}
+@media(max-width:600px){.player-card{flex:0 0 calc(50% - 8px);}}
+@media(max-width:380px){.player-card{flex:0 0 100%;}}
 
-    nav .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+html{scroll-behavior:smooth;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
 
-    nav .logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
+/* ── COURT LINE BG ── */
+.court-bg{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(rgba(26,107,60,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(26,107,60,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+.court-bg::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(26,107,60,0.12) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 40% at 50% 100%,rgba(232,55,42,0.05) 0%,transparent 70%);
+}
 
-    nav .logo span { color: var(--primary); }
+/* ── NAV ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;height:60px;
+  background:rgba(8,12,8,0.9);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.2rem;font-weight:900;text-transform:uppercase;letter-spacing:0.15em;
+  display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);
+}
+.nav-logo-icon{
+  width:32px;height:32px;background:var(--primary);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.nav-logo-icon::before{
+  content:'';position:absolute;width:3px;height:200%;background:rgba(255,255,255,0.15);
+  transform:rotate(30deg);left:40%;
+}
+.nav-links{display:flex;align-items:center;gap:6px;}
+.nav-link{
+  color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;
+  padding:6px 14px;border-radius:6px;transition:all 0.2s;
+  text-transform:uppercase;letter-spacing:0.06em;font-family:'Barlow Condensed',sans-serif;
+}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.nav-btn{
+  background:var(--primary);color:#fff;border:none;
+  font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.1em;padding:8px 20px;border-radius:7px;
+  cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+}
+.nav-btn:hover{background:#c0281c;transform:translateY(-1px);}
+.hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:5px;}
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;background:rgba(8,12,8,0.98);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:1rem;z-index:99;flex-direction:column;gap:4px;}
+.mobile-menu.open{display:flex;}
+.mobile-menu .nav-link{font-size:1rem;padding:12px 16px;border-radius:8px;}
+.mobile-menu .nav-btn{width:100%;justify-content:center;padding:13px;font-size:1rem;margin-top:8px;}
 
-    nav .nav-links {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
+/* ── HERO ── */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:100px 1.5rem 60px;
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;
+  color:var(--court-light);border:1px solid rgba(34,197,94,0.25);
+  background:rgba(34,197,94,0.06);padding:5px 14px;border-radius:20px;
+  margin-bottom:1.5rem;
+}
+.hero-eyebrow i{font-size:10px;}
+.hero-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:clamp(3rem,10vw,7rem);font-weight:900;
+  text-transform:uppercase;letter-spacing:0.02em;
+  line-height:0.92;margin-bottom:1.5rem;
+}
+.hero-title .line1{display:block;color:var(--text);}
+.hero-title .line2{
+  display:block;
+  background:linear-gradient(135deg,var(--primary) 0%,var(--gold) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-title .line3{display:block;color:var(--text);}
+.hero-sub{
+  font-size:clamp(0.95rem,2vw,1.1rem);color:var(--muted);
+  max-width:520px;line-height:1.7;margin-bottom:2.5rem;
+}
+.hero-sub strong{color:var(--court-light);}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn-primary{
+  background:var(--primary);color:#fff;border:none;
+  font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.1em;padding:14px 32px;border-radius:9px;
+  cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary:hover{background:#c0281c;transform:translateY(-2px);box-shadow:0 8px 24px rgba(232,55,42,0.3);}
+.btn-outline{
+  background:transparent;color:var(--text);
+  border:1px solid var(--border);
+  font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.1em;padding:14px 32px;border-radius:9px;
+  cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-outline:hover{border-color:var(--court-light);color:var(--court-light);transform:translateY(-2px);}
 
-    nav a {
-      color: var(--muted);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      transition: color 0.3s;
-    }
+/* SHUTTLECOCK DECO */
+.hero-deco{
+  position:absolute;width:100%;height:100%;top:0;left:0;overflow:hidden;pointer-events:none;z-index:-1;
+}
+.deco-circle{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(26,107,60,0.15) 0%,transparent 70%);
+}
+.deco-c1{width:600px;height:600px;top:-200px;right:-150px;}
+.deco-c2{width:400px;height:400px;bottom:-100px;left:-100px;background:radial-gradient(circle,rgba(232,55,42,0.08) 0%,transparent 70%);}
+.deco-line{position:absolute;background:linear-gradient(90deg,transparent,rgba(34,197,94,0.15),transparent);height:1px;}
+.deco-l1{width:60%;top:38%;left:20%;}
+.deco-l2{width:40%;top:62%;left:30%;}
 
-    nav a:hover { color: var(--primary); }
+/* ── STATS BAR ── */
+.stats-bar{
+  position:relative;z-index:1;
+  background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:2rem 1.5rem;
+}
+.stats-bar-inner{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+}
+.stat-item{text-align:center;padding:0.5rem 1rem;position:relative;}
+.stat-item+.stat-item::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:var(--border);}
+.stat-num{
+  font-family:'Barlow Condensed',sans-serif;font-size:2.5rem;font-weight:900;
+  background:linear-gradient(135deg,var(--primary),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;
+}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;font-weight:600;}
 
-    /* Hero Section */
-    .hero {
-      min-height: 85vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-      border-bottom: 1px solid var(--border);
-      padding: 4rem 2rem;
-      text-align: center;
-    }
+/* ── FEATURES ── */
+.section{position:relative;z-index:1;padding:5rem 1.5rem;}
+.section-inner{max-width:1100px;margin:0 auto;}
+.section-label{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;
+  color:var(--court-light);margin-bottom:0.75rem;display:flex;align-items:center;gap:6px;
+}
+.section-label::before{content:'';width:20px;height:2px;background:var(--court-light);}
+.section-title{
+  font-family:'Barlow Condensed',sans-serif;font-size:clamp(2rem,5vw,3rem);
+  font-weight:900;text-transform:uppercase;letter-spacing:0.03em;
+  line-height:1;margin-bottom:1rem;
+}
+.section-sub{font-size:14px;color:var(--muted);max-width:480px;line-height:1.7;margin-bottom:3rem;}
 
-    .hero-content {
-      max-width: 900px;
-    }
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+.feature-card{
+  background:var(--card2);border:1px solid var(--border);border-radius:14px;
+  padding:1.75rem;transition:all 0.3s;position:relative;overflow:hidden;
+}
+.feature-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--primary),var(--gold));
+  opacity:0;transition:opacity 0.3s;
+}
+.feature-card:hover{border-color:rgba(34,197,94,0.2);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.4);}
+.feature-card:hover::before{opacity:1;}
+.feature-icon{
+  width:44px;height:44px;background:rgba(232,55,42,0.1);border:1px solid rgba(232,55,42,0.2);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;color:var(--primary);margin-bottom:1.1rem;
+}
+.feature-card:nth-child(2) .feature-icon{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);color:var(--court-light);}
+.feature-card:nth-child(3) .feature-icon{background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,0.2);color:var(--gold);}
+.feature-card:nth-child(4) .feature-icon{background:rgba(96,165,250,0.08);border-color:rgba(96,165,250,0.2);color:#60a5fa;}
+.feature-card:nth-child(5) .feature-icon{background:rgba(232,55,42,0.08);border-color:rgba(232,55,42,0.2);color:var(--primary);}
+.feature-card:nth-child(6) .feature-icon{background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2);color:var(--court-light);}
+.feature-title{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;}
+.feature-desc{font-size:13px;color:var(--muted);line-height:1.6;}
 
-    .hero-badge {
-      display: inline-block;
-      background: var(--primary);
-      color: #fff;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      padding: 6px 16px;
-      border-radius: 4px;
-      margin-bottom: 1.5rem;
-    }
+/* ── WORKFLOW ── */
+.workflow{
+  position:relative;z-index:1;
+  background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:5rem 1.5rem;
+}
+.workflow-inner{max-width:900px;margin:0 auto;}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;}
+.steps::before{
+  content:'';position:absolute;top:28px;left:calc(12.5% + 14px);right:calc(12.5% + 14px);
+  height:2px;background:linear-gradient(90deg,var(--primary),var(--gold));z-index:0;
+}
+.step{text-align:center;padding:0 0.5rem;position:relative;z-index:1;}
+.step-num{
+  width:56px;height:56px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;color:var(--primary);
+  margin:0 auto 1rem;position:relative;
+}
+.step-num::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,55,42,0.12),transparent 70%);
+}
+.step:nth-child(2) .step-num{border-color:var(--gold);color:var(--gold);}
+.step:nth-child(2) .step-num::after{background:radial-gradient(circle,rgba(245,166,35,0.12),transparent 70%);}
+.step:nth-child(3) .step-num{border-color:var(--court-light);color:var(--court-light);}
+.step:nth-child(3) .step-num::after{background:radial-gradient(circle,rgba(34,197,94,0.12),transparent 70%);}
+.step:nth-child(4) .step-num{border-color:#60a5fa;color:#60a5fa;}
+.step:nth-child(4) .step-num::after{background:radial-gradient(circle,rgba(96,165,250,0.12),transparent 70%);}
+.step-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5;}
 
-    .hero h1 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: clamp(2.5rem, 8vw, 4rem);
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      line-height: 1.1;
-      margin-bottom: 1rem;
-    }
+/* ── COURT VISUAL ── */
+.court-section{
+  position:relative;z-index:1;padding:5rem 1.5rem;
+  display:flex;align-items:center;
+}
+.court-section-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;}
+.court-graphic{
+  aspect-ratio:4/3;background:var(--court);border-radius:16px;
+  position:relative;overflow:hidden;border:2px solid rgba(34,197,94,0.3);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(34,197,94,0.1);
+}
+/* Court lines */
+.court-graphic::before{
+  content:'';position:absolute;inset:8%;
+  border:2px solid rgba(255,255,255,0.5);border-radius:1px;
+}
+.court-graphic::after{
+  content:'';position:absolute;left:8%;right:8%;top:50%;
+  height:2px;background:rgba(255,255,255,0.5);transform:translateY(-50%);
+}
+.court-net{
+  position:absolute;left:8%;right:8%;top:50%;height:12px;
+  border-top:3px solid rgba(255,255,255,0.9);
+  transform:translateY(-50%);
+}
+.court-service-left{position:absolute;left:8%;right:50%;top:22%;height:2px;background:rgba(255,255,255,0.4);}
+.court-service-right{position:absolute;left:50%;right:8%;top:22%;height:2px;background:rgba(255,255,255,0.4);}
+.court-service-left2{position:absolute;left:8%;right:50%;top:78%;height:2px;background:rgba(255,255,255,0.4);}
+.court-service-right2{position:absolute;left:50%;right:8%;top:78%;height:2px;background:rgba(255,255,255,0.4);}
+.court-center-vert{position:absolute;left:50%;top:8%;bottom:8%;width:2px;background:rgba(255,255,255,0.3);transform:translateX(-50%);}
+.court-shuttle{
+  position:absolute;font-size:2rem;
+  animation:shuttleFly 3s ease-in-out infinite;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+@keyframes shuttleFly{
+  0%{top:30%;left:25%;transform:rotate(-20deg);}
+  50%{top:20%;left:65%;transform:rotate(15deg);}
+  100%{top:30%;left:25%;transform:rotate(-20deg);}
+}
+.court-player{position:absolute;font-size:1.4rem;}
+.court-player.p1{bottom:25%;left:20%;}
+.court-player.p2{top:25%;right:20%;}
+.court-score{
+  position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.2);
+  border-radius:8px;padding:6px 20px;display:flex;gap:14px;align-items:center;
+  font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;
+  backdrop-filter:blur(4px);
+}
+.court-score .s1{color:var(--gold);}
+.court-score .sep{color:rgba(255,255,255,0.3);}
+.court-score .s2{color:#fff;}
 
-    .hero h1 span { color: var(--primary); }
+/* ── CTA ── */
+.cta-section{
+  position:relative;z-index:1;padding:5rem 1.5rem;text-align:center;
+}
+.cta-inner{
+  max-width:640px;margin:0 auto;
+  background:linear-gradient(135deg,rgba(26,107,60,0.15),rgba(232,55,42,0.08));
+  border:1px solid rgba(34,197,94,0.2);border-radius:20px;
+  padding:3.5rem 2rem;position:relative;overflow:hidden;
+}
+.cta-inner::before{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(ellipse at center,rgba(26,107,60,0.08),transparent 60%);
+  pointer-events:none;
+}
+.cta-title{font-family:'Barlow Condensed',sans-serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:900;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:1rem;}
+.cta-sub{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:2rem;}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
 
-    .hero p {
-      font-size: 1.1rem;
-      color: var(--muted);
-      margin-bottom: 2.5rem;
-      line-height: 1.6;
-    }
+/* ── FOOTER ── */
+.footer{
+  position:relative;z-index:1;
+  background:var(--card);border-top:1px solid var(--border);
+  padding:2rem 1.5rem;text-align:center;
+}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;}
+.footer-brand{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--primary);display:flex;align-items:center;gap:8px;}
+.footer-links{display:flex;gap:20px;}
+.footer-links a{font-size:12px;color:var(--muted);text-decoration:none;transition:color 0.2s;text-transform:uppercase;letter-spacing:0.07em;font-weight:600;}
+.footer-links a:hover{color:var(--court-light);}
+.footer-copy{font-size:11px;color:var(--muted);}
 
-    .hero-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 14px 32px;
-      border-radius: 8px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.3s;
-      border: none;
-      text-decoration: none;
-      display: inline-block;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    /* Features Section */
-    .features {
-      max-width: 1200px;
-      margin: 4rem auto;
-      padding: 0 2rem;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-top: 3rem;
-    }
-
-    .feature-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      transition: all 0.3s;
-    }
-
-    .feature-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-4px);
-    }
-
-    .feature-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .feature-card h3 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 0.75rem;
-    }
-
-    .feature-card p {
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    /* Section Title */
-    .section-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 2rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-    }
-
-    .section-sub {
-      color: var(--muted);
-      font-size: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    /* Footer */
-    footer {
-      background: var(--card);
-      border-top: 1px solid var(--border);
-      padding: 2rem;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    footer a {
-      color: var(--primary);
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-
-    @media (max-width: 768px) {
-      nav .nav-links {
-        gap: 1rem;
-      }
-
-      nav a {
-        font-size: 0.75rem;
-      }
-
-      .hero-buttons {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .btn {
-        width: 100%;
-        max-width: 300px;
-      }
-    }
-  </style>
+/* ── MOBILE ── */
+@media(max-width:768px){
+  .nav-links,.nav-btn.desktop{display:none;}
+  .hamburger{display:block;}
+  .stats-bar-inner{grid-template-columns:repeat(2,1fr);}
+  .stat-item:nth-child(3)::before{display:none;}
+  .features-grid{grid-template-columns:1fr;}
+  .steps{grid-template-columns:repeat(2,1fr);gap:2rem;}
+  .steps::before{display:none;}
+  .court-section-inner{grid-template-columns:1fr;}
+  .footer-inner{flex-direction:column;text-align:center;}
+  .footer-links{justify-content:center;}
+  .hero-title{letter-spacing:0;}
+}
+@media(max-width:480px){
+  .stats-bar-inner{grid-template-columns:repeat(2,1fr);}
+  .features-grid{grid-template-columns:1fr;}
+  .hero-actions{flex-direction:column;align-items:center;}
+  .btn-primary,.btn-outline{width:100%;max-width:280px;justify-content:center;}
+}
+</style>
 </head>
 <body>
 
-  <!-- Navigation -->
-  <nav>
-    <div class="container">
-      <div class="logo">Badminton<span>.</span></div>
-      <ul class="nav-links">
-        <li><a href="#home">Home</a></li>
-        <li><a href="registration.html">Registration</a></li>
-        <li><a href="tournaments.html">Tournaments</a></li>
-        <li><a href="admin.html">Admin</a></li>
-      </ul>
-    </div>
-  </nav>
+<div class="court-bg"></div>
 
-  <!-- Hero Section -->
-  <section class="hero" id="home">
-    <div class="hero-content">
-      <div class="hero-badge">Official Tournament Platform</div>
-      <h1>Badminton<br><span>Tournament</span></h1>
-      <p>Register your team, manage tournaments, and compete with the best players in your region. Professional-grade tournament management made simple.</p>
-      <div class="hero-buttons">
-        <a href="registration.html" class="btn btn-primary">Register Now</a>
-        <a href="tournaments.html" class="btn btn-secondary">View Tournaments</a>
+<!-- NAV -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon"><i class="bi bi-trophy-fill" style="color:#fff;font-size:1rem;"></i></div>
+    BT System
+  </a>
+  <div class="nav-links">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#workflow" class="nav-link">How It Works</a>
+    <a href="admin.html" class="nav-link">Admin</a>
+  </div>
+  <a href="admin.html" class="nav-btn desktop"><i class="bi bi-speedometer2"></i> Open Dashboard</a>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+    <i class="bi bi-sun-fill icon-sun"></i>
+    <i class="bi bi-moon-fill icon-moon"></i>
+  </button>
+  <button class="hamburger" onclick="toggleMobileMenu()" id="hamburgerBtn"><i class="bi bi-list" id="hamburgerIcon"></i></button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features" class="nav-link" onclick="closeMobileMenu()">Features</a>
+  <a href="#workflow" class="nav-link" onclick="closeMobileMenu()">How It Works</a>
+  <a href="admin.html" class="nav-link" onclick="closeMobileMenu()">Admin</a>
+  <a href="admin.html" class="nav-btn">Open Dashboard</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-deco">
+    <div class="deco-circle deco-c1"></div>
+    <div class="deco-circle deco-c2"></div>
+    <div class="deco-line deco-l1"></div>
+    <div class="deco-line deco-l2"></div>
+  </div>
+  <div class="hero-eyebrow"><i class="bi bi-lightning-fill"></i> Tournament Management System</div>
+  <h1 class="hero-title">
+    <span class="line1">Run Your</span>
+    <span class="line2">Badminton</span>
+    <span class="line3">Tournament</span>
+  </h1>
+  <p class="hero-sub">
+    From <strong>registration</strong> to <strong>brackets</strong> to <strong>live scheduling</strong> — everything an organizer needs in one dashboard. Built for speed, designed for the court.
+  </p>
+  <div class="hero-actions">
+    <a href="admin.html" class="btn-primary"><i class="bi bi-speedometer2"></i> Go to Dashboard</a>
+    <a href="#workflow" class="btn-outline"><i class="bi bi-play-circle"></i> How It Works</a>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-bar-inner">
+    <div class="stat-item">
+      <div class="stat-num" id="statTournaments">—</div>
+      <div class="stat-label">Tournaments</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statTeams">—</div>
+      <div class="stat-label">Teams Registered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statLevels">—</div>
+      <div class="stat-label">Active Levels</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="statMatches">—</div>
+      <div class="stat-label">Matches Scheduled</div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYERS CAROUSEL -->
+<section class="players-section" id="players">
+  <div class="players-inner">
+    <div class="players-header">
+      <div>
+        <div class="section-label">World's Elite</div>
+        <h2 class="section-title">Meet The Champions</h2>
+      </div>
+      <div class="players-nav">
+        <button class="players-nav-btn" id="playersPrev" onclick="prevSlide()" title="Previous"><i class="bi bi-chevron-left"></i></button>
+        <button class="players-nav-btn" id="playersNext" onclick="nextSlide()" title="Next"><i class="bi bi-chevron-right"></i></button>
       </div>
     </div>
-  </section>
+    <div class="players-track-wrap" id="playersTrackWrap">
+      <div class="players-track" id="playersTrack"></div>
+    </div>
+    <div class="players-dots" id="playersDots"></div>
+  </div>
+</section>
 
-  <!-- Features Section -->
-  <section class="features">
-    <div class="section-title">Why Choose Us?</div>
-    <div class="section-sub">Everything you need to run a successful badminton tournament</div>
-
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <div class="section-label">What's inside</div>
+    <h2 class="section-title">Everything You Need</h2>
+    <p class="section-sub">A complete system built specifically for badminton tournament organizers. No generic event software.</p>
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon">📋</div>
-        <h3>Easy Registration</h3>
-        <p>Simple multi-step registration process for teams. Collect all necessary information with age-restricted categories support.</p>
+        <div class="feature-icon"><i class="bi bi-person-plus-fill"></i></div>
+        <div class="feature-title">Registration Management</div>
+        <div class="feature-desc">Accept, review, and approve team registrations. Track payment status, send email confirmations, and manage cancellations — all from one screen.</div>
       </div>
-
       <div class="feature-card">
-        <div class="feature-icon">🏆</div>
-        <h3>Tournament Management</h3>
-        <p>Create and manage multiple tournaments with pricing levels, schedules, and locations. Full control over your events.</p>
+        <div class="feature-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+        <div class="feature-title">Bracket Generation</div>
+        <div class="feature-desc">Auto-generate round-robin groups with a single click. Shuffle seedings, manually drag teams between groups, and export printable brackets.</div>
       </div>
-
       <div class="feature-card">
-        <div class="feature-icon">💰</div>
-        <h3>Financial Tracking</h3>
-        <p>Track revenue, expenses, and sponsors. Get real-time insights into your tournament's profitability and financial health.</p>
+        <div class="feature-icon"><i class="bi bi-calendar3"></i></div>
+        <div class="feature-title">Smart Scheduling</div>
+        <div class="feature-desc">Generate a full match schedule that respects court availability and automatically detects player conflicts across multiple levels.</div>
       </div>
-
       <div class="feature-card">
-        <div class="feature-icon">👥</div>
-        <h3>Admin Dashboard</h3>
-        <p>Comprehensive admin panel with role-based access control. Manage registrations, pricing, and tournament details effortlessly.</p>
+        <div class="feature-icon"><i class="bi bi-layers-fill"></i></div>
+        <div class="feature-title">Multi-Level Support</div>
+        <div class="feature-desc">Run Level H, G, F, Open, Mixed, Women's — all simultaneously. Players registered in multiple levels are conflict-checked automatically.</div>
       </div>
-
       <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>Secure & Reliable</h3>
-        <p>Cloud-based infrastructure with Supabase. Your data is safe, secure, and always accessible from anywhere.</p>
+        <div class="feature-icon"><i class="bi bi-bell-fill"></i></div>
+        <div class="feature-title">Live Notifications</div>
+        <div class="feature-desc">Get real-time alerts for new registrations, payment submissions, cancellation requests, and at-risk levels — with full history.</div>
       </div>
-
       <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>Real-time Analytics</h3>
-        <p>Monitor registration status, team statistics, and tournament progress in real-time with detailed analytics.</p>
+        <div class="feature-icon"><i class="bi bi-file-earmark-excel-fill"></i></div>
+        <div class="feature-title">Export Anywhere</div>
+        <div class="feature-desc">Export brackets, schedules, and registration lists to Excel or print-ready PDF. Share directly with players and venue staff.</div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <footer>
-    <p>&copy; 2026 Badminton Tournament Platform. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
-  </footer>
+<!-- WORKFLOW -->
+<div class="workflow" id="workflow">
+  <div class="workflow-inner">
+    <div style="text-align:center;margin-bottom:3rem;">
+      <div class="section-label" style="justify-content:center;">Simple process</div>
+      <h2 class="section-title">4 Steps to Tournament Day</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Setup</div>
+        <div class="step-desc">Create tournament, add levels, set pricing and slot limits.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Register</div>
+        <div class="step-desc">Teams register online. Review and approve with one click.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Bracket</div>
+        <div class="step-desc">Auto-generate groups. Shuffle or manually adjust seedings.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Schedule</div>
+        <div class="step-desc">Generate full match schedule. Print and go to court.</div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- COURT VISUAL + TEXT -->
+<section class="court-section">
+  <div class="court-section-inner">
+    <div>
+      <div class="section-label">Built for badminton</div>
+      <h2 class="section-title">Designed Around The Court</h2>
+      <p style="font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:1.5rem;">
+        Unlike generic event tools, this system understands badminton — court slots, game durations, level formats, and how players move between matches. The scheduler knows that a player in Level H can't also be on Court 3 in Level G at the same time.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+          <div style="width:24px;height:24px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-check-lg" style="color:var(--court-light);font-size:11px;"></i>
+          </div>
+          <span style="color:#ccc;">Player conflict detection across all levels</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+          <div style="width:24px;height:24px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-check-lg" style="color:var(--court-light);font-size:11px;"></i>
+          </div>
+          <span style="color:#ccc;">Dynamic court reduction rules (12 → 6 → 3 courts)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+          <div style="width:24px;height:24px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-check-lg" style="color:var(--court-light);font-size:11px;"></i>
+          </div>
+          <span style="color:#ccc;">Round-robin within bracket groups only</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+          <div style="width:24px;height:24px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-check-lg" style="color:var(--court-light);font-size:11px;"></i>
+          </div>
+          <span style="color:#ccc;">Estimated end-time warnings before you commit</span>
+        </div>
+      </div>
+    </div>
+    <div class="court-graphic">
+      <div class="court-service-left"></div>
+      <div class="court-service-right"></div>
+      <div class="court-service-left2"></div>
+      <div class="court-service-right2"></div>
+      <div class="court-center-vert"></div>
+      <div class="court-net"></div>
+      <div class="court-shuttle">🏸</div>
+      <div class="court-player p1">👤</div>
+      <div class="court-player p2">👤</div>
+      <div class="court-score">
+        <span class="s1">21</span>
+        <span class="sep">—</span>
+        <span class="s2">18</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title">Ready to Run Your Tournament?</h2>
+    <p class="cta-sub">Log in to the admin dashboard to set up your tournament, manage registrations, and generate brackets and schedules in minutes.</p>
+    <div class="cta-btns">
+      <a href="admin.html" class="btn-primary"><i class="bi bi-speedometer2"></i> Open Admin Dashboard</a>
+      <a href="brackets.html" class="btn-outline"><i class="bi bi-grid-3x3-gap"></i> View Brackets</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand"><i class="bi bi-trophy-fill"></i> BT System</div>
+    <div class="footer-links">
+      <a href="admin.html">Admin</a>
+      <a href="brackets.html">Brackets</a>
+      <a href="schedule.html">Schedule</a>
+      <a href="seeder.html">Dev Tools</a>
+    </div>
+    <div class="footer-copy">Badminton Tournament System</div>
+  </div>
+</footer>
+
+<script>
+const SB_URL = 'https://qpxhpvntnltsevcfxfjl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFweGhwdm50bmx0c2V2Y2Z4ZmpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NTMzNzIsImV4cCI6MjA5MjUyOTM3Mn0.32JNipYAhmB6vpGYV27SfW4yfT95peecqGAa6eihvaA';
+const HDRS   = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+// Load live stats
+(async function loadStats(){
+  try{
+    const [tRes, rRes, pRes] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/tournaments?select=id&limit=100`,{headers:HDRS}),
+      fetch(`${SB_URL}/rest/v1/registrations?select=id&Status=in.(Registered,Awaiting Payment,Payment Submitted)&limit=1000`,{headers:HDRS}),
+      fetch(`${SB_URL}/rest/v1/pricing?select=id&enabled=eq.true&limit=200`,{headers:HDRS}),
+    ]);
+    const [ts, rs, ps] = await Promise.all([tRes.json(), rRes.json(), pRes.json()]);
+    animateCount('statTournaments', ts.length||0);
+    animateCount('statTeams', rs.length||0);
+    animateCount('statLevels', ps.length||0);
+    animateCount('statMatches', Math.floor((rs.length||0)*1.8));
+  }catch(e){}
+})();
+
+function animateCount(id, target){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const dur = 1200, fps = 60, steps = dur/1000*fps;
+  let cur = 0;
+  const inc = target/steps;
+  const timer = setInterval(()=>{
+    cur = Math.min(cur+inc, target);
+    el.textContent = Math.round(cur).toLocaleString();
+    if(cur >= target) clearInterval(timer);
+  }, 1000/fps);
+}
+
+function toggleMobileMenu(){
+  const menu = document.getElementById('mobileMenu');
+  const icon = document.getElementById('hamburgerIcon');
+  const open = menu.classList.toggle('open');
+  icon.className = open ? 'bi bi-x-lg' : 'bi bi-list';
+}
+function closeMobileMenu(){
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('hamburgerIcon').className = 'bi bi-list';
+}
+
+// ── THEME TOGGLE ──
+function toggleTheme(){
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('bt-theme', next);
+}
+(function initTheme(){
+  const saved = localStorage.getItem('bt-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ── PLAYERS CAROUSEL ──
+const PLAYERS = [
+  {name:'Viktor Axelsen',  country:'Denmark',        flag:'🇩🇰', rank:'World #1',   cat:"Men's Singles",   titles:'3× World Champion',      init:'VA', c1:'#C60C30', c2:'#300008', gold:true},
+  {name:'Kunlavut Vitidsarn',country:'Thailand',     flag:'🇹🇭', rank:'World #2',   cat:"Men's Singles",   titles:'World Champion 2023',     init:'KV', c1:'#00247D', c2:'#0c0a20', gold:false},
+  {name:'An Se-young',     country:'South Korea',    flag:'🇰🇷', rank:"Women's #1", cat:"Women's Singles", titles:'World #1 · 2023–24',       init:'SY', c1:'#003478', c2:'#08041e', gold:true},
+  {name:'Tai Tzu-ying',    country:'Chinese Taipei', flag:'🇹🇼', rank:'Former #1',  cat:"Women's Singles", titles:'Olympic Silver 2020',      init:'TZ', c1:'#0033A0', c2:'#00072c', gold:false},
+  {name:'Carolina Marín',  country:'Spain',          flag:'🇪🇸', rank:'World #4',   cat:"Women's Singles", titles:'3× World Champion',        init:'CM', c1:'#AA151B', c2:'#270004', gold:false},
+  {name:'Kevin Sanjaya',   country:'Indonesia',      flag:'🇮🇩', rank:'Doubles #1', cat:"Men's Doubles",   titles:'7× Super 1000 Champion',  init:'KS', c1:'#CE1126', c2:'#26000a', gold:true},
+  {name:'Lee Zii Jia',     country:'Malaysia',       flag:'🇲🇾', rank:'Top 10',     cat:"Men's Singles",   titles:'All England Champ 2021',  init:'LZ', c1:'#003087', c2:'#04001c', gold:false},
+  {name:'Kento Momota',    country:'Japan',          flag:'🇯🇵', rank:'Former #1',  cat:"Men's Singles",   titles:'2× World Champion',        init:'KM', c1:'#BC002D', c2:'#1a0007', gold:false},
+];
+
+let currentSlide = 0;
+let autoTimer = null;
+
+function buildCarousel(){
+  const track = document.getElementById('playersTrack');
+  const dots  = document.getElementById('playersDots');
+  if(!track || !dots) return;
+
+  PLAYERS.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'player-card';
+    card.style.cssText = `--pc1:${p.c1};--pc2:${p.c2}`;
+    card.innerHTML = `
+      <div class="player-card-inner">
+        <div class="player-card-bg"></div>
+        <div class="player-big-init">${p.init}</div>
+        <div class="player-icon-wrap">
+          <i class="bi bi-person-fill"></i>
+          <span class="player-cat-label">${p.cat}</span>
+        </div>
+        <span class="player-flag-badge">${p.flag}</span>
+        <span class="player-rank-pill${p.gold?' gold':''}">${p.rank}</span>
+        <div class="player-info-overlay">
+          <div class="player-info-name">${p.name}</div>
+          <div class="player-info-country">${p.country}</div>
+          <div class="player-info-titles">${p.titles}</div>
+        </div>
+      </div>`;
+    track.appendChild(card);
+
+    const dot = document.createElement('button');
+    dot.className = 'players-dot' + (i===0?' active':'');
+    dot.setAttribute('aria-label', 'Go to slide '+(i+1));
+    dot.onclick = () => goToSlide(i);
+    dots.appendChild(dot);
+  });
+
+  const wrap = document.getElementById('playersTrackWrap');
+  if(wrap){
+    wrap.addEventListener('mouseenter', () => clearInterval(autoTimer));
+    wrap.addEventListener('mouseleave', startAutoplay);
+  }
+  startAutoplay();
+}
+
+function getVisible(){
+  const w = window.innerWidth;
+  if(w <= 380) return 1;
+  if(w <= 600) return 2;
+  if(w <= 900) return 3;
+  return 4;
+}
+function getMaxSlide(){ return Math.max(0, PLAYERS.length - getVisible()); }
+
+function goToSlide(idx){
+  currentSlide = Math.max(0, Math.min(idx, getMaxSlide()));
+  const cards = document.querySelectorAll('.player-card');
+  if(!cards.length) return;
+  const gap = 16;
+  const cardW = cards[0].offsetWidth + gap;
+  document.getElementById('playersTrack').style.transform = `translateX(-${currentSlide * cardW}px)`;
+  document.querySelectorAll('.players-dot').forEach((d,i) => d.classList.toggle('active', i===currentSlide));
+}
+function nextSlide(){ goToSlide(currentSlide >= getMaxSlide() ? 0 : currentSlide+1); }
+function prevSlide(){ goToSlide(currentSlide <= 0 ? getMaxSlide() : currentSlide-1); }
+function startAutoplay(){ clearInterval(autoTimer); autoTimer = setInterval(nextSlide, 4000); }
+
+window.addEventListener('resize', () => goToSlide(Math.min(currentSlide, getMaxSlide())));
+document.addEventListener('DOMContentLoaded', buildCarousel);
+</script>
 </body>
 </html>

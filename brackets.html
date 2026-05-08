@@ -384,6 +384,12 @@ function staleGeneratedReason(l){
   if(e.notEnoughSlots) return `Current setup has ${e.totalSlots} slots but ${l.teams} Registered teams. Increase brackets or slots, then regenerate.`;
   // Over-provisioned: bracket was generated with more test data — more groups than real teams
   if(l.brackets > l.teams) return `Bracket has ${l.brackets} groups but only ${l.teams} Registered team${l.teams!==1?'s':''} — teams were likely added/removed since last generation. Click Regenerate to fix.`;
+  // Fix #6: warn if any registered teams in this bracket have since been cancelled
+  const cancelledInBracket = (allRegs||[]).filter(r =>
+    r.Level === l.level_key &&
+    ['Cancelled','Rejected'].includes(r.Status)
+  ).length;
+  if(cancelledInBracket > 0) return `${cancelledInBracket} team${cancelledInBracket>1?'s have':' has'} since cancelled. Regenerate to update the bracket.`;
   return '';
 }
 

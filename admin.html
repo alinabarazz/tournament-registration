@@ -424,7 +424,7 @@
     <div class="login-field">
       <label>Password</label>
       <div class="password-wrapper">
-        <input type="password" id="loginPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" id="passwordToggle" aria-label="Toggle password visibility">
           <svg id="eyeIcon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -1068,17 +1068,44 @@
 <!-- ══ EMAIL SETTINGS MODAL ══ -->
 <!-- ══ PROFILE SETTINGS MODAL ══ -->
 <div class="modal-overlay" id="profileSettingsModal" onclick="if(event.target===this)closeProfileSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;align-items:center;justify-content:center;">
-  <div class="modal" style="max-width:420px;">
+  <div class="modal" style="max-width:440px;">
     <div class="modal-header" style="border-left:4px solid var(--primary);">
       <div class="modal-title">Profile Settings</div>
       <button class="modal-close" onclick="closeProfileSettings()">✕</button>
     </div>
     <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+
+      <!-- Avatar upload -->
+      <div class="modal-field">
+        <label>Profile / Organizer Logo <span style="color:var(--muted);font-weight:400;">(used on emails &amp; tournament cards)</span></label>
+        <div style="display:flex;gap:14px;align-items:center;margin-top:6px;">
+          <!-- Preview circle -->
+          <div id="profileAvatarPreview"
+            onclick="document.getElementById('profileAvatarInput').click()"
+            style="width:72px;height:72px;border-radius:10px;border:2px dashed #2a2a2a;background:#0f0f0f;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#555;font-size:26px;cursor:pointer;transition:border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='#2a2a2a'">
+            👤
+          </div>
+          <div>
+            <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;" onchange="previewProfileAvatar(event)">
+            <button type="button" onclick="document.getElementById('profileAvatarInput').click()"
+              style="background:#1a1a1a;border:1px solid #333;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;padding:8px 16px;border-radius:6px;cursor:pointer;display:block;margin-bottom:6px;">
+              Upload Logo
+            </button>
+            <div id="profileAvatarName" style="font-size:11px;color:#555;">No logo uploaded</div>
+            <input type="hidden" id="profileAvatarUrl" value="">
+          </div>
+        </div>
+        <div style="font-size:11px;color:#555;margin-top:6px;">This logo appears in the <strong style="color:#888;">Organized By</strong> section of all player emails. Upload once — applies to all your tournaments automatically.</div>
+      </div>
+
+      <!-- Notification email -->
       <div class="modal-field">
         <label>Notification Email</label>
         <input class="modal-input" type="email" id="notifEmail" placeholder="your@email.com">
-        <div style="font-size:11px;color:#555;margin-top:4px;">All admin notifications (new registrations, payments) will be CC'd to this email.</div>
+        <div style="font-size:11px;color:#555;margin-top:4px;">You'll receive email alerts for new registrations, payments, and cancellations at this address.</div>
       </div>
+
       <div id="profileMsg" style="display:none;padding:8px 12px;border-radius:6px;font-size:12px;"></div>
     </div>
     <div class="modal-actions">
@@ -1772,12 +1799,15 @@ async function doLogin(){
       role:               user_record.role,
       notification_email: user_record.notification_email||'',
       site_base_url:      user_record.site_base_url||'',
+      profile_image_url:  user_record.profile_image_url||'',
       loginAt:            Date.now(),
     };
     // Cache site URL
     if(user_record.site_base_url) localStorage.setItem('siteBaseUrl', user_record.site_base_url);
+    // ── SECURITY: session stored in sessionStorage ONLY.
+    // localStorage persists indefinitely across restarts — an XSS payload
+    // could silently steal it. sessionStorage dies with the tab.
     sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
-    localStorage.setItem('adminUser', JSON.stringify(currentUser));
     initApp();
   }catch(e){
     errEl.textContent='Login failed: '+e.message;
@@ -1787,7 +1817,7 @@ async function doLogin(){
 
 function logout(){
   sessionStorage.removeItem('adminUser');
-  localStorage.removeItem('adminUser');
+  // localStorage.removeItem('adminUser') — no longer needed; we stopped writing it on login
   currentUser=null; activeTournament=null;
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('appScreen').style.display='none';
@@ -1803,8 +1833,12 @@ function initApp(){
   document.getElementById('homeScreen').style.display   = 'block';
   document.getElementById('mainDashboard').style.display = 'none';
   const badge = document.getElementById('userBadge');
-  badge.textContent = `${currentUser.username} · ${currentUser.role}`;
+  badge.textContent = currentUser.username;
   badge.className = `user-badge ${currentUser.role}`;
+  // Make username badge clickable — opens profile settings
+  badge.style.cursor = 'pointer';
+  badge.title = 'Click to edit profile';
+  badge.onclick = () => openProfileSettings();
   document.getElementById('homeBadge').textContent = badge.textContent;
   document.getElementById('homeBadge').className   = badge.className;
   document.getElementById('homeUsername').textContent = currentUser.username;
@@ -2116,12 +2150,16 @@ async function updateTournament(id, forceStatus){
    TOURNAMENTS
 ════════════════════════════════════════════ */
 async function loadTournaments(){
-  // Use only the base columns that are guaranteed to exist
-  // New columns (jersey_price, jersey_image_url, payment_qr_*) added via SQL migration
+  // SECURITY: owner_id filter is applied both here (frontend) AND enforced by
+  // RLS on the tournaments table. Even if someone tampers their sessionStorage
+  // role to 'superadmin', the RLS policy still scopes what the anon key can see.
+  // For a full server-side role guard post-launch, move this to an Edge Function.
   const baseSelect = 'id,name,owner_id,status,budget,event_date_from,event_date_to,early_bird_to,tournament_date_from,tournament_date_to,tournament_duration,free_jersey_count,location,description,owner_name,min_pairs_to_run';
   const extraSelect = ',jersey_price,jersey_image_url,payment_qr_gcash,payment_qr_maya,payment_qr_other';
-  let url = `${SB_URL}/rest/v1/tournaments?select=${baseSelect}${extraSelect}&order=created_at.desc`;
-  if(currentUser.role === 'admin') url += `&owner_id=eq.${currentUser.id}`;
+
+  // Apply owner filter for admin role — superadmin sees all
+  const ownerFilter = (currentUser.role === 'admin') ? `&owner_id=eq.${currentUser.id}` : '';
+  let url = `${SB_URL}/rest/v1/tournaments?select=${baseSelect}${extraSelect}&order=created_at.desc${ownerFilter}`;
 
   try{
     const res  = await fetch(url, {headers:HDRS});
@@ -2129,7 +2167,7 @@ async function loadTournaments(){
 
     // If new columns missing, fall back to base columns only
     if(!Array.isArray(data)){
-      const res2 = await fetch(`${SB_URL}/rest/v1/tournaments?select=${baseSelect}&order=created_at.desc`+(currentUser.role==='admin'?`&owner_id=eq.${currentUser.id}`:''), {headers:HDRS});
+      const res2 = await fetch(`${SB_URL}/rest/v1/tournaments?select=${baseSelect}&order=created_at.desc${ownerFilter}`, {headers:HDRS});
       data = await res2.json();
     }
 
@@ -2567,7 +2605,7 @@ async function fetchRegistrations(){
   document.getElementById('tableBody').innerHTML=`<tr><td colspan="11"><div class="empty-state"><span class="icon">⏳</span><p>Loading...</p></div></td></tr>`;
 
   try{
-    const res = await fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTournament.id}&select=*&order=id.desc`,{headers:HDRS});
+    const res = await fetch(`${SB_URL}/rest/v1/registrations?tournament_id=eq.${activeTournament.id}&select=id,created_at,approved_at,cancelled_at,Status,Level,Team_Name,Player1_Name,Player2_Name,Email_Address,payment_channel,payment_reference,payment_screenshot,payment_date,notes,cancellation_reason,transfer_from,transfer_to&order=id.desc`,{headers:HDRS});
     if(!res.ok){ const e=res.status===204?'No content':await res.text().catch(()=>'error'); throw new Error(e); }
     allRegs = await res.json();
     renderTable(allRegs);
@@ -2783,6 +2821,7 @@ async function resendApprovalEmail(regId, btn){
       payment_link:     getPaymentLink(rec.id),
       reg_ref:          `#${String(rec.id).padStart(5,'0')}`,
       admin_email:      currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
     });
     btn.textContent='Sent!'; btn.style.color='#22c55e';
     setTimeout(()=>{ btn.textContent=orig; btn.style.color='#22c55e'; btn.disabled=false; },3000);
@@ -2932,6 +2971,7 @@ async function updateStatus(id, sel){
         payment_link:    getPaymentLink(rec.id),
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
         admin_email:     currentUser?.notification_email || '',
+              organizer_logo_url: currentUser?.profile_image_url||'',
       });
     }
 
@@ -2947,6 +2987,7 @@ async function updateStatus(id, sel){
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
         admin_email:     currentUser?.notification_email || '',
+              organizer_logo_url: currentUser?.profile_image_url||'',
         rejection_reason: rr.reason || '',
         rejection_notes:  rr.notes  || '',
       });
@@ -2996,6 +3037,7 @@ async function updateStatus(id, sel){
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
         admin_email:     currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
       });
     }
 
@@ -3010,6 +3052,7 @@ async function updateStatus(id, sel){
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
         admin_email:     currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
       });
     }
 
@@ -3023,6 +3066,7 @@ async function updateStatus(id, sel){
         tournament_name: activeTournament?.name||'',
         reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
         admin_email:     currentUser?.notification_email || '',
+              organizer_logo_url: currentUser?.profile_image_url||'',
       });
     }
 
@@ -5097,6 +5141,7 @@ async function confirmDissolveLevel(){
       sendEmail('level_dissolved',{
         player_email:    reg.Email_Address,
         admin_email:     currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
         player_name:     reg.Player1_Name||'Player',
         player2_name:    reg.Player2_Name||'',
         team_name:       reg.Team_Name,
@@ -5240,6 +5285,7 @@ async function checkPaymentDeadlines(){
             payment_link:     getPaymentLink(rec.id),
             reg_ref:          `#${String(rec.id).padStart(5,'0')}`,
             admin_email:      currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
           });
           console.log(`Day 3 follow-up sent for #${rec.id}`);
         }
@@ -5256,6 +5302,7 @@ async function checkPaymentDeadlines(){
           // Email admin
           sendEmail('overdue_admin',{
             admin_email:     currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
             player_name:     rec.Player1_Name||'Player',
             player2_name:    rec.Player2_Name||'',
             team_name:       rec.Team_Name,
@@ -5291,6 +5338,7 @@ async function checkPaymentDeadlines(){
             tournament_name: activeTournament.name||'',
             reg_ref:         `#${String(rec.id).padStart(5,'0')}`,
             admin_email:     currentUser?.notification_email||'',
+              organizer_logo_url: currentUser?.profile_image_url||'',
           });
         }
       }
@@ -5430,12 +5478,23 @@ function closeEmailSettings(){ closeProfileSettings(); }
 
 async function openProfileSettings(){
   if(!currentUser){ console.warn('No currentUser'); return; }
-  console.log('Opening profile settings for user:', currentUser.id);
-  try{
-    const res  = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}&select=notification_email`,{headers:HDRS});
-    const data = await res.json();
-    document.getElementById('notifEmail').value = (data&&data.length) ? (data[0].notification_email||'') : '';
-  }catch(e){ console.warn('Failed to load email:', e); document.getElementById('notifEmail').value=''; }
+
+  // Pre-fill from currentUser session — no separate fetch needed
+  // currentUser already has notification_email and profile_image_url from login RPC
+  document.getElementById('notifEmail').value = currentUser.notification_email || '';
+
+  // Show logo preview from session
+  const avatarUrl = currentUser.profile_image_url || '';
+  document.getElementById('profileAvatarUrl').value = avatarUrl;
+  const prev = document.getElementById('profileAvatarPreview');
+  if(avatarUrl){
+    prev.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">`;
+    document.getElementById('profileAvatarName').textContent = 'Logo uploaded ✓';
+  } else {
+    prev.innerHTML = `<span style="font-size:28px;color:#444;">📷</span>`;
+    document.getElementById('profileAvatarName').textContent = 'No logo uploaded yet';
+  }
+
   document.getElementById('profileMsg').style.display='none';
   const modal = document.getElementById('profileSettingsModal');
   if(modal.parentElement !== document.body) document.body.appendChild(modal);
@@ -5446,31 +5505,87 @@ async function openProfileSettings(){
   modal.style.zIndex         = '999999';
   modal.style.alignItems     = 'center';
   modal.style.justifyContent = 'center';
-  console.log('Profile modal moved to body, display:', modal.style.display);
 }
 // Keep old name as alias
 async function openEmailSettings(){ return openProfileSettings(); }
+
+function previewProfileAvatar(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('profileAvatarPreview');
+    prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">`;
+    document.getElementById('profileAvatarName').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
 
 async function saveProfileSettings(){
   const email = document.getElementById('notifEmail').value.trim();
   const msgEl = document.getElementById('profileMsg');
   if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    msgEl.textContent='Please enter a valid email.';
+    msgEl.textContent='Please enter a valid email address.';
     msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;font-size:12px;';
     return;
   }
+
+  // Show saving state
+  msgEl.textContent='Saving...';
+  msgEl.style.cssText='display:block;background:#111;color:#888;border:1px solid #333;padding:8px 12px;border-radius:6px;font-size:12px;';
+
   try{
+    const patch: any = { notification_email: email||null };
+
+    // Upload logo if a new file was selected
+    const avatarFile = document.getElementById('profileAvatarInput')?.files?.[0];
+    if(avatarFile){
+      msgEl.textContent='Uploading logo...';
+      const ext = avatarFile.name.split('.').pop()||'png';
+      const path = `profile-${currentUser.id}-${Date.now()}.${ext}`;
+      const upRes = await fetch(`${SB_URL}/storage/v1/object/organizer/${path}`,{
+        method:'POST',
+        headers:{'Authorization':`Bearer ${SB_KEY}`,'Content-Type':avatarFile.type},
+        body: avatarFile,
+      });
+      if(!upRes.ok){
+        const errText = await upRes.text().catch(()=>'Unknown error');
+        throw new Error(`Logo upload failed (${upRes.status}): ${errText}`);
+      }
+      const avatarUrl = `${SB_URL}/storage/v1/object/public/organizer/${path}`;
+      patch.profile_image_url = avatarUrl;
+
+      // Update preview immediately
+      const prev = document.getElementById('profileAvatarPreview');
+      prev.innerHTML = `<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">`;
+      document.getElementById('profileAvatarName').textContent = 'Logo uploaded ✓';
+      document.getElementById('profileAvatarUrl').value = avatarUrl;
+
+      // Update currentUser in memory + session
+      currentUser.profile_image_url = avatarUrl;
+    }
+
+    // Save to database
     const r = await fetch(`${SB_URL}/rest/v1/users?id=eq.${currentUser.id}`,{
       method:'PATCH', headers:{...HDRS,'Prefer':'return=minimal'},
-      body:JSON.stringify({notification_email: email||null}),
+      body:JSON.stringify(patch),
     });
-    if(!r.ok && r.status!==204){ throw new Error('Save failed'); }
-    if(currentUser) currentUser.notification_email = email;
-    msgEl.textContent='✓ Saved!';
+    if(!r.ok && r.status!==204){ throw new Error(`Save failed (${r.status})`); }
+
+    // Update currentUser in memory and session storage
+    currentUser.notification_email = email;
+    sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
+
+    msgEl.textContent='✓ Saved successfully!';
     msgEl.style.cssText='display:block;background:#0d1a0d;color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:8px 12px;border-radius:6px;font-size:12px;';
-    setTimeout(closeProfileSettings, 1200);
+    setTimeout(closeProfileSettings, 1400);
   }catch(e){
     msgEl.textContent='Error: '+e.message;
+    msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;font-size:12px;';
+  }
+}
+// Keep alias
+async function saveEmailSettings(){ return saveProfileSettings(); }
     msgEl.style.cssText='display:block;background:#1a0808;color:#ff6b6b;border:1px solid #3a1010;padding:8px 12px;border-radius:6px;font-size:12px;';
   }
 }
@@ -5583,22 +5698,21 @@ function initDatePickers(){
 // Init pickers after DOM is ready
 document.addEventListener('DOMContentLoaded', initDatePickers);
 (function(){
-  const saved = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  // SECURITY: sessionStorage only — localStorage is never written for admin sessions.
+  // sessionStorage is tab-scoped and dies when the tab closes, limiting XSS exposure.
+  const saved = sessionStorage.getItem('adminUser');
   if(saved){
     try{
       const parsed = JSON.parse(saved);
       const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
       if(parsed.loginAt && (Date.now() - parsed.loginAt) > SESSION_TTL){
         sessionStorage.removeItem('adminUser');
-        localStorage.removeItem('adminUser');
         console.log('Session expired — please log in again.');
       } else {
         currentUser = parsed;
-        sessionStorage.setItem('adminUser', JSON.stringify(currentUser));
-        localStorage.setItem('adminUser', JSON.stringify(currentUser));
         initApp();
       }
-    }catch(e){ /* ignore */ }
+    }catch(e){ sessionStorage.removeItem('adminUser'); }
   }
 })();
 /* ════════════════════════════════════════════

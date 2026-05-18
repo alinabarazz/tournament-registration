@@ -232,7 +232,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
   async function loadTournaments(){
     try{
       const [tRes, rRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/tournaments?select=id,name,status,owner_name,event_date_from,event_date_to,tournament_date_from,tournament_date_to,location,description,free_jersey_count,early_bird_to&order=created_at.desc`, {headers:HDRS}),
+        fetch(`${SUPABASE_URL}/rest/v1/tournaments?select=id,name,status,owner_name,organizer_logo_url,event_date_from,event_date_to,tournament_date_from,tournament_date_to,location,description,free_jersey_count,early_bird_to&order=created_at.desc`, {headers:HDRS}),
         fetch(`${SUPABASE_URL}/rest/v1/registrations?select=tournament_id,Status`, {headers:HDRS}),
       ]);
       allTournaments = await tRes.json();
@@ -313,8 +313,16 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-
       return `
       <div class="t-card">
         <div class="t-card-top">
-          <div class="t-card-name">${t.name}</div>
-          <div class="t-card-org">${t.owner_name||'—'}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            ${t.organizer_logo_url
+              ? `<img src="${t.organizer_logo_url}" alt="${t.owner_name||''}" style="width:36px;height:36px;border-radius:6px;object-fit:contain;border:1px solid var(--border);background:#111;flex-shrink:0;">`
+              : `<div style="width:36px;height:36px;border-radius:6px;border:1px dashed var(--border);background:#111;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#444;font-size:16px;">🏆</div>`
+            }
+            <div>
+              <div class="t-card-name">${t.name}</div>
+              <div class="t-card-org">${t.owner_name||'—'}</div>
+            </div>
+          </div>
           <div class="status-pill ${statusKey}">
             <span class="status-dot"></span>${statusLabel}
           </div>
